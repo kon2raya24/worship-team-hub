@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Worship Team Hub
 
-## Getting Started
+A team hub for worship leaders: chord charts (with transposition), Sunday setlists, schedule, devotions, prayer requests, announcements, file uploads, and public share links.
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router) · TypeScript · Tailwind v4 · shadcn/ui · Supabase (Postgres + Auth + Storage) · `chordsheetjs` for ChordPro parsing.
+
+---
+
+## Local setup
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Create a Supabase project
+
+1. Go to [supabase.com](https://supabase.com) and create a new project.
+2. In **SQL Editor**, paste and run [`supabase/migrations/0001_init.sql`](./supabase/migrations/0001_init.sql). This creates all tables, the `profiles` trigger, and Row-Level Security policies.
+3. In **Storage**, create a private bucket named **`files`**. Then go to **Storage → Policies** and add:
+
+   ```sql
+   create policy "files bucket read (authenticated)"
+     on storage.objects for select to authenticated
+     using (bucket_id = 'files');
+
+   create policy "files bucket leader write"
+     on storage.objects for insert to authenticated
+     with check (bucket_id = 'files' and public.is_leader());
+
+   create policy "files bucket leader delete"
+     on storage.objects for delete to authenticated
+     using (bucket_id = 'files' and public.is_leader());
+   ```
+
+4. In **Authentication → Providers**, enable **Email** (and optionally **Google**).
+
+### 3. Configure environment
+
+Copy `.env.example` to `.env.local` and fill in:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key from Supabase Settings → API>
+SUPABASE_SERVICE_ROLE_KEY=<service-role key from Supabase Settings → API>
+```
+
+> The service-role key is server-only. It's used by the public `/share/[token]` route to render shared chord charts without requiring login.
+
+### 4. Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000), sign up, then promote your account to leader in Supabase: open **Table Editor → profiles**, change your row's `role` from `member` to `leader`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Feature map
 
-## Learn More
+| Route | Purpose |
+|---|---|
+| `/` | Dashboard with next setlist, latest devotion, pinned announcements |
+| `/songs` | Library — search + tag filter; leader adds/edits |
+| `/songs/[id]` | ChordPro viewer with transpose (±semitones), capo, zoom, print, practice notes |
+| `/setlists` | Upcoming + past setlists |
+| `/setlists/[id]` | Songs list with drag-reorder (leader), per-song "play in key" |
+| `/schedule` | Next 4 Sundays roster (leader assigns members to instruments) |
+| `/devotions` | Posts + weekly Bible reading plan |
+| `/prayer` | Team prayer feed; mark answered |
+| `/announcements` | Posts; pin to dashboard |
+| `/files` | Upload audio / PDFs / slides / MIDI, optionally attached to a song |
+| `/share/[token]` | Public read-only view of a song or setlist (no login) |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy to Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Push this repo to GitHub.
+2. On [vercel.com](https://vercel.com) → **New Project** → import the repo.
+3. Add the three env vars from `.env.local` to **Project Settings → Environment Variables**.
+4. Deploy. Vercel auto-deploys on each push to main.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## ChordPro quick reference
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+{title: Amazing Grace}
+{key: G}
+
+A[G]mazing [G7]grace, how [C]sweet the [G]sound
+That [G]saved a [Em]wretch like [D]me
+```
+
+- `[Chord]` brackets place chords above lyrics.
+- `{directive: value}` lines set song metadata.
+- Plain "chords-over-words" text also works as a fallback.
