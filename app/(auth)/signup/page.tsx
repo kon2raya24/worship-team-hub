@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -33,33 +32,52 @@ export default async function SignupPage({
   const { error } = await searchParams;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create account</CardTitle>
-        <CardDescription>Join your church worship team hub.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form action={signupAction} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="display_name">Name</Label>
-            <Input id="display_name" name="display_name" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required autoComplete="email" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" />
-          </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" className="w-full">Create account</Button>
-          <p className="text-center text-sm text-zinc-500">
-            Already have one?{" "}
-            <Link className="underline" href="/login">Sign in</Link>
+    <div className="space-y-5">
+      <div className="space-y-1">
+        <h2 className="font-display text-xl font-semibold">Create account</h2>
+        <p className="text-sm text-[#8a92b4]">Join your church worship team.</p>
+      </div>
+      <form action={signupAction} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="display_name">Name</Label>
+          <Input id="display_name" name="display_name" required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+          />
+        </div>
+        {error && (
+          <p className="text-sm text-[#ff5566] bg-[#ff5566]/10 border border-[#ff5566]/30 rounded-lg p-2">
+            {error}
           </p>
-        </form>
-      </CardContent>
-    </Card>
+        )}
+        <SubmitButton className="w-full" pendingLabel="Creating…">
+          Create account
+        </SubmitButton>
+        <p className="text-center text-sm text-[#8a92b4]">
+          Already have one?{" "}
+          <Link className="text-[#00e8ff] hover:underline" href="/login">
+            Sign in
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }

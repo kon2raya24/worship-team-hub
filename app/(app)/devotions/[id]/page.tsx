@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft, BookMarked } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 import { deleteDevotion } from "../actions";
 
 type Params = Promise<{ id: string }>;
@@ -23,30 +24,52 @@ export default async function DevotionDetail({ params }: { params: Params }) {
   if (!devotion) notFound();
 
   const author =
-    (devotion.profiles as { display_name?: string } | null)?.display_name ?? "Team";
+    (devotion.profiles as { display_name?: string } | null)?.display_name ??
+    "Team";
 
   return (
-    <article className="space-y-4 max-w-2xl">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <Link href="/devotions" className="text-sm text-zinc-500 hover:underline">
-            ← Devotions
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight">{devotion.title}</h1>
-          <div className="text-xs text-zinc-500">
-            {devotion.scripture_ref ? `${devotion.scripture_ref} · ` : ""}
-            {author} · {new Date(devotion.published_at).toLocaleDateString()}
+    <article className="space-y-6 fade-in max-w-3xl">
+      <div className="space-y-3">
+        <Link
+          href="/devotions"
+          className="inline-flex items-center gap-1.5 text-xs text-[#8a92b4] hover:text-white transition-colors"
+        >
+          <ArrowLeft className="size-3" /> Devotions
+        </Link>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
+            {devotion.scripture_ref && (
+              <p className="eyebrow flex items-center gap-1.5">
+                <BookMarked className="size-3" /> {devotion.scripture_ref}
+              </p>
+            )}
+            <h1 className="text-3xl md:text-4xl font-display font-semibold tracking-tight leading-tight mt-2">
+              {devotion.title}
+            </h1>
+            <p className="text-xs text-[#8a92b4] mt-2">
+              {author} ·{" "}
+              {new Date(devotion.published_at).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </p>
           </div>
+          {isLeader(profile) && (
+            <form action={deleteDevotion.bind(null, id)}>
+              <SubmitButton
+                variant="outline"
+                className="text-red-400 hover:text-red-300"
+                pendingLabel="Deleting…"
+              >
+                Delete
+              </SubmitButton>
+            </form>
+          )}
         </div>
-        {isLeader(profile) && (
-          <form action={deleteDevotion.bind(null, id)}>
-            <Button type="submit" variant="outline" className="text-red-600">
-              Delete
-            </Button>
-          </form>
-        )}
       </div>
-      <div className="prose prose-zinc dark:prose-invert max-w-none">
+
+      <div className="glass p-6 md:p-8 prose prose-invert max-w-none prose-headings:font-display prose-headings:text-white prose-p:text-white/85 prose-li:text-white/85 prose-strong:text-white prose-a:text-[#00e8ff] prose-blockquote:border-l-[#8b5cf6] prose-blockquote:text-[#c8cee6] prose-blockquote:not-italic">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{devotion.body}</ReactMarkdown>
       </div>
     </article>

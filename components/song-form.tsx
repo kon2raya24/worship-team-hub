@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 
 type Song = {
   title: string;
@@ -91,7 +91,7 @@ export function SongForm({
       </div>
 
       <div className="flex gap-2">
-        <Button type="submit">{submitLabel}</Button>
+        <SubmitButton pendingLabel="Saving…">{submitLabel}</SubmitButton>
       </div>
     </form>
   );

@@ -8,7 +8,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <Nav displayName={profile.display_name} role={profile.role} />
-      <main className="mx-auto max-w-6xl px-4 py-6 flex-1 w-full">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-6 flex-1 w-full fade-in">{children}</main>
       <Toaster richColors closeButton />
     </>
   );

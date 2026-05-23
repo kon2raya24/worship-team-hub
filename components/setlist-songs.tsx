@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 import { reorderSetlistSongs, removeSongFromSetlist } from "@/app/(app)/setlists/actions";
 
 export type SetlistSongRow = {
@@ -58,19 +58,39 @@ export function SetlistSongs({
 
   if (!canEdit) {
     return (
-      <ol className="space-y-1 list-decimal list-inside">
-        {items.map((s) => (
-          <li key={s.song_id}>
-            <a href={`/songs/${s.song_id}`} className="hover:underline font-medium">
-              {s.title}
-            </a>
-            <span className="text-zinc-500 text-sm">
-              {s.played_in_key ? ` · key ${s.played_in_key}` : s.original_key ? ` · key ${s.original_key}` : ""}
-              {s.artist ? ` · ${s.artist}` : ""}
+      <ul className="space-y-1.5">
+        {items.map((s, i) => (
+          <li
+            key={s.song_id}
+            className="flex items-center gap-3 p-2.5 rounded-lg bg-white/[0.025] border border-white/[0.06]"
+          >
+            <span className="font-mono text-xs tabular-nums text-[#8a92b4] w-5 text-center">
+              {i + 1}
             </span>
+            <div className="flex-1 min-w-0">
+              <a
+                href={`/songs/${s.song_id}`}
+                className="font-medium text-white/95 hover:text-[#00e8ff] transition-colors"
+              >
+                {s.title}
+              </a>
+              <span className="text-[#8a92b4] text-sm">
+                {s.played_in_key
+                  ? ` · key ${s.played_in_key}`
+                  : s.original_key
+                    ? ` · key ${s.original_key}`
+                    : ""}
+                {s.artist ? ` · ${s.artist}` : ""}
+              </span>
+            </div>
+            {(s.played_in_key || s.original_key) && (
+              <span className="font-mono text-xs px-2 py-0.5 rounded bg-[#00e8ff]/10 text-[#00e8ff] border border-[#00e8ff]/20">
+                {s.played_in_key ?? s.original_key}
+              </span>
+            )}
           </li>
         ))}
-      </ol>
+      </ul>
     );
   }
 
@@ -109,31 +129,45 @@ function SortableRow({
     <li
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 border rounded-md p-2 bg-white dark:bg-zinc-950"
+      className="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.025] border border-white/[0.06] hover:border-white/[0.12] transition-colors"
     >
       <button
         type="button"
-        className="cursor-grab active:cursor-grabbing px-1 text-zinc-400 hover:text-zinc-700"
+        className="cursor-grab active:cursor-grabbing px-1 text-[#8a92b4] hover:text-white transition-colors"
         aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
       >
         ⋮⋮
       </button>
-      <span className="w-6 text-right text-zinc-500 tabular-nums text-sm">{index + 1}.</span>
+      <span className="font-mono text-xs tabular-nums text-[#8a92b4] w-5 text-center">
+        {index + 1}
+      </span>
       <div className="flex-1 min-w-0">
-        <a href={`/songs/${row.song_id}`} className="font-medium hover:underline">
+        <a
+          href={`/songs/${row.song_id}`}
+          className="font-medium text-white/95 hover:text-[#00e8ff] transition-colors"
+        >
           {row.title}
         </a>
-        <span className="text-zinc-500 text-sm">
-          {row.played_in_key ? ` · key ${row.played_in_key}` : row.original_key ? ` · key ${row.original_key}` : ""}
+        <span className="text-[#8a92b4] text-sm">
+          {row.played_in_key
+            ? ` · key ${row.played_in_key}`
+            : row.original_key
+              ? ` · key ${row.original_key}`
+              : ""}
           {row.artist ? ` · ${row.artist}` : ""}
         </span>
       </div>
       <form action={removeSongFromSetlist.bind(null, setlistId, row.song_id)}>
-        <Button type="submit" size="sm" variant="ghost" className="text-red-600">
+        <SubmitButton
+          size="sm"
+          variant="ghost"
+          className="text-red-400 hover:text-red-300"
+          pendingLabel="…"
+        >
           Remove
-        </Button>
+        </SubmitButton>
       </form>
     </li>
   );

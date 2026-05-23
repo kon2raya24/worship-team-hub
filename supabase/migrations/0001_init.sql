@@ -4,6 +4,21 @@
 create extension if not exists "pgcrypto";
 
 -- ============================================================
+-- Schema grants: ensure anon, authenticated, service_role can
+-- reach tables in the public schema. RLS still enforces row access.
+-- (Some Supabase project setups don't auto-grant these.)
+-- ============================================================
+grant usage on schema public to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to anon, authenticated;
+alter default privileges in schema public
+  grant all on tables to service_role;
+alter default privileges in schema public
+  grant usage, select on sequences to anon, authenticated;
+alter default privileges in schema public
+  grant all on sequences to service_role;
+
+-- ============================================================
 -- profiles: extends auth.users with display name + role
 -- ============================================================
 create type user_role as enum ('leader', 'member');

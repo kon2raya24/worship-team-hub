@@ -1,8 +1,10 @@
+import { Heart, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
+import { TextSubmit } from "@/components/text-submit";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/page-header";
 import { addPrayer, togglePrayer, deletePrayer } from "./actions";
 
 export default async function PrayerPage() {
@@ -15,58 +17,65 @@ export default async function PrayerPage() {
     .order("is_answered", { ascending: true })
     .order("created_at", { ascending: false });
 
-  return (
-    <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-semibold tracking-tight">Prayer requests</h1>
+  const openCount = (requests ?? []).filter((r) => !r.is_answered).length;
 
-      <form action={addPrayer} className="space-y-2">
+  return (
+    <div className="space-y-6 fade-in max-w-3xl">
+      <PageHeader
+        icon={Heart}
+        title="Prayer wall"
+        subtitle={`${openCount} open · ${(requests ?? []).length} total`}
+      />
+
+      <form action={addPrayer} className="glass p-5 space-y-3">
         <Textarea
           name="body"
           rows={3}
           required
           placeholder="What can the team pray about?"
+          className="bg-white/[0.04] border-white/[0.1] resize-none"
         />
-        <Button type="submit">Post request</Button>
+        <SubmitButton pendingLabel="Posting…">Post request</SubmitButton>
       </form>
 
-      <ul className="space-y-2">
+      <ul className="space-y-3">
         {(requests ?? []).map((r) => {
           const author =
-            (r.profiles as { display_name?: string } | null)?.display_name ?? "Member";
+            (r.profiles as { display_name?: string } | null)?.display_name ??
+            "Member";
           const canEdit = r.author_id === profile.id || isLeader(profile);
           return (
             <li
               key={r.id}
-              className={`border rounded-md p-3 ${
-                r.is_answered ? "opacity-60 bg-zinc-50 dark:bg-zinc-900" : ""
+              className={`glass p-4 ${
+                r.is_answered ? "opacity-60" : ""
               }`}
             >
-              <div className="flex justify-between items-start gap-2">
-                <div className="flex-1">
-                  <div className="text-xs text-zinc-500 flex gap-2 items-center">
-                    <span>{author}</span>
+              <div className="flex justify-between items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-[#8a92b4] flex gap-2 items-center">
+                    <span className="text-white/80">{author}</span>
                     <span>·</span>
                     <span>{new Date(r.created_at).toLocaleDateString()}</span>
-                    {r.is_answered && <Badge variant="secondary">Answered</Badge>}
+                    {r.is_answered && (
+                      <span className="inline-flex items-center gap-1 text-[#8eff6a] text-[10px] font-mono uppercase tracking-wider ml-1">
+                        <CheckCircle2 className="size-3" /> Answered
+                      </span>
+                    )}
                   </div>
-                  <p className="whitespace-pre-wrap mt-1">{r.body}</p>
+                  <p className="whitespace-pre-wrap mt-1.5 text-[15px] text-white/90 leading-relaxed">
+                    {r.body}
+                  </p>
                 </div>
                 {canEdit && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-3 shrink-0">
                     <form action={togglePrayer.bind(null, r.id, r.is_answered)}>
-                      <Button type="submit" size="sm" variant="outline">
+                      <TextSubmit pendingLabel="…">
                         {r.is_answered ? "Mark open" : "Mark answered"}
-                      </Button>
+                      </TextSubmit>
                     </form>
                     <form action={deletePrayer.bind(null, r.id)}>
-                      <Button
-                        type="submit"
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-600"
-                      >
-                        Delete
-                      </Button>
+                      <TextSubmit danger pendingLabel="…">Delete</TextSubmit>
                     </form>
                   </div>
                 )}
@@ -75,7 +84,9 @@ export default async function PrayerPage() {
           );
         })}
         {(requests ?? []).length === 0 && (
-          <li className="text-sm text-zinc-500">No prayer requests yet.</li>
+          <li className="glass p-8 text-center text-[#8a92b4]">
+            No prayer requests yet.
+          </li>
         )}
       </ul>
     </div>

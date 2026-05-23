@@ -1,13 +1,23 @@
+import { Calendar, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
+import { TextSubmit } from "@/components/text-submit";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/page-header";
 import { assignMember, unassign } from "./actions";
 
-const ROLES = ["lead_vocal", "vocals", "acoustic", "electric", "bass", "keys", "drums", "tech"];
+const ROLES = [
+  "lead_vocal",
+  "vocals",
+  "acoustic",
+  "electric",
+  "bass",
+  "keys",
+  "drums",
+  "tech",
+];
 
 function fmt(d: string) {
   return new Date(d).toLocaleDateString(undefined, {
@@ -42,7 +52,10 @@ export default async function SchedulePage() {
     supabase.from("profiles").select("id, display_name").order("display_name"),
   ]);
 
-  const byDate = new Map<string, { id: string; role: string; user_id: string; name: string }[]>();
+  const byDate = new Map<
+    string,
+    { id: string; role: string; user_id: string; name: string }[]
+  >();
   for (const a of assignments ?? []) {
     const name =
       (a.profiles as { display_name?: string } | null)?.display_name ?? "Member";
@@ -52,139 +65,170 @@ export default async function SchedulePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Sunday schedule</h1>
+    <div className="space-y-6 fade-in">
+      <PageHeader
+        icon={Calendar}
+        title="Sunday schedule"
+        subtitle="Next 4 services · roster by role"
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         {dates.map((d) => {
           const items = byDate.get(d) ?? [];
+          const isFirst = d === dates[0];
           return (
-            <Card key={d}>
-              <CardHeader>
-                <CardTitle>{fmt(d)}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {items.length === 0 ? (
-                  <p className="text-sm text-zinc-500">No assignments yet.</p>
-                ) : (
-                  <ul className="space-y-1">
-                    {items.map((a) => (
-                      <li key={a.id} className="flex items-center gap-2 text-sm">
-                        <Badge variant="outline" className="font-mono text-xs">
-                          {a.role}
-                        </Badge>
-                        <span className={a.user_id === profile.id ? "font-medium" : ""}>
-                          {a.name}
-                        </span>
-                        {canEdit && (
-                          <form action={unassign.bind(null, a.id)} className="ml-auto">
-                            <button
-                              type="submit"
-                              className="text-xs text-zinc-400 hover:text-red-600"
-                            >
-                              Remove
-                            </button>
-                          </form>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+            <div
+              key={d}
+              className={`glass p-5 ${
+                isFirst ? "ring-1 ring-[#00e8ff]/30" : ""
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="eyebrow">
+                    {isFirst ? "This Sunday" : "Upcoming"}
+                  </p>
+                  <h3 className="font-display text-lg font-semibold mt-0.5">
+                    {fmt(d)}
+                  </h3>
+                </div>
+                <span className="text-xs text-[#8a92b4]">
+                  {items.length} assigned
+                </span>
+              </div>
 
-                {canEdit && (
-                  <form
-                    action={assignMember}
-                    className="flex flex-wrap gap-2 items-end pt-3 border-t"
-                  >
-                    <input type="hidden" name="service_date" value={d} />
-                    <div className="space-y-1 flex-1 min-w-[8rem]">
-                      <Label htmlFor={`user-${d}`} className="text-xs">
-                        Member
-                      </Label>
-                      <select
-                        id={`user-${d}`}
-                        name="user_id"
-                        required
-                        className="w-full border rounded-md p-1 text-sm h-9 bg-transparent"
+              {items.length === 0 ? (
+                <p className="text-sm text-[#8a92b4] py-2">No assignments yet.</p>
+              ) : (
+                <ul className="space-y-1.5 mb-3">
+                  {items.map((a) => (
+                    <li
+                      key={a.id}
+                      className="flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg bg-white/[0.025]"
+                    >
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-[#00e8ff] bg-[#00e8ff]/10 px-1.5 py-0.5 rounded">
+                        {a.role}
+                      </span>
+                      <span
+                        className={
+                          a.user_id === profile.id
+                            ? "font-medium text-white"
+                            : "text-white/85"
+                        }
                       >
-                        <option value="">Pick…</option>
-                        {(members ?? []).map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.display_name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1 flex-1 min-w-[8rem]">
-                      <Label htmlFor={`role-${d}`} className="text-xs">
-                        Role
-                      </Label>
-                      <select
-                        id={`role-${d}`}
-                        name="role"
-                        required
-                        className="w-full border rounded-md p-1 text-sm h-9 bg-transparent"
-                      >
-                        {ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <Button type="submit" size="sm">
-                      Add
-                    </Button>
-                  </form>
-                )}
-              </CardContent>
-            </Card>
+                        {a.name}
+                      </span>
+                      {canEdit && (
+                        <form
+                          action={unassign.bind(null, a.id)}
+                          className="ml-auto"
+                        >
+                          <TextSubmit danger pendingLabel="…">Remove</TextSubmit>
+                        </form>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {canEdit && (
+                <form
+                  action={assignMember}
+                  className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end pt-3 border-t border-white/[0.06]"
+                >
+                  <input type="hidden" name="service_date" value={d} />
+                  <div className="space-y-1">
+                    <Label htmlFor={`user-${d}`} className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+                      Member
+                    </Label>
+                    <select
+                      id={`user-${d}`}
+                      name="user_id"
+                      required
+                      className="w-full rounded-lg border border-white/10 bg-white/[0.04] p-1.5 text-sm h-9"
+                    >
+                      <option value="">Pick…</option>
+                      {(members ?? []).map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.display_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor={`role-${d}`} className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+                      Role
+                    </Label>
+                    <select
+                      id={`role-${d}`}
+                      name="role"
+                      required
+                      className="w-full rounded-lg border border-white/10 bg-white/[0.04] p-1.5 text-sm h-9"
+                    >
+                      {ROLES.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <SubmitButton size="sm" pendingLabel="…" className="gap-1">
+                    <Plus className="size-3.5" /> Add
+                  </SubmitButton>
+                </form>
+              )}
+            </div>
           );
         })}
       </div>
 
-      <div className="text-xs text-zinc-500">
-        Custom role: add a date below to assign for a non-standard service.
-      </div>
       {canEdit && (
-        <form
-          action={assignMember}
-          className="flex flex-wrap gap-2 items-end border rounded-md p-3"
-        >
-          <div className="space-y-1">
-            <Label htmlFor="custom-date" className="text-xs">
-              Date
-            </Label>
-            <Input id="custom-date" name="service_date" type="date" required />
-          </div>
-          <div className="space-y-1 flex-1 min-w-[10rem]">
-            <Label htmlFor="custom-user" className="text-xs">
-              Member
-            </Label>
-            <select
-              id="custom-user"
-              name="user_id"
-              required
-              className="w-full border rounded-md p-1 text-sm h-9 bg-transparent"
-            >
-              <option value="">Pick…</option>
-              {(members ?? []).map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.display_name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="custom-role" className="text-xs">
-              Role
-            </Label>
-            <Input id="custom-role" name="role" placeholder="e.g. tech" required />
-          </div>
-          <Button type="submit" size="sm">
-            Add
-          </Button>
-        </form>
+        <div className="glass p-5">
+          <p className="eyebrow mb-3">Custom date</p>
+          <form
+            action={assignMember}
+            className="grid sm:grid-cols-[140px_1fr_1fr_auto] gap-3 items-end"
+          >
+            <div className="space-y-1">
+              <Label htmlFor="custom-date" className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+                Date
+              </Label>
+              <Input id="custom-date" name="service_date" type="date" required />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="custom-user" className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+                Member
+              </Label>
+              <select
+                id="custom-user"
+                name="user_id"
+                required
+                className="w-full rounded-lg border border-white/10 bg-white/[0.04] p-1.5 text-sm h-9"
+              >
+                <option value="">Pick…</option>
+                {(members ?? []).map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.display_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="custom-role" className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+                Role
+              </Label>
+              <Input
+                id="custom-role"
+                name="role"
+                placeholder="e.g. tech"
+                required
+              />
+            </div>
+            <SubmitButton size="sm" pendingLabel="…" className="gap-1">
+              <Plus className="size-3.5" /> Add
+            </SubmitButton>
+          </form>
+        </div>
       )}
     </div>
   );

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -16,7 +15,9 @@ async function loginAction(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`);
+    redirect(
+      `/login?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`
+    );
   }
   redirect(next);
 }
@@ -29,30 +30,50 @@ export default async function LoginPage({
   const { error, next = "/" } = await searchParams;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Sign in</CardTitle>
-        <CardDescription>Welcome back to the worship team hub.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form action={loginAction} className="space-y-4">
-          <input type="hidden" name="next" value={next} />
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required autoComplete="email" />
-          </div>
-          <div className="space-y-2">
+    <div className="space-y-5">
+      <div className="space-y-1">
+        <h2 className="font-display text-xl font-semibold">Sign in</h2>
+        <p className="text-sm text-[#8a92b4]">Welcome back.</p>
+      </div>
+      <form action={loginAction} className="space-y-4">
+        <input type="hidden" name="next" value={next} />
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" name="email" type="email" required autoComplete="email" />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" name="password" type="password" required autoComplete="current-password" />
+            <Link
+              href="/forgot-password"
+              className="text-xs text-[#8a92b4] hover:text-[#00e8ff] transition-colors"
+            >
+              Forgot?
+            </Link>
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" className="w-full">Sign in</Button>
-          <p className="text-center text-sm text-zinc-500">
-            New to the team?{" "}
-            <Link className="underline" href="/signup">Create an account</Link>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autoComplete="current-password"
+          />
+        </div>
+        {error && (
+          <p className="text-sm text-[#ff5566] bg-[#ff5566]/10 border border-[#ff5566]/30 rounded-lg p-2">
+            {error}
           </p>
-        </form>
-      </CardContent>
-    </Card>
+        )}
+        <SubmitButton className="w-full" pendingLabel="Signing in…">
+          Sign in
+        </SubmitButton>
+        <p className="text-center text-sm text-[#8a92b4]">
+          New to the team?{" "}
+          <Link className="text-[#00e8ff] hover:underline" href="/signup">
+            Create an account
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }

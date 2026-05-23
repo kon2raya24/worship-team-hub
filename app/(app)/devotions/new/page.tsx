@@ -1,22 +1,23 @@
-import Link from "next/link";
+import { BookOpen } from "lucide-react";
 import { requireLeader } from "@/lib/auth";
 import { createDevotion } from "../actions";
+import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 
 export default async function NewDevotionPage() {
   await requireLeader();
   return (
-    <div className="space-y-4 max-w-2xl">
-      <div>
-        <Link href="/devotions" className="text-sm text-zinc-500 hover:underline">
-          ← Devotions
-        </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">New devotion</h1>
-      </div>
-      <form action={createDevotion} className="space-y-4">
+    <div className="space-y-6 fade-in max-w-2xl">
+      <PageHeader
+        icon={BookOpen}
+        title="New devotion"
+        subtitle="Markdown supported"
+        back={{ href: "/devotions", label: "Devotions" }}
+      />
+      <form action={createDevotion} className="glass p-6 space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="title">Title</Label>
           <Input id="title" name="title" required />
@@ -30,16 +31,16 @@ export default async function NewDevotionPage() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="body">Body (Markdown)</Label>
+          <Label htmlFor="body">Body</Label>
           <Textarea
             id="body"
             name="body"
             rows={14}
             required
-            className="font-mono text-sm"
+            className="font-mono text-sm resize-none"
           />
         </div>
-        <Button type="submit">Publish</Button>
+        <SubmitButton pendingLabel="Publishing…">Publish</SubmitButton>
       </form>
     </div>
   );

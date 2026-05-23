@@ -1,10 +1,11 @@
-import Link from "next/link";
+import { ListMusic } from "lucide-react";
 import { requireLeader } from "@/lib/auth";
 import { createSetlist } from "../actions";
+import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 
 function nextSunday(): string {
   const d = new Date();
@@ -18,14 +19,15 @@ export default async function NewSetlistPage() {
   await requireLeader();
 
   return (
-    <div className="space-y-4 max-w-xl">
-      <div>
-        <Link href="/setlists" className="text-sm text-zinc-500 hover:underline">
-          ← Setlists
-        </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">New setlist</h1>
-      </div>
-      <form action={createSetlist} className="space-y-4">
+    <div className="space-y-6 fade-in max-w-xl">
+      <PageHeader
+        icon={ListMusic}
+        title="New setlist"
+        subtitle="Plan a Sunday service"
+        back={{ href: "/setlists", label: "Setlists" }}
+      />
+
+      <form action={createSetlist} className="glass p-6 space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="service_date">Service date</Label>
           <Input
@@ -42,9 +44,9 @@ export default async function NewSetlistPage() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="notes">Notes</Label>
-          <Textarea id="notes" name="notes" rows={3} />
+          <Textarea id="notes" name="notes" rows={3} className="resize-none" />
         </div>
-        <Button type="submit">Create setlist</Button>
+        <SubmitButton pendingLabel="Creating…">Create setlist</SubmitButton>
       </form>
     </div>
   );

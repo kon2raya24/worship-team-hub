@@ -30,16 +30,23 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup");
-  const isPublicRoute = pathname.startsWith("/share") || pathname.startsWith("/auth");
+  const isAuthRoute =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/forgot-password");
+  const isPasswordResetRoute = pathname.startsWith("/reset-password");
+  const isPublicRoute =
+    pathname.startsWith("/share") || pathname.startsWith("/auth");
 
-  if (!user && !isAuthRoute && !isPublicRoute) {
+  if (!user && !isAuthRoute && !isPasswordResetRoute && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
+  // Authenticated users hitting /login or /signup go back to dashboard,
+  // but /reset-password is allowed to stay (user just clicked email link).
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/";

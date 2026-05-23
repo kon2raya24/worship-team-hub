@@ -1,17 +1,10 @@
 import Link from "next/link";
+import { Music, Plus, Search, X, Tag } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 type SearchParams = Promise<{ q?: string; tag?: string }>;
 
@@ -39,92 +32,164 @@ export default async function SongsPage({
   ).sort();
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1 className="text-2xl font-semibold tracking-tight">Songs</h1>
+    <div className="space-y-6 fade-in">
+      {/* Page header */}
+      <header className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-start gap-3">
+          <span className="inline-flex items-center justify-center size-11 rounded-2xl bg-primary/10 text-primary shrink-0">
+            <Music className="size-5" />
+          </span>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-heading font-semibold tracking-tight">
+              Song library
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {(songs ?? []).length} song{(songs ?? []).length === 1 ? "" : "s"}
+              {tag && ` tagged "${tag}"`}
+              {q && ` matching "${q}"`}
+            </p>
+          </div>
+        </div>
         {isLeader(profile) && (
-          <Link href="/songs/new" className={buttonVariants()}>
-            New song
+          <Link
+            href="/songs/new"
+            className={buttonVariants({ size: "lg" }) + " gap-1.5"}
+          >
+            <Plus className="size-4" /> New song
           </Link>
+        )}
+      </header>
+
+      {/* Search + tag filters */}
+      <div className="space-y-3">
+        <form className="flex gap-2 flex-wrap" action="/songs" method="get">
+          <div className="relative flex-1 min-w-[14rem] max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+              name="q"
+              defaultValue={q ?? ""}
+              placeholder="Search by title…"
+              className="pl-9 h-10"
+            />
+          </div>
+          {tag && <input type="hidden" name="tag" value={tag} />}
+          <button
+            type="submit"
+            className={buttonVariants({ variant: "outline", size: "lg" })}
+          >
+            Search
+          </button>
+          {(q || tag) && (
+            <Link
+              href="/songs"
+              className={buttonVariants({ variant: "ghost", size: "lg" }) + " gap-1"}
+            >
+              <X className="size-3.5" /> Clear
+            </Link>
+          )}
+        </form>
+
+        {allTags.length > 0 && (
+          <div className="flex gap-1.5 flex-wrap items-center">
+            <Tag className="size-3.5 text-muted-foreground" />
+            {allTags.map((t) => (
+              <Link
+                key={t}
+                href={`/songs?tag=${encodeURIComponent(t)}`}
+              >
+                <Badge
+                  variant={tag === t ? "default" : "outline"}
+                  className="cursor-pointer hover:bg-primary/10 hover:border-primary/40 transition-colors"
+                >
+                  {t}
+                </Badge>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
 
-      <form className="flex gap-2 flex-wrap" action="/songs" method="get">
-        <Input
-          name="q"
-          defaultValue={q ?? ""}
-          placeholder="Search by title"
-          className="max-w-xs"
+      {/* Card grid */}
+      {(songs ?? []).length === 0 ? (
+        <EmptyState
+          canAdd={isLeader(profile)}
+          message={
+            q || tag
+              ? "No songs match those filters."
+              : "Your library is empty."
+          }
         />
-        {tag && <input type="hidden" name="tag" value={tag} />}
-        <Button type="submit" variant="outline">
-          Search
-        </Button>
-        {(q || tag) && (
-          <Link href="/songs" className={buttonVariants({ variant: "ghost" })}>
-            Clear
-          </Link>
-        )}
-      </form>
-
-      {allTags.length > 0 && (
-        <div className="flex gap-2 flex-wrap text-sm">
-          {allTags.map((t) => (
-            <Link
-              key={t}
-              href={`/songs?tag=${encodeURIComponent(t)}`}
-              className={tag === t ? "" : "opacity-60 hover:opacity-100"}
-            >
-              <Badge variant={tag === t ? "default" : "secondary"}>{t}</Badge>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Artist</TableHead>
-            <TableHead>Key</TableHead>
-            <TableHead>BPM</TableHead>
-            <TableHead>Tags</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+      ) : (
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {(songs ?? []).map((s) => (
-            <TableRow key={s.id}>
-              <TableCell>
-                <Link href={`/songs/${s.id}`} className="font-medium hover:underline">
-                  {s.title}
-                </Link>
-              </TableCell>
-              <TableCell className="text-zinc-500">{s.artist ?? "—"}</TableCell>
-              <TableCell>{s.original_key ?? "—"}</TableCell>
-              <TableCell>{s.bpm ?? "—"}</TableCell>
-              <TableCell className="space-x-1">
-                {(s.tags ?? []).map((t: string) => (
-                  <Badge key={t} variant="outline">
-                    {t}
-                  </Badge>
-                ))}
-              </TableCell>
-            </TableRow>
-          ))}
-          {(songs ?? []).length === 0 && (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center text-zinc-500 py-8">
-                No songs yet.{" "}
-                {isLeader(profile) && (
-                  <Link href="/songs/new" className="underline">
-                    Add the first one
-                  </Link>
+            <li key={s.id}>
+              <Link
+                href={`/songs/${s.id}`}
+                className="card-hover group/song block h-full rounded-2xl bg-card ring-1 ring-border/70 hover:ring-primary/40 p-5 transition-all"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-heading font-semibold text-base leading-snug truncate group-hover/song:text-primary transition-colors">
+                    {s.title}
+                  </h3>
+                  {s.original_key && (
+                    <span className="shrink-0 inline-flex items-center justify-center min-w-9 h-7 px-2 rounded-md bg-primary/10 text-primary text-xs font-mono font-semibold">
+                      {s.original_key}
+                    </span>
+                  )}
+                </div>
+                {s.artist && (
+                  <p className="text-sm text-muted-foreground truncate mt-0.5">
+                    {s.artist}
+                  </p>
                 )}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                  {s.bpm && (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="inline-block size-1.5 rounded-full bg-accent" />
+                      {s.bpm} BPM
+                    </span>
+                  )}
+                  {(s.tags ?? []).slice(0, 3).map((t: string) => (
+                    <Badge
+                      key={t}
+                      variant="secondary"
+                      className="text-[10px] py-0 px-1.5 h-4"
+                    >
+                      {t}
+                    </Badge>
+                  ))}
+                  {(s.tags?.length ?? 0) > 3 && (
+                    <span className="text-[10px]">+{(s.tags?.length ?? 0) - 3}</span>
+                  )}
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function EmptyState({
+  canAdd,
+  message,
+}: {
+  canAdd: boolean;
+  message: string;
+}) {
+  return (
+    <div className="rounded-3xl border-2 border-dashed border-border/70 p-12 text-center bg-card/50">
+      <Music className="size-10 mx-auto text-muted-foreground/60" />
+      <p className="mt-4 text-muted-foreground">{message}</p>
+      {canAdd && (
+        <Link
+          href="/songs/new"
+          className={buttonVariants() + " mt-4 gap-1.5"}
+        >
+          <Plus className="size-4" /> Add the first song
+        </Link>
+      )}
     </div>
   );
 }

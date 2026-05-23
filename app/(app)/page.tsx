@@ -1,8 +1,17 @@
 import Link from "next/link";
+import {
+  Music,
+  Heart,
+  Mic2,
+  Megaphone,
+  Calendar,
+  BookOpen,
+  ArrowRight,
+  Pin,
+  Sparkles,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 function formatDate(iso: string | null | undefined) {
   if (!iso) return "";
@@ -13,108 +22,320 @@ function formatDate(iso: string | null | undefined) {
   });
 }
 
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 5) return "Good evening";
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 export default async function DashboardPage() {
   const profile = await requireProfile();
   const supabase = await createClient();
-
   const today = new Date().toISOString().slice(0, 10);
 
-  const [{ data: nextSetlist }, { data: pinned }, { data: latestDevotion }, { data: openPrayers }] =
-    await Promise.all([
-      supabase
-        .from("setlists")
-        .select("id, service_date, theme")
-        .gte("service_date", today)
-        .order("service_date", { ascending: true })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("announcements")
-        .select("id, title, body, created_at")
-        .eq("pinned", true)
-        .order("created_at", { ascending: false })
-        .limit(3),
-      supabase
-        .from("devotions")
-        .select("id, title, scripture_ref, published_at")
-        .order("published_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("prayer_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("is_answered", false),
-    ]);
+  const [
+    nextSetlistRes,
+    pinnedRes,
+    latestDevotionRes,
+    openPrayersRes,
+    songsCountRes,
+    upcomingScheduleRes,
+  ] = await Promise.all([
+    supabase
+      .from("setlists")
+      .select("id, service_date, theme")
+      .gte("service_date", today)
+      .order("service_date", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("announcements")
+      .select("id, title, body, created_at")
+      .eq("pinned", true)
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("devotions")
+      .select("id, title, scripture_ref, published_at")
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("prayer_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("is_answered", false),
+    supabase.from("songs").select("id", { count: "exact", head: true }),
+    supabase
+      .from("schedule_assignments")
+      .select("service_date, role")
+      .eq("user_id", profile.id)
+      .gte("service_date", today)
+      .order("service_date", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const nextSetlist = nextSetlistRes.data;
+  const pinned = pinnedRes.data ?? [];
+  const latestDevotion = latestDevotionRes.data;
+  const openPrayerCount = openPrayersRes.count ?? 0;
+  const songsCount = songsCountRes.count ?? 0;
+  const mySchedule = upcomingScheduleRes.data;
+  const firstName = profile.display_name.split(" ")[0];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Hi, {profile.display_name}</h1>
-        <p className="text-zinc-500">Here&apos;s what&apos;s happening with the worship team.</p>
-      </div>
+    <div className="space-y-6 fade-in">
+      {/* Hero — glass aurora panel */}
+      <section className="glass aurora-bg p-7 md:p-10">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="space-y-3">
+            <p className="eyebrow flex items-center gap-2">
+              <Sparkles className="size-3" strokeWidth={2} /> {greeting().toUpperCase()} ·{" "}
+              {new Date().toLocaleDateString(undefined, { weekday: "long" })}
+            </p>
+            <h1 className="font-display text-3xl md:text-5xl font-semibold tracking-tight leading-[1.05] max-w-2xl">
+              {firstName},{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#00e8ff] via-[#8b5cf6] to-[#ff3aa3]">
+                let everything that has breath
+              </span>{" "}
+              praise the Lord.
+            </h1>
+            <p className="text-sm text-[#c8cee6]/70 max-w-xl">
+              — Psalm 150:6. Here&apos;s what your worship team is up to today.
+            </p>
+          </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Next Sunday</CardTitle>
-            <CardDescription>
-              {nextSetlist ? formatDate(nextSetlist.service_date) : "No setlist scheduled yet."}
-            </CardDescription>
-          </CardHeader>
           {nextSetlist && (
-            <CardContent>
-              <p className="text-sm">{nextSetlist.theme ?? "Theme TBA"}</p>
-              <Link href={`/setlists/${nextSetlist.id}`} className="text-sm underline">
-                Open setlist →
-              </Link>
-            </CardContent>
+            <Link
+              href={`/setlists/${nextSetlist.id}`}
+              className="shrink-0 inline-flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.06] border border-white/[0.16] hover:bg-white/[0.09] transition-colors"
+            >
+              <span className="live-dot" />
+              <div className="text-left">
+                <div className="eyebrow text-[#c8cee6]">Next service</div>
+                <div className="font-display text-base">
+                  {formatDate(nextSetlist.service_date)}
+                </div>
+              </div>
+              <ArrowRight className="size-4 text-[#c8cee6]" />
+            </Link>
           )}
-        </Card>
+        </div>
+      </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Latest devotion</CardTitle>
-            <CardDescription>
-              {latestDevotion
-                ? `${latestDevotion.title}${latestDevotion.scripture_ref ? ` — ${latestDevotion.scripture_ref}` : ""}`
-                : "No devotions posted yet."}
-            </CardDescription>
-          </CardHeader>
-          {latestDevotion && (
-            <CardContent>
-              <Link href={`/devotions/${latestDevotion.id}`} className="text-sm underline">
-                Read →
-              </Link>
-            </CardContent>
-          )}
-        </Card>
+      {/* Stat grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Song Library"
+          value={songsCount}
+          icon={<Music className="size-5" />}
+          href="/songs"
+          accent="violet"
+        />
+        <StatCard
+          label="Open Prayers"
+          value={openPrayerCount}
+          icon={<Heart className="size-5" />}
+          href="/prayer"
+          accent={openPrayerCount > 0 ? "magenta" : "violet"}
+        />
+        <StatCard
+          label="Your Next Role"
+          value={mySchedule ? mySchedule.role : "—"}
+          sub={mySchedule ? formatDate(mySchedule.service_date) : "Not assigned"}
+          icon={<Mic2 className="size-5" />}
+          href="/schedule"
+          accent="cyan"
+        />
+        <StatCard
+          label="Pinned"
+          value={pinned.length}
+          icon={<Pin className="size-5" />}
+          href="/announcements"
+          accent="amber"
+        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      {/* Featured */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <FeatureCard
+          icon={<Calendar className="size-5" />}
+          eyebrow="Next Sunday"
+          title={nextSetlist ? formatDate(nextSetlist.service_date) : "No setlist yet"}
+          body={
+            nextSetlist
+              ? nextSetlist.theme ?? "Theme to be announced"
+              : "Plan a setlist to get the band ready."
+          }
+          href={nextSetlist ? `/setlists/${nextSetlist.id}` : "/setlists/new"}
+          cta={nextSetlist ? "Open setlist" : "Create setlist"}
+          accent="cyan"
+        />
+        <FeatureCard
+          icon={<BookOpen className="size-5" />}
+          eyebrow="Latest Devotion"
+          title={latestDevotion?.title ?? "No devotions yet"}
+          body={
+            latestDevotion?.scripture_ref ??
+            "Share the first devotion with your team."
+          }
+          href={
+            latestDevotion ? `/devotions/${latestDevotion.id}` : "/devotions/new"
+          }
+          cta={latestDevotion ? "Read devotion" : "Write one"}
+          accent="violet"
+        />
+      </div>
+
+      {/* Pinned announcements */}
+      <section className="glass p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="inline-flex items-center justify-center size-8 rounded-lg bg-[#ff3aa3]/15 text-[#ff3aa3] ring-1 ring-[#ff3aa3]/30">
+            <Megaphone className="size-4" />
+          </span>
+          <h2 className="font-display font-semibold text-lg">
             Pinned announcements
-            {openPrayers?.length !== undefined && (
-              <Badge variant="secondary" className="ml-auto">
-                {/* count comes back via head:true on supabase-js; render link instead */}
-                <Link href="/prayer">Prayer requests</Link>
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {pinned && pinned.length > 0 ? (
+          </h2>
+          <Link
+            href="/announcements"
+            className="ml-auto text-xs text-[#8a92b4] hover:text-white inline-flex items-center gap-1 transition-colors"
+          >
+            All news <ArrowRight className="size-3" />
+          </Link>
+        </div>
+        <div className="space-y-3">
+          {pinned.length > 0 ? (
             pinned.map((a) => (
-              <div key={a.id} className="border-l-2 border-zinc-300 pl-3">
-                <div className="font-medium">{a.title}</div>
-                <div className="text-sm text-zinc-500 whitespace-pre-wrap">{a.body}</div>
+              <div
+                key={a.id}
+                className="border-l-2 border-[#ff3aa3]/60 pl-3 py-1"
+              >
+                <div className="font-medium text-white/90">{a.title}</div>
+                <div className="text-sm text-[#8a92b4] whitespace-pre-wrap">
+                  {a.body}
+                </div>
               </div>
             ))
           ) : (
-            <p className="text-sm text-zinc-500">Nothing pinned right now.</p>
+            <p className="text-sm text-[#8a92b4]">Nothing pinned right now.</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
+  );
+}
+
+const ACCENTS: Record<
+  string,
+  { ring: string; bg: string; text: string; glow: string }
+> = {
+  violet: {
+    ring: "ring-[#8b5cf6]/30 hover:ring-[#8b5cf6]/60",
+    bg: "bg-[#8b5cf6]/15",
+    text: "text-[#8b5cf6]",
+    glow: "hover:shadow-[0_0_24px_rgba(139,92,246,0.35)]",
+  },
+  cyan: {
+    ring: "ring-[#00e8ff]/30 hover:ring-[#00e8ff]/60",
+    bg: "bg-[#00e8ff]/15",
+    text: "text-[#00e8ff]",
+    glow: "hover:shadow-[0_0_24px_rgba(0,232,255,0.35)]",
+  },
+  magenta: {
+    ring: "ring-[#ff3aa3]/30 hover:ring-[#ff3aa3]/60",
+    bg: "bg-[#ff3aa3]/15",
+    text: "text-[#ff3aa3]",
+    glow: "hover:shadow-[0_0_24px_rgba(255,58,163,0.35)]",
+  },
+  amber: {
+    ring: "ring-[#ffb547]/30 hover:ring-[#ffb547]/60",
+    bg: "bg-[#ffb547]/15",
+    text: "text-[#ffb547]",
+    glow: "hover:shadow-[0_0_24px_rgba(255,181,71,0.35)]",
+  },
+};
+
+function StatCard({
+  label,
+  value,
+  sub,
+  href,
+  icon,
+  accent,
+}: {
+  label: string;
+  value: number | string;
+  sub?: string;
+  href: string;
+  icon: React.ReactNode;
+  accent: keyof typeof ACCENTS;
+}) {
+  const a = ACCENTS[accent];
+  return (
+    <Link
+      href={href}
+      className={`glass card-hover block p-5 ring-1 ${a.ring} ${a.glow} transition-all`}
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className={`inline-flex items-center justify-center size-10 rounded-xl ${a.bg} ${a.text} ring-1 ring-current/30`}
+        >
+          {icon}
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="eyebrow">{label}</p>
+          <p className="font-display text-2xl mt-1 truncate text-white/95">
+            {value}
+          </p>
+          {sub && <p className="text-xs text-[#8a92b4] mt-0.5 truncate">{sub}</p>}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function FeatureCard({
+  icon,
+  eyebrow,
+  title,
+  body,
+  href,
+  cta,
+  accent,
+}: {
+  icon: React.ReactNode;
+  eyebrow: string;
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+  accent: keyof typeof ACCENTS;
+}) {
+  const a = ACCENTS[accent];
+  return (
+    <Link
+      href={href}
+      className={`glass card-hover group/feature block p-6 ring-1 ${a.ring} ${a.glow} transition-all`}
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className={`inline-flex items-center justify-center size-9 rounded-xl ${a.bg} ${a.text} ring-1 ring-current/30`}
+        >
+          {icon}
+        </span>
+        <span className="eyebrow">{eyebrow}</span>
+      </div>
+      <h3 className="mt-4 text-xl font-display font-semibold text-white/95">
+        {title}
+      </h3>
+      <p className="text-sm text-[#8a92b4] mt-1 line-clamp-2">{body}</p>
+      <p
+        className={`mt-4 inline-flex items-center gap-1 text-sm font-medium ${a.text} group-hover/feature:gap-2 transition-all`}
+      >
+        {cta} <ArrowRight className="size-3.5" />
+      </p>
+    </Link>
   );
 }

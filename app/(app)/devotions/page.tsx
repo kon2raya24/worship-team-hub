@@ -1,12 +1,13 @@
 import Link from "next/link";
+import { BookOpen, Plus, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 import { upsertBiblePlan } from "./actions";
 
 function startOfWeek(): string {
@@ -36,94 +37,112 @@ export default async function DevotionsPage() {
   const currentPlan = (plans ?? [])[0];
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Devotions</h1>
+    <div className="space-y-6 fade-in max-w-4xl">
+      <PageHeader
+        icon={BookOpen}
+        title="Devotions"
+        subtitle="Weekly readings and team devotionals"
+        action={
+          canEdit && (
+            <Link
+              href="/devotions/new"
+              className={buttonVariants() + " gap-1.5"}
+            >
+              <Plus className="size-4" /> New devotion
+            </Link>
+          )
+        }
+      />
+
+      <div className="glass p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="size-4 text-[#ffb547]" />
+          <p className="eyebrow">This week&apos;s reading plan</p>
+        </div>
+        {currentPlan ? (
+          <div className="space-y-3">
+            <p className="text-sm text-[#8a92b4]">
+              Week of {new Date(currentPlan.week_of).toLocaleDateString()}
+            </p>
+            <ul className="space-y-1.5">
+              {currentPlan.passages.map((p: string) => (
+                <li
+                  key={p}
+                  className="text-[15px] text-white/90 flex items-start gap-2"
+                >
+                  <span className="text-[#00e8ff] mt-1">▸</span> {p}
+                </li>
+              ))}
+            </ul>
+            {currentPlan.notes && (
+              <p className="text-sm whitespace-pre-wrap text-[#c8cee6] mt-2">
+                {currentPlan.notes}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-[#8a92b4]">No plan posted yet.</p>
+        )}
+
         {canEdit && (
-          <Link href="/devotions/new" className={buttonVariants()}>
-            New devotion
-          </Link>
+          <details className="text-sm mt-4">
+            <summary className="cursor-pointer text-[#8a92b4] hover:text-white transition-colors">
+              {currentPlan ? "Update plan" : "Add plan"}
+            </summary>
+            <form action={upsertBiblePlan} className="space-y-3 pt-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="week_of">Week of</Label>
+                <Input
+                  id="week_of"
+                  name="week_of"
+                  type="date"
+                  required
+                  defaultValue={startOfWeek()}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="passages">
+                  Passages <span className="text-[#8a92b4]">(comma or newline separated)</span>
+                </Label>
+                <Textarea
+                  id="passages"
+                  name="passages"
+                  rows={3}
+                  placeholder="Psalm 23, John 14:1-6, Romans 8"
+                  className="resize-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea id="notes" name="notes" rows={2} className="resize-none" />
+              </div>
+              <SubmitButton size="sm" pendingLabel="Saving…">
+                Save plan
+              </SubmitButton>
+            </form>
+          </details>
         )}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>This week&apos;s reading plan</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {currentPlan ? (
-            <>
-              <p className="text-sm text-zinc-500">
-                Week of {new Date(currentPlan.week_of).toLocaleDateString()}
-              </p>
-              <ul className="list-disc list-inside text-sm space-y-0.5">
-                {currentPlan.passages.map((p: string) => (
-                  <li key={p}>{p}</li>
-                ))}
-              </ul>
-              {currentPlan.notes && (
-                <p className="text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                  {currentPlan.notes}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-zinc-500">No plan posted yet.</p>
-          )}
-
-          {canEdit && (
-            <details className="text-sm">
-              <summary className="cursor-pointer text-zinc-500">
-                Add / update plan
-              </summary>
-              <form action={upsertBiblePlan} className="space-y-3 pt-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="week_of">Week of</Label>
-                  <Input
-                    id="week_of"
-                    name="week_of"
-                    type="date"
-                    required
-                    defaultValue={startOfWeek()}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="passages">Passages (comma or newline separated)</Label>
-                  <Textarea
-                    id="passages"
-                    name="passages"
-                    rows={3}
-                    placeholder="Psalm 23, John 14:1-6, Romans 8"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea id="notes" name="notes" rows={2} />
-                </div>
-                <Button type="submit" size="sm">
-                  Save plan
-                </Button>
-              </form>
-            </details>
-          )}
-        </CardContent>
-      </Card>
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-medium">Posts</h2>
+      <section className="space-y-2">
+        <h2 className="eyebrow">Posts</h2>
         {(devotions ?? []).length === 0 ? (
-          <p className="text-sm text-zinc-500">No devotions posted yet.</p>
+          <p className="glass p-8 text-center text-[#8a92b4]">
+            No devotions posted yet.
+          </p>
         ) : (
           <ul className="space-y-2">
             {(devotions ?? []).map((d) => (
-              <li key={d.id} className="border rounded-md p-3">
-                <Link href={`/devotions/${d.id}`} className="font-medium hover:underline">
-                  {d.title}
+              <li key={d.id} className="glass p-4 card-hover">
+                <Link href={`/devotions/${d.id}`} className="block group/dev">
+                  <div className="font-display font-semibold text-base text-white/95 group-hover/dev:text-[#00e8ff] transition-colors">
+                    {d.title}
+                  </div>
+                  <div className="text-xs text-[#8a92b4] mt-0.5">
+                    {d.scripture_ref ? `${d.scripture_ref} · ` : ""}
+                    {new Date(d.published_at).toLocaleDateString()}
+                  </div>
                 </Link>
-                <div className="text-xs text-zinc-500">
-                  {d.scripture_ref ? `${d.scripture_ref} · ` : ""}
-                  {new Date(d.published_at).toLocaleDateString()}
-                </div>
               </li>
             ))}
           </ul>

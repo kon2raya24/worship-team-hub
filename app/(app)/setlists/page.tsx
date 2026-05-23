@@ -1,15 +1,9 @@
 import Link from "next/link";
+import { ListMusic, Plus, Calendar } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 
 function fmt(d: string) {
   return new Date(d).toLocaleDateString(undefined, {
@@ -40,59 +34,83 @@ export default async function SetlistsPage() {
   ]);
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Setlists</h1>
-        {isLeader(profile) && (
-          <Link href="/setlists/new" className={buttonVariants()}>
-            New setlist
-          </Link>
-        )}
-      </div>
+    <div className="space-y-8 fade-in">
+      <PageHeader
+        icon={ListMusic}
+        title="Setlists"
+        subtitle={`${(upcoming ?? []).length} upcoming · ${(past ?? []).length} past`}
+        action={
+          isLeader(profile) && (
+            <Link
+              href="/setlists/new"
+              className={buttonVariants({ size: "lg" }) + " gap-1.5"}
+            >
+              <Plus className="size-4" /> New setlist
+            </Link>
+          )
+        }
+      />
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium uppercase text-zinc-500">Upcoming</h2>
-        <SetlistTable rows={upcoming ?? []} empty="No upcoming setlists." />
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Upcoming
+        </h2>
+        <SetlistGrid rows={upcoming ?? []} empty="No upcoming setlists yet." />
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-medium uppercase text-zinc-500">Past</h2>
-        <SetlistTable rows={past ?? []} empty="No past setlists yet." />
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Past
+        </h2>
+        <SetlistGrid rows={past ?? []} empty="No past setlists yet." muted />
       </section>
     </div>
   );
 }
 
-function SetlistTable({
+function SetlistGrid({
   rows,
   empty,
+  muted = false,
 }: {
   rows: { id: string; service_date: string; theme: string | null }[];
   empty: string;
+  muted?: boolean;
 }) {
   if (rows.length === 0) {
-    return <p className="text-sm text-zinc-500">{empty}</p>;
+    return (
+      <p className="text-sm text-muted-foreground rounded-xl border border-dashed border-border/70 p-6 text-center">
+        {empty}
+      </p>
+    );
   }
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Service date</TableHead>
-          <TableHead>Theme</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((r) => (
-          <TableRow key={r.id}>
-            <TableCell>
-              <Link href={`/setlists/${r.id}`} className="font-medium hover:underline">
-                {fmt(r.service_date)}
-              </Link>
-            </TableCell>
-            <TableCell className="text-zinc-500">{r.theme ?? "—"}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {rows.map((r) => (
+        <li key={r.id}>
+          <Link
+            href={`/setlists/${r.id}`}
+            className={`card-hover group/setlist block rounded-2xl bg-card ring-1 ring-border/70 hover:ring-primary/40 p-5 transition-all ${
+              muted ? "opacity-80 hover:opacity-100" : ""
+            }`}
+          >
+            <div className="flex items-center gap-2 text-primary">
+              <Calendar className="size-4" />
+              <span className="text-xs font-medium uppercase tracking-wider">
+                {new Date(r.service_date).toLocaleDateString(undefined, {
+                  weekday: "short",
+                })}
+              </span>
+            </div>
+            <p className="mt-1 text-xl font-heading font-semibold leading-tight group-hover/setlist:text-primary transition-colors">
+              {fmt(r.service_date)}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              {r.theme ?? "Theme to be announced"}
+            </p>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
