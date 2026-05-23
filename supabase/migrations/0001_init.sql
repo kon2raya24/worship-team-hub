@@ -294,19 +294,20 @@ create policy "share_links leader write" on public.share_links
   for all to authenticated using (public.is_leader()) with check (public.is_leader());
 
 -- ============================================================
--- Storage bucket for file uploads (run separately if needed)
+-- Storage bucket for file uploads
 -- ============================================================
--- In the Supabase dashboard, create a bucket named 'files' (private).
--- Then add these storage policies:
---
---   create policy "files bucket read (authenticated)"
---     on storage.objects for select to authenticated
---     using (bucket_id = 'files');
---
---   create policy "files bucket leader write"
---     on storage.objects for insert to authenticated
---     with check (bucket_id = 'files' and public.is_leader());
---
---   create policy "files bucket leader delete"
---     on storage.objects for delete to authenticated
---     using (bucket_id = 'files' and public.is_leader());
+insert into storage.buckets (id, name, public)
+values ('files', 'files', false)
+on conflict (id) do nothing;
+
+create policy "files bucket read (authenticated)"
+  on storage.objects for select to authenticated
+  using (bucket_id = 'files');
+
+create policy "files bucket leader write"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'files' and public.is_leader());
+
+create policy "files bucket leader delete"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'files' and public.is_leader());
