@@ -115,6 +115,7 @@
   html {
     color-scheme: dark;
     @apply font-sans;
+    overflow-x: clip;
   }
   body {
     @apply bg-background text-foreground;
@@ -125,6 +126,8 @@
       linear-gradient(180deg, #060916 0%, #04060e 60%, #03050c 100%);
     background-attachment: fixed;
     letter-spacing: -0.005em;
+    overflow-x: clip;
+    max-width: 100vw;
   }
 }
 

@@ -87,8 +87,8 @@ export default async function SongsPage({
           <Link
             href="/songs/offline"
             className={
-              buttonVariants({ variant: "outline" }) +
-              " gap-1.5 flex-1 sm:flex-initial"
+              buttonVariants({ variant: "outline", size: "sm" }) +
+              " gap-1.5 flex-1 sm:flex-initial sm:h-9 sm:px-3.5 sm:text-sm"
             }
             title="View songs cached for offline use"
           >
@@ -99,8 +99,8 @@ export default async function SongsPage({
               <Link
                 href="/songs/import"
                 className={
-                  buttonVariants({ variant: "outline" }) +
-                  " gap-1.5 flex-1 sm:flex-initial"
+                  buttonVariants({ variant: "outline", size: "sm" }) +
+                  " gap-1.5 flex-1 sm:flex-initial sm:h-9 sm:px-3.5 sm:text-sm"
                 }
               >
                 <Upload className="size-4" /> Import
@@ -108,10 +108,13 @@ export default async function SongsPage({
               <Link
                 href="/songs/new"
                 className={
-                  buttonVariants() + " gap-1.5 flex-1 sm:flex-initial"
+                  buttonVariants({ size: "sm" }) +
+                  " gap-1.5 flex-1 sm:flex-initial sm:h-9 sm:px-3.5 sm:text-sm"
                 }
               >
-                <Plus className="size-4" /> New song
+                <Plus className="size-4" />
+                <span className="sm:hidden">New</span>
+                <span className="hidden sm:inline">New song</span>
               </Link>
             </>
           )}
