@@ -28,6 +28,10 @@ export async function addPrayer(formData: FormData) {
 
 export async function togglePrayer(id: string, currentlyAnswered: boolean) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
   const { error } = await supabase
     .from("prayer_requests")
     .update({ is_answered: !currentlyAnswered })
@@ -38,6 +42,10 @@ export async function togglePrayer(id: string, currentlyAnswered: boolean) {
 
 export async function deletePrayer(id: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
   const { error } = await supabase.from("prayer_requests").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/prayer");

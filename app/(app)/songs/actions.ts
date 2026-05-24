@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireLeader } from "@/lib/auth";
+import { assertChordProSize } from "@/lib/chordpro-parse";
 
 function parseTags(raw: FormDataEntryValue | null): string[] {
   if (typeof raw !== "string") return [];
@@ -28,6 +29,8 @@ export async function createSong(formData: FormData) {
 
   const bpmRaw = s(formData.get("bpm"));
   const bpm = bpmRaw ? Number(bpmRaw) : null;
+  const chordpro_body = s(formData.get("chordpro_body")) ?? "";
+  assertChordProSize(chordpro_body);
 
   const { data, error } = await supabase
     .from("songs")
@@ -37,7 +40,7 @@ export async function createSong(formData: FormData) {
       original_key: s(formData.get("original_key")),
       bpm: Number.isFinite(bpm as number) ? bpm : null,
       tags: parseTags(formData.get("tags")),
-      chordpro_body: s(formData.get("chordpro_body")) ?? "",
+      chordpro_body,
       reference_url: s(formData.get("reference_url")),
       created_by: leader.id,
     })
@@ -59,6 +62,8 @@ export async function updateSong(id: string, formData: FormData) {
 
   const bpmRaw = s(formData.get("bpm"));
   const bpm = bpmRaw ? Number(bpmRaw) : null;
+  const chordpro_body = s(formData.get("chordpro_body")) ?? "";
+  assertChordProSize(chordpro_body);
 
   const { error } = await supabase
     .from("songs")
@@ -68,7 +73,7 @@ export async function updateSong(id: string, formData: FormData) {
       original_key: s(formData.get("original_key")),
       bpm: Number.isFinite(bpm as number) ? bpm : null,
       tags: parseTags(formData.get("tags")),
-      chordpro_body: s(formData.get("chordpro_body")) ?? "",
+      chordpro_body,
       reference_url: s(formData.get("reference_url")),
       updated_at: new Date().toISOString(),
     })
@@ -100,6 +105,15 @@ export async function addSongNote(songId: string, formData: FormData) {
   const body = s(formData.get("body"));
   if (!body) return;
 
+  // Verify the song exists before orphaning a note row.
+  const { data: song, error: lookupErr } = await supabase
+    .from("songs")
+    .select("id")
+    .eq("id", songId)
+    .maybeSingle();
+  if (lookupErr) throw new Error(lookupErr.message);
+  if (!song) throw new Error("Song not found");
+
   const { error } = await supabase.from("song_notes").insert({
     song_id: songId,
     author_id: user.id,
@@ -111,6 +125,10 @@ export async function addSongNote(songId: string, formData: FormData) {
 
 export async function deleteSongNote(noteId: string, songId: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
   const { error } = await supabase.from("song_notes").delete().eq("id", noteId);
   if (error) throw new Error(error.message);
   revalidatePath(`/songs/${songId}`);

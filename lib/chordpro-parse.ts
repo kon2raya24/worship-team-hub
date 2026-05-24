@@ -11,6 +11,23 @@ export type ParsedChordPro = {
   body: string;
 };
 
+/**
+ * Upper bound for a single song's chordpro_body. Real charts are 1–5 KB.
+ * 50 KB is generous and protects against accidental log-paste / hostile input.
+ */
+export const MAX_CHORDPRO_BYTES = 50 * 1024;
+
+export function assertChordProSize(body: string): void {
+  const size = new TextEncoder().encode(body).length;
+  if (size > MAX_CHORDPRO_BYTES) {
+    throw new Error(
+      `Chord chart is too large (${(size / 1024).toFixed(1)} KB, limit ${
+        MAX_CHORDPRO_BYTES / 1024
+      } KB). Trim the chart or split it into multiple songs.`
+    );
+  }
+}
+
 function readDirective(body: string, name: string): string | null {
   const re = new RegExp(`\\{${name}\\s*:\\s*([^}]+)\\}`, "i");
   const m = body.match(re);

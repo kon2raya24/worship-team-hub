@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireLeader } from "@/lib/auth";
-import { parseSingleChordPro, splitChordProBlocks } from "@/lib/chordpro-parse";
+import {
+  parseSingleChordPro,
+  splitChordProBlocks,
+  MAX_CHORDPRO_BYTES,
+} from "@/lib/chordpro-parse";
 
 export async function importSongs(formData: FormData) {
   const leader = await requireLeader();
@@ -24,6 +28,21 @@ export async function importSongs(formData: FormData) {
 
   if (parsed.length === 0) {
     redirect("/songs/import?error=Couldn%27t%20parse%20anything");
+  }
+
+  // Cap each parsed song's body. One oversized block fails the import rather
+  // than DB-bloating us.
+  const oversize = parsed.find(
+    (p) => new TextEncoder().encode(p.body).length > MAX_CHORDPRO_BYTES
+  );
+  if (oversize) {
+    redirect(
+      `/songs/import?error=${encodeURIComponent(
+        `"${oversize.title ?? "Untitled"}" is over the ${
+          MAX_CHORDPRO_BYTES / 1024
+        } KB limit`
+      )}`
+    );
   }
 
   // Existing titles (case-insensitive).
