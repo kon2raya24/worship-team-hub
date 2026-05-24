@@ -1,7 +1,46 @@
-export default function Loading() {
+/**
+ * Route-segment loading skeleton for the (app) group. Shows while server
+ * components are still awaiting Supabase queries so the screen stays
+ * visually settled instead of going blank on slow connections.
+ */
+export default function AppLoading() {
   return (
-    <div className="flex items-center justify-center py-20">
-      <div className="h-8 w-8 rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-700 dark:border-t-zinc-50 animate-spin" />
+    <div className="space-y-6 fade-in" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Loading…</span>
+
+      <section className="glass aurora-bg p-5 sm:p-7 md:p-10">
+        <div className="space-y-3">
+          <div className="h-3 w-32 rounded bg-white/[0.08] animate-pulse" />
+          <div className="h-9 w-3/4 rounded bg-white/[0.08] animate-pulse" />
+          <div className="h-9 w-1/2 rounded bg-white/[0.08] animate-pulse" />
+          <div className="h-3 w-48 rounded bg-white/[0.06] animate-pulse" />
+        </div>
+      </section>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="glass p-5">
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-md bg-white/[0.08] animate-pulse" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-20 rounded bg-white/[0.08] animate-pulse" />
+                <div className="h-6 w-12 rounded bg-white/[0.08] animate-pulse" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="glass p-6 space-y-3">
+            <div className="h-3 w-24 rounded bg-white/[0.08] animate-pulse" />
+            <div className="h-6 w-2/3 rounded bg-white/[0.08] animate-pulse" />
+            <div className="h-4 w-full rounded bg-white/[0.06] animate-pulse" />
+            <div className="h-4 w-3/4 rounded bg-white/[0.06] animate-pulse" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

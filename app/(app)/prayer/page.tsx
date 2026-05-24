@@ -5,7 +5,8 @@ import { SubmitButton } from "@/components/submit-button";
 import { TextSubmit } from "@/components/text-submit";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/page-header";
-import { addPrayer, togglePrayer, deletePrayer } from "./actions";
+import { PrayerToggle } from "@/components/prayer-toggle";
+import { addPrayer, deletePrayer } from "./actions";
 
 export default async function PrayerPage() {
   const profile = await requireProfile();
@@ -68,12 +69,8 @@ export default async function PrayerPage() {
                   </p>
                 </div>
                 {canEdit && (
-                  <div className="flex gap-3 shrink-0">
-                    <form action={togglePrayer.bind(null, r.id, r.is_answered)}>
-                      <TextSubmit pendingLabel="…">
-                        {r.is_answered ? "Mark open" : "Mark answered"}
-                      </TextSubmit>
-                    </form>
+                  <div className="flex gap-3 shrink-0 items-center">
+                    <PrayerToggle id={r.id} isAnswered={r.is_answered} />
                     <form action={deletePrayer.bind(null, r.id)}>
                       <TextSubmit danger pendingLabel="…">Delete</TextSubmit>
                     </form>
