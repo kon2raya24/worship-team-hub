@@ -111,7 +111,24 @@ export async function reorderSetlistSongs(
   await requireLeader();
   const supabase = await createClient();
 
-  await Promise.all(
+  // Validate: every song_id the client sent must already belong to this setlist,
+  // otherwise the corresponding UPDATE silently no-ops and the client's
+  // optimistic UI diverges from the DB.
+  const { data: existing, error: existingErr } = await supabase
+    .from("setlist_songs")
+    .select("song_id")
+    .eq("setlist_id", setlistId);
+  if (existingErr) throw new Error(existingErr.message);
+  const existingIds = new Set((existing ?? []).map((r) => r.song_id));
+  for (const id of orderedSongIds) {
+    if (!existingIds.has(id))
+      throw new Error("Reorder failed: a song is no longer in this setlist");
+  }
+  if (orderedSongIds.length !== existingIds.size) {
+    throw new Error("Reorder failed: the setlist has changed, please refresh");
+  }
+
+  const results = await Promise.all(
     orderedSongIds.map((songId, index) =>
       supabase
         .from("setlist_songs")
@@ -120,5 +137,8 @@ export async function reorderSetlistSongs(
         .eq("song_id", songId)
     )
   );
+  const firstErr = results.find((r) => r.error);
+  if (firstErr?.error) throw new Error(firstErr.error.message);
+
   revalidatePath(`/setlists/${setlistId}`);
 }

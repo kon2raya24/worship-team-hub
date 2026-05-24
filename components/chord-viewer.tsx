@@ -15,15 +15,57 @@ import { renderTransposedHtml } from "@/lib/chordpro";
 export function ChordViewer({
   body,
   defaultSemitones = 0,
+  persistKey,
 }: {
   body: string;
   defaultSemitones?: number;
+  /**
+   * If provided (e.g. song id), transpose/capo/font-size/speed are saved to
+   * sessionStorage under this key so leaving and returning to the song
+   * preserves the leader's settings during a rehearsal session.
+   */
+  persistKey?: string;
 }) {
+  const storageKey = persistKey ? `chord-viewer:${persistKey}` : null;
   const [semitones, setSemitones] = useState(defaultSemitones);
   const [capo, setCapo] = useState(0);
   const [fontSize, setFontSize] = useState(16);
   const [scrolling, setScrolling] = useState(false);
   const [speed, setSpeed] = useState(35); // pixels per second
+
+  // Hydrate from sessionStorage on mount (post-hydration to avoid SSR mismatch).
+  useEffect(() => {
+    if (!storageKey || typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(storageKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<{
+        semitones: number;
+        capo: number;
+        fontSize: number;
+        speed: number;
+      }>;
+      if (typeof saved.semitones === "number") setSemitones(saved.semitones);
+      if (typeof saved.capo === "number") setCapo(saved.capo);
+      if (typeof saved.fontSize === "number") setFontSize(saved.fontSize);
+      if (typeof saved.speed === "number") setSpeed(saved.speed);
+    } catch {
+      /* corrupt entry — ignore */
+    }
+  }, [storageKey]);
+
+  // Persist on change.
+  useEffect(() => {
+    if (!storageKey || typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(
+        storageKey,
+        JSON.stringify({ semitones, capo, fontSize, speed })
+      );
+    } catch {
+      /* quota or private mode — ignore */
+    }
+  }, [storageKey, semitones, capo, fontSize, speed]);
   const rafRef = useRef<number | null>(null);
   const lastTickRef = useRef<number | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);

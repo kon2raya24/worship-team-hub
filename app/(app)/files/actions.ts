@@ -67,12 +67,13 @@ export async function deleteFile(id: string) {
   await requireLeader();
   const supabase = await createClient();
 
-  const { data: file } = await supabase
+  const { data: file, error: lookupErr } = await supabase
     .from("files")
     .select("storage_path, song_id")
     .eq("id", id)
-    .single();
-  if (!file) return;
+    .maybeSingle();
+  if (lookupErr) throw new Error(lookupErr.message);
+  if (!file) return; // already gone (race) — idempotent no-op
 
   await supabase.storage.from(BUCKET).remove([file.storage_path]);
   await supabase.from("files").delete().eq("id", id);

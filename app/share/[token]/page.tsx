@@ -26,7 +26,8 @@ export default async function SharePage({ params }: { params: Params }) {
     .maybeSingle();
 
   if (!link) notFound();
-  if (link.expires_at && new Date(link.expires_at) < new Date()) notFound();
+  // Compare as ISO strings to avoid local-clock-skew false-positives.
+  if (link.expires_at && link.expires_at < new Date().toISOString()) notFound();
 
   return (
     <div className="min-h-screen">
@@ -115,7 +116,7 @@ async function SongShare({
           )}
         </div>
       </div>
-      <ChordViewer body={song.chordpro_body} />
+      <ChordViewer body={song.chordpro_body} persistKey={`shared:${id}`} />
     </>
   );
 }

@@ -59,7 +59,12 @@ export default function OfflineSetlistsPage() {
 
   useEffect(() => {
     refresh();
-    const on = () => setIsOnline(true);
+    const on = () => {
+      setIsOnline(true);
+      // Coming back online: pull fresh data so song IDs that have been
+      // deleted server-side stop linking to dead pages.
+      syncNow();
+    };
     const off = () => setIsOnline(false);
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
@@ -67,6 +72,7 @@ export default function OfflineSetlistsPage() {
       window.removeEventListener("online", on);
       window.removeEventListener("offline", off);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function refresh() {
@@ -305,16 +311,17 @@ function OfflineSetlistView({
           <p className="text-sm text-muted-foreground">No songs in this setlist.</p>
         ) : (
           <ul className="divide-y divide-white/5">
-            {setlist.songs.map((s, i) => (
-              <li key={s.song_id} className="py-3 flex items-center gap-3">
-                <span className="text-xs font-mono text-[#8a92b4] w-6 text-right">
-                  {i + 1}
-                </span>
-                <Link
-                  href={`/songs/offline?id=${s.song_id}`}
-                  className="flex-1 min-w-0 group/song"
-                >
-                  <p className="font-medium leading-snug truncate group-hover/song:text-primary transition-colors">
+            {setlist.songs.map((s, i) => {
+              const isDeleted = s.title === "(deleted)";
+              const Row = (
+                <>
+                  <p
+                    className={`font-medium leading-snug truncate transition-colors ${
+                      isDeleted
+                        ? "line-through text-[#8a92b4]"
+                        : "group-hover/song:text-primary"
+                    }`}
+                  >
                     {s.title}
                   </p>
                   {s.artist && (
@@ -322,14 +329,46 @@ function OfflineSetlistView({
                       {s.artist}
                     </p>
                   )}
-                </Link>
-                {(s.played_in_key ?? s.original_key) && (
-                  <span className="shrink-0 inline-flex items-center justify-center min-w-9 h-7 px-2 rounded-md bg-[#00e8ff]/10 text-[#00e8ff] text-xs font-mono font-semibold">
-                    {s.played_in_key ?? s.original_key}
+                  {isDeleted && (
+                    <p className="text-[10px] uppercase tracking-wider text-[#ffb547] mt-0.5 font-mono">
+                      Removed from library
+                    </p>
+                  )}
+                </>
+              );
+              return (
+                <li
+                  key={s.song_id}
+                  className={`py-3 flex items-center gap-3 ${
+                    isDeleted ? "opacity-60" : ""
+                  }`}
+                >
+                  <span className="text-xs font-mono text-[#8a92b4] w-6 text-right">
+                    {i + 1}
                   </span>
-                )}
-              </li>
-            ))}
+                  {isDeleted ? (
+                    <div
+                      className="flex-1 min-w-0"
+                      aria-label="This song was removed from the library"
+                    >
+                      {Row}
+                    </div>
+                  ) : (
+                    <Link
+                      href={`/songs/offline?id=${s.song_id}`}
+                      className="flex-1 min-w-0 group/song"
+                    >
+                      {Row}
+                    </Link>
+                  )}
+                  {!isDeleted && (s.played_in_key ?? s.original_key) && (
+                    <span className="shrink-0 inline-flex items-center justify-center min-w-9 h-7 px-2 rounded-md bg-[#00e8ff]/10 text-[#00e8ff] text-xs font-mono font-semibold">
+                      {s.played_in_key ?? s.original_key}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

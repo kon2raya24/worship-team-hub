@@ -22,6 +22,7 @@ export async function createShareLink(
     .single();
 
   if (error) throw new Error(error.message);
+  if (!data?.token) throw new Error("Failed to create share link");
   revalidatePath(`/${resourceType}s/${resourceId}`);
   return data.token;
 }

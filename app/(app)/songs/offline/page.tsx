@@ -24,7 +24,10 @@ export default function OfflineSongsPage() {
 
   useEffect(() => {
     refresh();
-    const on = () => setIsOnline(true);
+    const on = () => {
+      setIsOnline(true);
+      syncNow();
+    };
     const off = () => setIsOnline(false);
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
@@ -32,6 +35,7 @@ export default function OfflineSongsPage() {
       window.removeEventListener("online", on);
       window.removeEventListener("offline", off);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function refresh() {
@@ -227,7 +231,7 @@ function OfflineSongView({
           )}
         </div>
       </div>
-      <ChordViewer body={song.chordpro_body} />
+      <ChordViewer body={song.chordpro_body} persistKey={song.id} />
     </div>
   );
 }
