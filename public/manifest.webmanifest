@@ -79,9 +79,16 @@
     },
     {
       "name": "Offline songs",
-      "short_name": "Offline",
+      "short_name": "Offline songs",
       "description": "Songs cached for offline use",
       "url": "/songs/offline",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Offline setlists",
+      "short_name": "Offline setlists",
+      "description": "Setlists cached for offline use",
+      "url": "/setlists/offline",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ],

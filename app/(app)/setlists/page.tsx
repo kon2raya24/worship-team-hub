@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ListMusic, Plus, Calendar } from "lucide-react";
+import { ListMusic, Plus, Calendar, WifiOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
@@ -40,14 +40,26 @@ export default async function SetlistsPage() {
         title="Setlists"
         subtitle={`${(upcoming ?? []).length} upcoming · ${(past ?? []).length} past`}
         action={
-          isLeader(profile) && (
+          <div className="flex gap-2 w-full sm:w-auto">
             <Link
-              href="/setlists/new"
-              className={buttonVariants({ size: "lg" }) + " gap-1.5"}
+              href="/setlists/offline"
+              className={
+                buttonVariants({ variant: "outline" }) +
+                " gap-1.5 flex-1 sm:flex-initial"
+              }
+              title="View setlists cached for offline use"
             >
-              <Plus className="size-4" /> New setlist
+              <WifiOff className="size-4" /> Offline
             </Link>
-          )
+            {isLeader(profile) && (
+              <Link
+                href="/setlists/new"
+                className={buttonVariants({ size: "lg" }) + " gap-1.5 flex-1 sm:flex-initial"}
+              >
+                <Plus className="size-4" /> New setlist
+              </Link>
+            )}
+          </div>
         }
       />
 
