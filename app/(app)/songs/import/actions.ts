@@ -9,6 +9,10 @@ import {
   splitChordProBlocks,
   MAX_CHORDPRO_BYTES,
 } from "@/lib/chordpro-parse";
+import {
+  convertChordOverLyrics,
+  looksLikeChordOverLyrics,
+} from "@/lib/chord-line-parse";
 
 export async function importSongs(formData: FormData) {
   const leader = await requireLeader();
@@ -20,8 +24,14 @@ export async function importSongs(formData: FormData) {
   }
 
   const skipExisting = formData.get("skip_existing") === "on";
+  const autoConvert = formData.get("auto_convert") !== null;
 
-  const blocks = splitChordProBlocks(raw);
+  const normalized =
+    autoConvert && looksLikeChordOverLyrics(raw)
+      ? convertChordOverLyrics(raw)
+      : raw;
+
+  const blocks = splitChordProBlocks(normalized);
   const parsed = blocks
     .map(parseSingleChordPro)
     .filter((p) => p.body.length > 0);

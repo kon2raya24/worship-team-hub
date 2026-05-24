@@ -67,43 +67,60 @@ export default async function ImportSongsPage({
 
       <form action={importSongs} className="glass p-6 space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="paste">ChordPro source</Label>
+          <Label htmlFor="paste">Paste chord chart</Label>
           <Textarea
             id="paste"
             name="paste"
             rows={18}
             required
-            placeholder={`{title: Song Title}
+            placeholder={`Accepts either format.
+
+— ChordPro (inline) —
+{title: Song Title}
 {artist: Artist Name}
 {key: G}
-{tempo: 72}
 
-{comment: Verse 1}
-A[G]mazing [G7]grace, how [C]sweet the [G]sound...
+A[G]mazing how [C]sweet the [G]sound...
 
----
+— Chord-over-lyrics (auto-converted) —
+{title: Song Title}
+{artist: Artist Name}
+{key: G}
 
-{title: Another Song}
-{key: D}
-...`}
+[Verse 1]
+    G            C        G
+Paste lyrics with chord lines above.
+
+Multiple songs? Separate them with a line of ---`}
             className="font-mono text-sm resize-y bg-[#04060e]/40"
           />
           <p className="text-xs text-[#8a92b4]">
             Multiple songs? Separate them with a line containing only{" "}
-            <code className="text-[#00e8ff]">---</code>, or just paste blocks
-            that each begin with their own <code className="text-[#00e8ff]">{`{title: ...}`}</code> directive.
+            <code className="text-[#00e8ff]">---</code>, or each block starts
+            with its own <code className="text-[#00e8ff]">{`{title: ...}`}</code> directive.
           </p>
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-[#c8cee6]">
-          <input
-            type="checkbox"
-            name="skip_existing"
-            defaultChecked
-            className="size-4 rounded border-white/20 bg-white/[0.04] accent-[#8b5cf6]"
-          />
-          Skip songs whose title already exists
-        </label>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm text-[#c8cee6]">
+            <input
+              type="checkbox"
+              name="auto_convert"
+              defaultChecked
+              className="size-4 rounded border-white/20 bg-white/[0.04] accent-[#8b5cf6]"
+            />
+            Auto-convert &ldquo;chord-above-lyrics&rdquo; format to ChordPro
+          </label>
+          <label className="flex items-center gap-2 text-sm text-[#c8cee6]">
+            <input
+              type="checkbox"
+              name="skip_existing"
+              defaultChecked
+              className="size-4 rounded border-white/20 bg-white/[0.04] accent-[#8b5cf6]"
+            />
+            Skip songs whose title already exists
+          </label>
+        </div>
 
         <SubmitButton pendingLabel="Importing…" className="gap-1.5">
           <Upload className="size-4" /> Import

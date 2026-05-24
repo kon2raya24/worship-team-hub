@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/submit-button";
+import { ConvertChordLinesButton } from "@/components/convert-chord-lines-button";
 
 type Song = {
   title: string;
@@ -75,11 +76,14 @@ export function SongForm({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="chordpro_body">ChordPro body</Label>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <Label htmlFor="chordpro_body">ChordPro body</Label>
+          <ConvertChordLinesButton targetId="chordpro_body" />
+        </div>
         <p className="text-xs text-zinc-500">
           Use <code>{`[Chord]`}</code> brackets above words, e.g.{" "}
-          <code>{`Amazing [G]grace, how [D]sweet the [G]sound`}</code>. Directives like{" "}
-          <code>{`{title: ...}`}</code> and <code>{`{key: G}`}</code> are supported.
+          <code>{`Amazing [G]grace, how [D]sweet the [G]sound`}</code>. Pasted
+          chord-above-lyrics charts can be converted with the button above.
         </p>
         <Textarea
           id="chordpro_body"
