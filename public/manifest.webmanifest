@@ -1,0 +1,123 @@
+{
+  "id": "/?source=pwa",
+  "name": "Worship Hub",
+  "short_name": "Worship Hub",
+  "description": "Chord charts with transpose, Sunday setlists, schedule, devotions, prayer requests and team files — for the worship team.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "lang": "en",
+  "dir": "ltr",
+  "background_color": "#04060e",
+  "theme_color": "#070a17",
+  "categories": ["music", "lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/wide-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard with hero verse and quick stats"
+    },
+    {
+      "src": "/screenshots/narrow-songs.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Song library with chord chart"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Songs",
+      "short_name": "Songs",
+      "description": "Browse the chord chart library",
+      "url": "/songs",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Setlists",
+      "short_name": "Setlists",
+      "description": "View this Sunday's setlist",
+      "url": "/setlists",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Schedule",
+      "short_name": "Schedule",
+      "description": "See who's playing when",
+      "url": "/schedule",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Offline songs",
+      "short_name": "Offline",
+      "description": "Songs cached for offline use",
+      "url": "/songs/offline",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  "prefer_related_applications": false,
+  "handle_links": "preferred",
+  "share_target": {
+    "action": "/songs/import",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/songs/import",
+      "accept": {
+        "text/plain": [".chordpro", ".pro", ".cho", ".crd", ".txt"]
+      },
+      "icons": [
+        { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }
+      ],
+      "launch_type": "single-client"
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+worship",
+      "url": "/songs?q=%s"
+    }
+  ]
+}
