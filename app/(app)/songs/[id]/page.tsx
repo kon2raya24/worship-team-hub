@@ -114,6 +114,23 @@ export default async function SongDetailPage({ params }: { params: Params }) {
         )}
       </div>
 
+      {isLeader(profile) &&
+        (!song.chordpro_body || song.chordpro_body.trim().length < 40) && (
+          <div className="glass p-4 flex items-start gap-3 border border-[#ffb547]/30 print:hidden">
+            <span className="text-lg leading-none">✨</span>
+            <div className="text-sm flex-1">
+              <div className="font-semibold text-white/95">
+                No chords yet — add them now.
+              </div>
+              <p className="text-[#c8cee6]/80 mt-0.5">
+                Open <Link href={`/songs/${song.id}/edit`} className="text-[#00e8ff] hover:underline">Edit</Link>,
+                paste a chord-above-lyrics chart into the body field, then click{" "}
+                <span className="font-mono text-[#00e8ff]">Convert chord lines</span>.
+              </p>
+            </div>
+          </div>
+        )}
+
       <ChordViewer body={song.chordpro_body} persistKey={song.id} />
 
       {song.reference_url && <MediaEmbed url={song.reference_url} />}

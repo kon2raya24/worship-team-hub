@@ -9,7 +9,7 @@
  *   - BACKGROUND SYNC: registers a retry queue for failed writes.
  */
 
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL_CACHE = `worship-shell-${VERSION}`;
 const API_CACHE = `worship-api-${VERSION}`;
 const OFFLINE_URL = "/offline";
