@@ -31,7 +31,7 @@ export default async function SharePage({ params }: { params: Params }) {
   return (
     <div className="min-h-screen">
       <ShareHeader />
-      <main className="mx-auto max-w-4xl px-4 py-8 md:py-12 space-y-6 fade-in">
+      <main className="mx-auto max-w-4xl px-3 sm:px-4 py-6 md:py-12 space-y-6 fade-in">
         {link.resource_type === "song" ? (
           <SongShare admin={admin} id={link.resource_id} />
         ) : (
@@ -46,15 +46,16 @@ export default async function SharePage({ params }: { params: Params }) {
 function ShareHeader() {
   return (
     <header className="border-b border-white/[0.08] bg-[#070a17]/70 backdrop-blur-md print:hidden">
-      <div className="mx-auto max-w-4xl px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <span className="brand-mark inline-block size-7" />
-          <span className="font-display font-semibold tracking-wide text-sm">
+      <div className="mx-auto max-w-4xl px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
+        <Link href="/" className="flex items-center gap-2.5 group min-w-0">
+          <span className="brand-mark inline-block size-7 shrink-0" />
+          <span className="font-display font-semibold tracking-wide text-sm truncate">
             Worship Hub
           </span>
         </Link>
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] px-2 py-1 rounded border border-[#00e8ff]/35 bg-[#00e8ff]/10 text-[#00e8ff] font-semibold">
-          Shared · Read only
+        <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.14em] sm:tracking-[0.18em] px-1.5 sm:px-2 py-1 rounded border border-[#00e8ff]/35 bg-[#00e8ff]/10 text-[#00e8ff] font-semibold shrink-0">
+          <span className="sm:hidden">Shared</span>
+          <span className="hidden sm:inline">Shared · Read only</span>
         </span>
       </div>
     </header>

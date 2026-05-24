@@ -8,10 +8,10 @@ import {
   BookOpen,
   ArrowRight,
   Pin,
-  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
+import { TimeGreeting } from "@/components/time-greeting";
 
 function formatDate(iso: string | null | undefined) {
   if (!iso) return "";
@@ -22,13 +22,6 @@ function formatDate(iso: string | null | undefined) {
   });
 }
 
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 5) return "Good evening";
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
-}
 
 export default async function DashboardPage() {
   const profile = await requireProfile();
@@ -88,14 +81,11 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6 fade-in">
       {/* Hero — glass aurora panel */}
-      <section className="glass aurora-bg p-7 md:p-10">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+      <section className="glass aurora-bg p-5 sm:p-7 md:p-10">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-5 md:gap-6">
           <div className="space-y-3">
-            <p className="eyebrow flex items-center gap-2">
-              <Sparkles className="size-3" strokeWidth={2} /> {greeting().toUpperCase()} ·{" "}
-              {new Date().toLocaleDateString(undefined, { weekday: "long" })}
-            </p>
-            <h1 className="font-display text-3xl md:text-5xl font-semibold tracking-tight leading-[1.05] max-w-2xl">
+            <TimeGreeting />
+            <h1 className="font-display text-2xl sm:text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] md:leading-[1.05] max-w-2xl">
               {firstName},{" "}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#00e8ff] via-[#8b5cf6] to-[#ff3aa3]">
                 let everything that has breath
@@ -110,7 +100,7 @@ export default async function DashboardPage() {
           {nextSetlist && (
             <Link
               href={`/setlists/${nextSetlist.id}`}
-              className="shrink-0 inline-flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.06] border border-white/[0.16] hover:bg-white/[0.09] transition-colors"
+              className="shrink-0 inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.16] hover:bg-white/[0.09] transition-colors"
             >
               <span className="live-dot" />
               <div className="text-left">
@@ -280,7 +270,7 @@ function StatCard({
     >
       <div className="flex items-start gap-3">
         <span
-          className={`inline-flex items-center justify-center size-10 rounded-xl ${a.bg} ${a.text} ring-1 ring-current/30`}
+          className={`inline-flex items-center justify-center size-10 rounded-md ${a.bg} ${a.text} ring-1 ring-current/30`}
         >
           {icon}
         </span>
@@ -321,7 +311,7 @@ function FeatureCard({
     >
       <div className="flex items-center gap-3">
         <span
-          className={`inline-flex items-center justify-center size-9 rounded-xl ${a.bg} ${a.text} ring-1 ring-current/30`}
+          className={`inline-flex items-center justify-center size-9 rounded-md ${a.bg} ${a.text} ring-1 ring-current/30`}
         >
           {icon}
         </span>

@@ -74,39 +74,46 @@ export default async function SetlistDetailPage({ params }: { params: Params }) 
         >
           <ArrowLeft className="size-3" /> Setlists
         </Link>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="min-w-0">
-            <p className="eyebrow">Service</p>
-            <h1 className="text-3xl md:text-4xl font-display font-semibold tracking-tight leading-tight mt-1">
-              {fmt(setlist.service_date)}
-            </h1>
-            {setlist.theme && (
-              <p className="text-[#c8cee6] mt-1">{setlist.theme}</p>
-            )}
-          </div>
-          {canEdit && (
-            <div className="flex flex-col gap-2 items-stretch min-w-[18rem] shrink-0">
-              <div className="flex gap-2 justify-end">
-                <Link
-                  href={`/setlists/${id}/edit`}
-                  className={buttonVariants({ variant: "outline" })}
-                >
-                  Edit details
-                </Link>
-                <form action={deleteSetlist.bind(null, id)}>
-                  <SubmitButton
-                    variant="outline"
-                    className="text-red-400 hover:text-red-300"
-                    pendingLabel="Deleting…"
-                  >
-                    Delete
-                  </SubmitButton>
-                </form>
-              </div>
-              <ShareButton resourceType="setlist" resourceId={id} />
-            </div>
+        <div className="min-w-0">
+          <p className="eyebrow">Service</p>
+          <h1 className="text-2xl md:text-4xl font-display font-semibold tracking-tight leading-tight mt-1">
+            {fmt(setlist.service_date)}
+          </h1>
+          {setlist.theme && (
+            <p className="text-[#c8cee6] mt-1">{setlist.theme}</p>
           )}
         </div>
+        {canEdit && (
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center pt-1">
+            <div className="flex gap-2">
+              <Link
+                href={`/setlists/${id}/edit`}
+                className={
+                  buttonVariants({ variant: "outline", size: "sm" }) +
+                  " flex-1 sm:flex-initial"
+                }
+              >
+                Edit details
+              </Link>
+              <form
+                action={deleteSetlist.bind(null, id)}
+                className="flex-1 sm:flex-initial"
+              >
+                <SubmitButton
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-red-400 hover:text-red-300"
+                  pendingLabel="Deleting…"
+                >
+                  Delete
+                </SubmitButton>
+              </form>
+            </div>
+            <div className="sm:ml-auto sm:max-w-md sm:w-full">
+              <ShareButton resourceType="setlist" resourceId={id} />
+            </div>
+          </div>
+        )}
       </div>
 
       {setlist.notes && (

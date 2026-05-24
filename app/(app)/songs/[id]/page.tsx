@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink, StickyNote } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
 import { ChordViewer } from "@/components/chord-viewer";
+import { MediaEmbed } from "@/components/media-embed";
 import { buttonVariants } from "@/components/ui/button";
 import { SubmitButton } from "@/components/submit-button";
 import { TextSubmit } from "@/components/text-submit";
@@ -43,75 +44,79 @@ export default async function SongDetailPage({ params }: { params: Params }) {
         >
           <ArrowLeft className="size-3" /> Songs
         </Link>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="min-w-0">
-            <h1 className="text-3xl md:text-4xl font-display font-semibold tracking-tight leading-tight">
-              {song.title}
-            </h1>
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-[#8a92b4]">
-              {song.artist && <span>{song.artist}</span>}
-              {song.original_key && (
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="size-1 rounded-full bg-[#00e8ff]" />
-                  Key {song.original_key}
-                </span>
-              )}
-              {song.bpm && (
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="size-1 rounded-full bg-[#8b5cf6]" />
-                  {song.bpm} BPM
-                </span>
-              )}
-              {song.reference_url && (
-                <a
-                  href={song.reference_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-[#00e8ff] hover:underline"
-                >
-                  Reference <ExternalLink className="size-3" />
-                </a>
-              )}
-            </div>
-            {(song.tags ?? []).length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {(song.tags ?? []).map((t: string) => (
-                  <span
-                    key={t}
-                    className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-[#c8cee6]"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-4xl font-display font-semibold tracking-tight leading-tight">
+            {song.title}
+          </h1>
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-[#8a92b4]">
+            {song.artist && <span>{song.artist}</span>}
+            {song.original_key && (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-1 rounded-full bg-[#00e8ff]" />
+                Key {song.original_key}
+              </span>
+            )}
+            {song.bpm && (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-1 rounded-full bg-[#8b5cf6]" />
+                {song.bpm} BPM
+              </span>
+            )}
+            {song.reference_url && (
+              <a
+                href={song.reference_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-[#00e8ff] hover:underline"
+              >
+                Reference <ExternalLink className="size-3" />
+              </a>
             )}
           </div>
-          {isLeader(profile) && (
-            <div className="flex flex-col gap-2 items-stretch min-w-[18rem] shrink-0">
-              <div className="flex gap-2 justify-end">
-                <Link
-                  href={`/songs/${song.id}/edit`}
-                  className={buttonVariants({ variant: "outline" })}
+          {(song.tags ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
+              {(song.tags ?? []).map((t: string) => (
+                <span
+                  key={t}
+                  className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-[#c8cee6]"
                 >
-                  Edit
-                </Link>
-                <form action={deleteSong.bind(null, song.id)}>
-                  <SubmitButton
-                    variant="outline"
-                    className="text-red-400 hover:text-red-300"
-                    pendingLabel="Deleting…"
-                  >
-                    Delete
-                  </SubmitButton>
-                </form>
-              </div>
-              <ShareButton resourceType="song" resourceId={song.id} />
+                  {t}
+                </span>
+              ))}
             </div>
           )}
         </div>
+
+        {isLeader(profile) && (
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center pt-1">
+            <div className="flex gap-2">
+              <Link
+                href={`/songs/${song.id}/edit`}
+                className={buttonVariants({ variant: "outline", size: "sm" }) + " flex-1 sm:flex-initial"}
+              >
+                Edit
+              </Link>
+              <form action={deleteSong.bind(null, song.id)} className="flex-1 sm:flex-initial">
+                <SubmitButton
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-red-400 hover:text-red-300"
+                  pendingLabel="Deleting…"
+                >
+                  Delete
+                </SubmitButton>
+              </form>
+            </div>
+            <div className="sm:ml-auto sm:max-w-md sm:w-full">
+              <ShareButton resourceType="song" resourceId={song.id} />
+            </div>
+          </div>
+        )}
       </div>
 
       <ChordViewer body={song.chordpro_body} />
+
+      {song.reference_url && <MediaEmbed url={song.reference_url} />}
 
       {/* Practice notes */}
       <section className="glass p-5 space-y-4 print:hidden">

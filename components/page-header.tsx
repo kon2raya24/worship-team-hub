@@ -27,7 +27,7 @@ export function PageHeader({
       )}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="inline-flex items-center justify-center size-11 rounded-2xl bg-white/[0.05] ring-1 ring-white/[0.12] text-[#00e8ff] shrink-0">
+          <span className="inline-flex items-center justify-center size-11 rounded-lg bg-white/[0.05] ring-1 ring-white/[0.12] text-[#00e8ff] shrink-0">
             <Icon className="size-5" strokeWidth={1.75} />
           </span>
           <div className="min-w-0">

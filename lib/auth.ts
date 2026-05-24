@@ -2,7 +2,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-export type Role = "leader" | "member";
+// Re-export so server-side callers can keep getting Role + roleLabel from "@/lib/auth".
+export { roleLabel, type Role } from "@/lib/roles";
+
+import type { Role } from "@/lib/roles";
 
 export type Profile = {
   id: string;

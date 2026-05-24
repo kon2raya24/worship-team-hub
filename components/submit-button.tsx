@@ -12,14 +12,22 @@ export function SubmitButton({
   children,
   pendingLabel,
   disabled,
+  className,
   ...props
 }: Props) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending || disabled} {...props}>
+    <Button
+      type="submit"
+      disabled={pending || disabled}
+      aria-busy={pending || undefined}
+      className={className}
+      {...props}
+    >
       {pending ? (
         <>
-          <Spinner /> {pendingLabel ?? "Working…"}
+          <Spinner />
+          <span>{pendingLabel ?? "Working…"}</span>
         </>
       ) : (
         children
@@ -32,7 +40,7 @@ function Spinner() {
   return (
     <span
       aria-hidden
-      className="inline-block h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin"
+      className="inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-current border-t-transparent animate-spin"
     />
   );
 }

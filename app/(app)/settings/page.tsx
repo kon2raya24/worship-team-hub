@@ -1,6 +1,6 @@
 import { Settings as SettingsIcon, User, KeyRound, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile } from "@/lib/auth";
+import { requireProfile, roleLabel } from "@/lib/auth";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,12 +70,12 @@ export default async function SettingsPage({
           <Label>Role</Label>
           <div className="flex items-center gap-2 text-sm">
             <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#00e8ff]/10 text-[#00e8ff] border border-[#00e8ff]/30 font-semibold">
-              {profile.role}
+              {roleLabel(profile.role)}
             </span>
             <span className="text-[#8a92b4]">
               {profile.role === "leader"
-                ? "You can manage the song library, setlists, and schedule."
-                : "Ask a leader to promote you if you need edit access."}
+                ? "You can manage the song library, setlists, schedule, and devotions."
+                : "Ask an editor to upgrade your account if you need to add or edit content."}
             </span>
           </div>
         </div>

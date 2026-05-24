@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   DndContext,
   closestCenter,
@@ -39,6 +39,12 @@ export function SetlistSongs({
   const [items, setItems] = useState(songs);
   const [, startTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  // When the server re-renders with new songs (added / removed / reordered server-side),
+  // sync the local optimistic state to the fresh data.
+  useEffect(() => {
+    setItems(songs);
+  }, [songs]);
 
   function handleDragEnd(e: DragEndEvent) {
     const { active, over } = e;

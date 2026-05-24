@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Music, Plus, Search, X, Tag } from "lucide-react";
+import { Music, Plus, Search, X, Tag, Upload, WifiOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
 import { buttonVariants } from "@/components/ui/button";
@@ -17,15 +17,48 @@ export default async function SongsPage({
   const { q, tag } = await searchParams;
   const supabase = await createClient();
 
+  // Search query — match against title, artist, OR lyrics/chord body.
+  // Escape characters that have meaning in PostgREST filter values.
+  const escapeFilter = (s: string) =>
+    s.replace(/[\\,()."']/g, (m) => `\\${m}`);
+
   let query = supabase
     .from("songs")
-    .select("id, title, artist, original_key, bpm, tags")
+    .select("id, title, artist, original_key, bpm, tags, chordpro_body")
     .order("title", { ascending: true });
 
-  if (q) query = query.ilike("title", `%${q}%`);
+  if (q) {
+    const safe = escapeFilter(q);
+    query = query.or(
+      `title.ilike.*${safe}*,artist.ilike.*${safe}*,chordpro_body.ilike.*${safe}*`
+    );
+  }
   if (tag) query = query.contains("tags", [tag]);
 
-  const { data: songs } = await query;
+  const { data: rawSongs } = await query;
+  const songs = (rawSongs ?? []).map((s) => {
+    // Decide if the title/artist matched; if not, the body did.
+    const needle = q?.toLowerCase() ?? "";
+    const inTitle = needle && s.title?.toLowerCase().includes(needle);
+    const inArtist =
+      needle && (s.artist ?? "").toLowerCase().includes(needle);
+    const inBody =
+      needle &&
+      !inTitle &&
+      !inArtist &&
+      (s.chordpro_body ?? "").toLowerCase().includes(needle);
+    let snippet: string | null = null;
+    if (inBody) {
+      const body = s.chordpro_body as string;
+      const idx = body.toLowerCase().indexOf(needle);
+      const start = Math.max(0, idx - 30);
+      const end = Math.min(body.length, idx + needle.length + 30);
+      snippet = (start > 0 ? "…" : "") +
+        body.slice(start, end).replace(/\[[^\]]+\]/g, "").replace(/\s+/g, " ").trim() +
+        (end < body.length ? "…" : "");
+    }
+    return { ...s, _matchedBody: !!inBody, _snippet: snippet };
+  });
 
   const allTags = Array.from(
     new Set((songs ?? []).flatMap((s) => s.tags ?? []))
@@ -36,7 +69,7 @@ export default async function SongsPage({
       {/* Page header */}
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-start gap-3">
-          <span className="inline-flex items-center justify-center size-11 rounded-2xl bg-primary/10 text-primary shrink-0">
+          <span className="inline-flex items-center justify-center size-11 rounded-lg bg-primary/10 text-primary shrink-0">
             <Music className="size-5" />
           </span>
           <div>
@@ -50,14 +83,39 @@ export default async function SongsPage({
             </p>
           </div>
         </div>
-        {isLeader(profile) && (
+        <div className="flex gap-2 w-full sm:w-auto">
           <Link
-            href="/songs/new"
-            className={buttonVariants({ size: "lg" }) + " gap-1.5"}
+            href="/songs/offline"
+            className={
+              buttonVariants({ variant: "outline" }) +
+              " gap-1.5 flex-1 sm:flex-initial"
+            }
+            title="View songs cached for offline use"
           >
-            <Plus className="size-4" /> New song
+            <WifiOff className="size-4" /> Offline
           </Link>
-        )}
+          {isLeader(profile) && (
+            <>
+              <Link
+                href="/songs/import"
+                className={
+                  buttonVariants({ variant: "outline" }) +
+                  " gap-1.5 flex-1 sm:flex-initial"
+                }
+              >
+                <Upload className="size-4" /> Import
+              </Link>
+              <Link
+                href="/songs/new"
+                className={
+                  buttonVariants() + " gap-1.5 flex-1 sm:flex-initial"
+                }
+              >
+                <Plus className="size-4" /> New song
+              </Link>
+            </>
+          )}
+        </div>
       </header>
 
       {/* Search + tag filters */}
@@ -68,7 +126,7 @@ export default async function SongsPage({
             <Input
               name="q"
               defaultValue={q ?? ""}
-              placeholder="Search by title…"
+              placeholder="Search title, artist, or lyrics…"
               className="pl-9 h-10"
             />
           </div>
@@ -125,7 +183,7 @@ export default async function SongsPage({
             <li key={s.id}>
               <Link
                 href={`/songs/${s.id}`}
-                className="card-hover group/song block h-full rounded-2xl bg-card ring-1 ring-border/70 hover:ring-primary/40 p-5 transition-all"
+                className="card-hover group/song block h-full rounded-lg bg-card ring-1 ring-border/70 hover:ring-primary/40 p-5 transition-all"
               >
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-heading font-semibold text-base leading-snug truncate group-hover/song:text-primary transition-colors">
@@ -137,6 +195,14 @@ export default async function SongsPage({
                     </span>
                   )}
                 </div>
+                {s._snippet && (
+                  <p className="mt-2 text-xs text-[#c8cee6]/80 italic line-clamp-2 border-l-2 border-[#00e8ff]/40 pl-2">
+                    <span className="not-italic font-mono text-[9px] uppercase tracking-wider text-[#00e8ff] mr-1">
+                      lyrics
+                    </span>
+                    {s._snippet}
+                  </p>
+                )}
                 {s.artist && (
                   <p className="text-sm text-muted-foreground truncate mt-0.5">
                     {s.artist}
@@ -179,7 +245,7 @@ function EmptyState({
   message: string;
 }) {
   return (
-    <div className="rounded-3xl border-2 border-dashed border-border/70 p-12 text-center bg-card/50">
+    <div className="rounded-xl border-2 border-dashed border-border/70 p-12 text-center bg-card/50">
       <Music className="size-10 mx-auto text-muted-foreground/60" />
       <p className="mt-4 text-muted-foreground">{message}</p>
       {canAdd && (

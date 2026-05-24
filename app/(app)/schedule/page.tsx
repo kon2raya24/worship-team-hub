@@ -134,7 +134,7 @@ export default async function SchedulePage() {
               {canEdit && (
                 <form
                   action={assignMember}
-                  className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end pt-3 border-t border-white/[0.06]"
+                  className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end pt-3 border-t border-white/[0.06]"
                 >
                   <input type="hidden" name="service_date" value={d} />
                   <div className="space-y-1">
@@ -172,7 +172,11 @@ export default async function SchedulePage() {
                       ))}
                     </select>
                   </div>
-                  <SubmitButton size="sm" pendingLabel="…" className="gap-1">
+                  <SubmitButton
+                    size="sm"
+                    pendingLabel="…"
+                    className="gap-1 col-span-2 sm:col-span-1"
+                  >
                     <Plus className="size-3.5" /> Add
                   </SubmitButton>
                 </form>

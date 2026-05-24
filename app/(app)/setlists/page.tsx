@@ -90,7 +90,7 @@ function SetlistGrid({
         <li key={r.id}>
           <Link
             href={`/setlists/${r.id}`}
-            className={`card-hover group/setlist block rounded-2xl bg-card ring-1 ring-border/70 hover:ring-primary/40 p-5 transition-all ${
+            className={`card-hover group/setlist block rounded-lg bg-card ring-1 ring-border/70 hover:ring-primary/40 p-5 transition-all ${
               muted ? "opacity-80 hover:opacity-100" : ""
             }`}
           >
