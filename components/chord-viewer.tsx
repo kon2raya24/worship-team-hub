@@ -1,7 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Minus, Plus, RotateCcw, Printer, Type } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Minus,
+  Plus,
+  RotateCcw,
+  Printer,
+  Play,
+  Pause,
+  Gauge,
+} from "lucide-react";
 import { renderTransposedHtml } from "@/lib/chordpro";
 
 export function ChordViewer({
@@ -14,19 +22,68 @@ export function ChordViewer({
   const [semitones, setSemitones] = useState(defaultSemitones);
   const [capo, setCapo] = useState(0);
   const [fontSize, setFontSize] = useState(16);
+  const [scrolling, setScrolling] = useState(false);
+  const [speed, setSpeed] = useState(35); // pixels per second
+  const rafRef = useRef<number | null>(null);
+  const lastTickRef = useRef<number | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
 
   const html = useMemo(
     () => renderTransposedHtml(body, semitones - capo),
     [body, semitones, capo]
   );
 
+  // Smooth auto-scroll loop. Stops when bottom of sheet reaches viewport bottom.
+  useEffect(() => {
+    if (!scrolling) {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      lastTickRef.current = null;
+      return;
+    }
+
+    function tick(now: number) {
+      if (lastTickRef.current == null) lastTickRef.current = now;
+      const dt = (now - lastTickRef.current) / 1000;
+      lastTickRef.current = now;
+
+      const sheet = sheetRef.current;
+      const docEl = document.documentElement;
+      const maxScroll = docEl.scrollHeight - window.innerHeight;
+      const nextY = Math.min(window.scrollY + speed * dt, maxScroll);
+      window.scrollTo({ top: nextY });
+
+      // Stop if at the bottom or sheet element is past viewport
+      const reachedDocBottom = nextY >= maxScroll - 1;
+      const sheetGone =
+        sheet &&
+        sheet.getBoundingClientRect().bottom < window.innerHeight * 0.2;
+      if (reachedDocBottom || sheetGone) {
+        setScrolling(false);
+        return;
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    }
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      lastTickRef.current = null;
+    };
+  }, [scrolling, speed]);
+
   return (
     <div className="glass overflow-hidden">
-      {/* Sticky toolbar */}
-      <div className="sticky top-[60px] z-10 flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-white/[0.08] bg-[#070a17]/85 backdrop-blur-xl print:hidden">
+      {/* Sticky toolbar — compact on mobile, expanded on desktop */}
+      <div className="sticky top-[57px] z-10 flex flex-wrap items-center gap-x-2 gap-y-1.5 px-2 sm:px-4 py-2 border-b border-white/[0.08] bg-[#070a17]/90 backdrop-blur-xl print:hidden">
+        {/* Key */}
         <ToolGroup label="Key">
           <ToolBtn label="−" onClick={() => setSemitones((s) => s - 1)} aria="Transpose down" />
-          <span className="w-10 text-center text-sm tabular-nums font-mono text-white">
+          <span className="w-8 sm:w-10 text-center text-sm tabular-nums font-mono text-white">
             {semitones > 0 ? `+${semitones}` : semitones}
           </span>
           <ToolBtn label="+" onClick={() => setSemitones((s) => s + 1)} aria="Transpose up" />
@@ -42,38 +99,99 @@ export function ChordViewer({
 
         <Divider />
 
-        <ToolGroup label="Capo">
-          <ToolBtn
-            icon={<Minus className="size-3.5" />}
-            onClick={() => setCapo((c) => Math.max(0, c - 1))}
-            aria="Capo down"
-          />
-          <span className="w-8 text-center text-sm tabular-nums font-mono text-white">{capo}</span>
-          <ToolBtn
-            icon={<Plus className="size-3.5" />}
-            onClick={() => setCapo((c) => Math.min(11, c + 1))}
-            aria="Capo up"
-          />
-        </ToolGroup>
+        {/* Capo — hidden on smallest screens, shown ≥sm */}
+        <div className="hidden sm:flex">
+          <ToolGroup label="Capo">
+            <ToolBtn
+              icon={<Minus className="size-3.5" />}
+              onClick={() => setCapo((c) => Math.max(0, c - 1))}
+              aria="Capo down"
+            />
+            <span className="w-7 text-center text-sm tabular-nums font-mono text-white">
+              {capo}
+            </span>
+            <ToolBtn
+              icon={<Plus className="size-3.5" />}
+              onClick={() => setCapo((c) => Math.min(11, c + 1))}
+              aria="Capo up"
+            />
+          </ToolGroup>
+        </div>
 
-        <Divider />
+        <div className="hidden sm:block">
+          <Divider />
+        </div>
 
+        {/* Size */}
         <ToolGroup label="Size">
-          <ToolBtn label="A−" onClick={() => setFontSize((f) => Math.max(10, f - 2))} aria="Smaller" />
-          <ToolBtn label="A+" onClick={() => setFontSize((f) => Math.min(28, f + 2))} aria="Larger" />
+          <ToolBtn
+            label="A−"
+            onClick={() => setFontSize((f) => Math.max(10, f - 2))}
+            aria="Smaller"
+          />
+          <ToolBtn
+            label="A+"
+            onClick={() => setFontSize((f) => Math.min(28, f + 2))}
+            aria="Larger"
+          />
         </ToolGroup>
 
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.12] text-sm text-white/90 hover:bg-white/[0.1] hover:border-white/[0.2] transition-colors"
-        >
-          <Printer className="size-3.5" /> Print
-        </button>
+        {/* Right-aligned cluster: auto-scroll + print */}
+        <div className="ml-auto flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setScrolling((s) => !s)}
+            aria-label={scrolling ? "Pause auto-scroll" : "Start auto-scroll"}
+            className={`inline-flex items-center justify-center gap-1.5 px-2.5 h-7 rounded-md border text-sm transition-all ${
+              scrolling
+                ? "bg-[#8b5cf6]/20 border-[#8b5cf6]/40 text-white shadow-[0_0_14px_rgba(139,92,246,0.35)]"
+                : "bg-white/[0.06] border-white/[0.12] text-white/90 hover:bg-white/[0.1]"
+            }`}
+          >
+            {scrolling ? (
+              <Pause className="size-3.5" />
+            ) : (
+              <Play className="size-3.5" />
+            )}
+            <span className="hidden sm:inline">
+              {scrolling ? "Pause" : "Scroll"}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+            aria-label="Print"
+            className="hidden md:inline-flex items-center justify-center gap-1.5 px-2.5 h-7 rounded-md bg-white/[0.06] border border-white/[0.12] text-sm text-white/90 hover:bg-white/[0.1]"
+          >
+            <Printer className="size-3.5" /> Print
+          </button>
+        </div>
+
+        {/* Speed slider — only when scrolling is active; takes full second row on mobile */}
+        {scrolling && (
+          <div className="basis-full sm:basis-auto sm:ml-2 flex items-center gap-2 px-2 h-7 rounded-md bg-white/[0.03] border border-white/[0.06]">
+            <Gauge className="size-3 text-[#8b5cf6]" />
+            <input
+              type="range"
+              min={10}
+              max={120}
+              step={5}
+              value={speed}
+              onChange={(e) => setSpeed(Number(e.target.value))}
+              className="flex-1 sm:w-24 accent-[#8b5cf6]"
+              aria-label="Scroll speed"
+            />
+            <span className="w-7 text-right tabular-nums font-mono text-xs text-[#c8cee6]">
+              {speed}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Sheet */}
       <div
+        ref={sheetRef}
         className="chord-sheet px-5 py-6 md:px-8 md:py-10 font-mono text-white/90"
         style={{ fontSize, lineHeight: 1.9 }}
         dangerouslySetInnerHTML={{ __html: html }}
@@ -88,10 +206,13 @@ export function ChordViewer({
           flex-wrap: wrap;
           align-items: flex-end;
         }
+        /* Columns flow tight against each other so mid-word chords
+           (e.g. sur[G]render) don't visibly split the word. Word
+           boundaries are preserved by trailing spaces in the lyric. */
         .chord-sheet .column {
           display: inline-flex;
           flex-direction: column;
-          margin-right: 0.35rem;
+          margin: 0;
         }
         .chord-sheet .chord {
           color: #00e8ff;
@@ -100,6 +221,13 @@ export function ChordViewer({
           line-height: 1.4em;
           text-shadow: 0 0 12px rgba(0, 232, 255, 0.35);
           letter-spacing: 0.02em;
+          /* Right padding gives consecutive chords breathing room
+             without separating the lyric below. */
+          padding-right: 0.6em;
+        }
+        /* When the chord is empty, no padding — keeps mid-word lyrics tight. */
+        .chord-sheet .chord:empty {
+          padding-right: 0;
         }
         .chord-sheet .lyrics {
           white-space: pre;
@@ -134,7 +262,13 @@ export function ChordViewer({
   );
 }
 
-function ToolGroup({ label, children }: { label: string; children: React.ReactNode }) {
+function ToolGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex items-center gap-1">
       <span className="eyebrow mr-1">{label}</span>
