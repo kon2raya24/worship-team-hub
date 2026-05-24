@@ -12,17 +12,20 @@ import {
   Heart,
   Megaphone,
   Files,
+  Users,
   LogOut,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/(app)/actions";
+import { roleLabel, type Role } from "@/lib/roles";
 
 const links = [
   { href: "/", label: "Home", Icon: Home },
   { href: "/songs", label: "Library", Icon: Music },
   { href: "/setlists", label: "Setlists", Icon: ListMusic },
   { href: "/schedule", label: "Schedule", Icon: Calendar },
+  { href: "/team", label: "Team", Icon: Users },
   { href: "/devotions", label: "Devotions", Icon: BookOpen },
   { href: "/prayer", label: "Prayer", Icon: Heart },
   { href: "/announcements", label: "News", Icon: Megaphone },
@@ -33,16 +36,19 @@ export function Nav({ displayName, role }: { displayName: string; role: string }
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 px-4 md:px-7 py-3 border-b border-white/[0.08] bg-[#070a17]/70 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Link href="/" className="flex items-center gap-3 group shrink-0">
+    <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-[#070a17]/75 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-3 md:px-7 py-2.5 flex items-center gap-2 md:gap-4">
+        <Link href="/" className="flex items-center gap-2 group shrink-0">
           <span className="brand-mark h-8 w-8 inline-block" />
           <span className="hidden sm:inline font-display font-semibold tracking-wide text-[15px]">
             Worship Hub
           </span>
         </Link>
 
-        <nav className="flex flex-wrap gap-1 p-1 bg-white/[0.025] border border-white/[0.08] rounded-2xl text-sm">
+        {/* Horizontally scrollable nav — never wraps on mobile */}
+        <nav
+          className="flex-1 min-w-0 flex gap-1 p-1 bg-white/[0.025] border border-white/[0.08] rounded-lg text-sm overflow-x-auto no-scrollbar"
+        >
           {links.map(({ href, label, Icon }) => {
             const active =
               href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -50,8 +56,9 @@ export function Nav({ displayName, role }: { displayName: string; role: string }
               <Link
                 key={href}
                 href={href}
+                title={label}
                 className={cn(
-                  "relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all",
+                  "relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md transition-all shrink-0",
                   active
                     ? "text-white bg-white/[0.09] ring-1 ring-white/[0.16] shadow-[0_0_18px_rgba(139,92,246,0.18)]"
                     : "text-[#8a92b4] hover:text-white hover:bg-white/[0.05]"
@@ -64,7 +71,7 @@ export function Nav({ displayName, role }: { displayName: string; role: string }
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-1.5 text-sm shrink-0">
           <Link
             href="/settings"
             className="inline-flex items-center justify-center size-8 rounded-md text-[#8a92b4] hover:text-white hover:bg-white/[0.05] transition-colors"
@@ -72,7 +79,7 @@ export function Nav({ displayName, role }: { displayName: string; role: string }
           >
             <SettingsIcon className="size-3.5" strokeWidth={1.75} />
           </Link>
-          <span className="hidden md:flex items-center gap-2 text-[#8a92b4]">
+          <span className="hidden lg:flex items-center gap-2 text-[#8a92b4]">
             <span className="text-white/90">{displayName}</span>
             <span
               className="font-mono text-[9px] tracking-[0.18em] px-1.5 py-[3px] rounded-md border border-[#00e8ff]/35 text-[#00e8ff] uppercase font-semibold"
@@ -81,7 +88,7 @@ export function Nav({ displayName, role }: { displayName: string; role: string }
                   "linear-gradient(135deg, rgba(0,232,255,0.18), rgba(139,92,246,0.18))",
               }}
             >
-              {role}
+              {roleLabel(role as Role)}
             </span>
           </span>
           <form action={signOut}>
@@ -89,6 +96,15 @@ export function Nav({ displayName, role }: { displayName: string; role: string }
           </form>
         </div>
       </div>
+
+      <style jsx>{`
+        :global(.no-scrollbar) {
+          scrollbar-width: none;
+        }
+        :global(.no-scrollbar::-webkit-scrollbar) {
+          display: none;
+        }
+      `}</style>
     </header>
   );
 }
