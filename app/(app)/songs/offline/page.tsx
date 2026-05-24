@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Music, WifiOff, Search, RefreshCw, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -13,11 +14,21 @@ import {
 import { Input } from "@/components/ui/input";
 
 export default function OfflineSongsPage() {
+  return (
+    <Suspense fallback={null}>
+      <OfflineSongs />
+    </Suspense>
+  );
+}
+
+function OfflineSongs() {
+  const searchParams = useSearchParams();
+  const initialOpenId = searchParams.get("id");
   const [songs, setSongs] = useState<OfflineSong[]>([]);
   const [q, setQ] = useState("");
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(initialOpenId);
   const [isOnline, setIsOnline] = useState<boolean>(
     typeof navigator !== "undefined" ? navigator.onLine : true
   );
