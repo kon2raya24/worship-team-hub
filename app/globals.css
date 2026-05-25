@@ -129,6 +129,23 @@
     overflow-x: clip;
     max-width: 100vw;
   }
+
+  /* Native <select> dropdown: force readable dark popup so options
+     aren't washed-out light-on-light. Chrome/Edge respect background +
+     color on <option>; Firefox falls back to system colors. */
+  select {
+    color-scheme: dark;
+  }
+  select option,
+  select optgroup {
+    background-color: #0b1024;
+    color: #f5f7ff;
+  }
+  select option:checked,
+  select option:hover {
+    background-color: #1a2150;
+    color: #ffffff;
+  }
 }
 
 @layer utilities {
