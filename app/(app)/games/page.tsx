@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { Gamepad2, ArrowRightLeft, KeyRound, ArrowRight } from "lucide-react";
+import {
+  Gamepad2,
+  ArrowRightLeft,
+  KeyRound,
+  Timer,
+  ArrowRight,
+} from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 
 export const metadata = { title: "Games · Worship Hub" };
@@ -21,6 +27,14 @@ const GAMES = [
     icon: KeyRound,
     accent: "cyan" as const,
   },
+  {
+    href: "/games/bpm",
+    title: "BPM Tapper",
+    blurb:
+      "Tap to a tempo and see how close you stay to the target. Great for drummers, click-track-leaders, and anyone who needs to keep the band locked in.",
+    icon: Timer,
+    accent: "magenta" as const,
+  },
 ];
 
 const ACCENTS = {
@@ -35,6 +49,12 @@ const ACCENTS = {
     bg: "bg-[#00e8ff]/15",
     text: "text-[#00e8ff]",
     glow: "hover:shadow-[0_0_24px_rgba(0,232,255,0.35)]",
+  },
+  magenta: {
+    ring: "ring-[#ff3aa3]/30 hover:ring-[#ff3aa3]/60",
+    bg: "bg-[#ff3aa3]/15",
+    text: "text-[#ff3aa3]",
+    glow: "hover:shadow-[0_0_24px_rgba(255,58,163,0.35)]",
   },
 } as const;
 
