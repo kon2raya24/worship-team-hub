@@ -1,8 +1,8 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useFormStatus } from "react-dom";
 import {
   Home,
   Music,
@@ -20,6 +20,15 @@ import {
 import { cn } from "@/lib/utils";
 import { signOut } from "@/app/(app)/actions";
 import { roleLabel, type Role } from "@/lib/roles";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const links = [
   { href: "/", label: "Home", Icon: Home },
@@ -95,9 +104,7 @@ export function Nav({ displayName, role }: { displayName: string; role: string }
                 {roleLabel(role as Role)}
               </span>
             </span>
-            <form action={signOut}>
-              <SignOutButton />
-            </form>
+            <SignOutButton />
           </div>
         </div>
       </div>
@@ -115,22 +122,62 @@ export function Nav({ displayName, role }: { displayName: string; role: string }
 }
 
 function SignOutButton() {
-  const { pending } = useFormStatus();
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  function confirm() {
+    startTransition(async () => {
+      await signOut();
+      setOpen(false);
+    });
+  }
+
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="inline-flex items-center gap-1.5 text-[#8a92b4] hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/[0.05] disabled:opacity-60 disabled:pointer-events-none"
-      aria-label="Sign out"
-    >
-      {pending ? (
-        <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
-      ) : (
-        <LogOut className="size-3.5" strokeWidth={1.75} />
-      )}
-      <span className="hidden sm:inline">
-        {pending ? "Signing out…" : "Sign out"}
-      </span>
-    </button>
+    <>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 text-[#8a92b4] hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/[0.05] disabled:opacity-60 disabled:pointer-events-none"
+        aria-label="Sign out"
+      >
+        {pending ? (
+          <span className="inline-block h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+        ) : (
+          <LogOut className="size-3.5" strokeWidth={1.75} />
+        )}
+        <span className="hidden sm:inline">
+          {pending ? "Signing out…" : "Sign out"}
+        </span>
+      </button>
+
+      <Dialog open={open} onOpenChange={(v) => !pending && setOpen(v)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Sign out?</DialogTitle>
+            <DialogDescription>
+              You&apos;ll be returned to the login screen. Your team data stays
+              safe on the server.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={pending}
+            >
+              Stay signed in
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirm}
+              disabled={pending}
+            >
+              {pending ? "Signing out…" : "Sign out"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
