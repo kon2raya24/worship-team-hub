@@ -126,11 +126,9 @@ function SignOutButton() {
   const [pending, startTransition] = useTransition();
 
   function confirm() {
-    // Close the dialog before kicking off the action. signOut() ends in a
-    // server redirect to /login, which unmounts this component — leaving
-    // the dialog open while we await caused users to think it hadn't
-    // registered and tap again.
-    setOpen(false);
+    // Keep the dialog open during the action so the spinner is visible.
+    // The redirect inside signOut() unmounts everything when it completes.
+    // Buttons are disabled while pending so tapping again is harmless.
     startTransition(async () => {
       await signOut();
     });
@@ -156,7 +154,11 @@ function SignOutButton() {
       </button>
 
       <Dialog open={open} onOpenChange={(v) => !pending && setOpen(v)}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent
+          className="sm:max-w-sm"
+          // Block dismissal via Escape / outside-click while signing out.
+          onEscapeKeyDown={(e) => pending && e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Sign out?</DialogTitle>
             <DialogDescription>
@@ -176,7 +178,14 @@ function SignOutButton() {
               variant="destructive"
               onClick={confirm}
               disabled={pending}
+              className="gap-2"
             >
+              {pending && (
+                <span
+                  className="inline-block h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin"
+                  aria-hidden
+                />
+              )}
               {pending ? "Signing out…" : "Sign out"}
             </Button>
           </DialogFooter>
