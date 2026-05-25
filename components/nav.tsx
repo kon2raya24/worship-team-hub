@@ -13,6 +13,7 @@ import {
   Megaphone,
   Files,
   Users,
+  Gamepad2,
   LogOut,
   Settings as SettingsIcon,
 } from "lucide-react";
@@ -30,6 +31,7 @@ const links = [
   { href: "/prayer", label: "Prayer", Icon: Heart },
   { href: "/announcements", label: "News", Icon: Megaphone },
   { href: "/files", label: "Files", Icon: Files },
+  { href: "/games", label: "Games", Icon: Gamepad2 },
 ];
 
 export function Nav({ displayName, role }: { displayName: string; role: string }) {
