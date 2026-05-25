@@ -154,11 +154,7 @@ function SignOutButton() {
       </button>
 
       <Dialog open={open} onOpenChange={(v) => !pending && setOpen(v)}>
-        <DialogContent
-          className="sm:max-w-sm"
-          // Block dismissal via Escape / outside-click while signing out.
-          onEscapeKeyDown={(e) => pending && e.preventDefault()}
-        >
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Sign out?</DialogTitle>
             <DialogDescription>
