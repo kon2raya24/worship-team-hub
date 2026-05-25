@@ -11,11 +11,13 @@ import {
   Gauge,
 } from "lucide-react";
 import { renderTransposedHtml } from "@/lib/chordpro";
+import { transposeChord, keyUsesFlats } from "@/lib/music";
 
 export function ChordViewer({
   body,
   defaultSemitones = 0,
   persistKey,
+  originalKey,
 }: {
   body: string;
   defaultSemitones?: number;
@@ -25,6 +27,8 @@ export function ChordViewer({
    * preserves the leader's settings during a rehearsal session.
    */
   persistKey?: string;
+  /** Song's original key — used to show "G → A" instead of "+2". */
+  originalKey?: string | null;
 }) {
   const storageKey = persistKey ? `chord-viewer:${persistKey}` : null;
   const [semitones, setSemitones] = useState(defaultSemitones);
@@ -74,6 +78,19 @@ export function ChordViewer({
     () => renderTransposedHtml(body, semitones - capo),
     [body, semitones, capo]
   );
+
+  // Build the key indicator: "A" when no transpose, "G → A" when transposed
+  // from a known key, "+2" as a last resort when we have no original key.
+  const keyLabel = useMemo(() => {
+    const trimmed = (originalKey ?? "").trim();
+    if (!trimmed) {
+      return semitones === 0 ? "—" : semitones > 0 ? `+${semitones}` : `${semitones}`;
+    }
+    if (semitones === 0) return trimmed;
+    const useFlats = keyUsesFlats(trimmed);
+    const newKey = transposeChord(trimmed, semitones, useFlats);
+    return `${trimmed} → ${newKey}`;
+  }, [originalKey, semitones]);
 
   // Smooth auto-scroll loop. Stops when bottom of sheet reaches viewport bottom.
   useEffect(() => {
@@ -125,8 +142,12 @@ export function ChordViewer({
         {/* Key */}
         <ToolGroup label="Key">
           <ToolBtn label="−" onClick={() => setSemitones((s) => s - 1)} aria="Transpose down" />
-          <span className="w-8 sm:w-10 text-center text-sm tabular-nums font-mono text-white">
-            {semitones > 0 ? `+${semitones}` : semitones}
+          <span
+            className={`min-w-[2.5rem] px-1.5 text-center text-sm font-mono ${
+              semitones === 0 ? "text-white" : "text-[#00e8ff]"
+            }`}
+          >
+            {keyLabel}
           </span>
           <ToolBtn label="+" onClick={() => setSemitones((s) => s + 1)} aria="Transpose up" />
           {semitones !== 0 && (

@@ -116,7 +116,11 @@ async function SongShare({
           )}
         </div>
       </div>
-      <ChordViewer body={song.chordpro_body} persistKey={`shared:${id}`} />
+      <ChordViewer
+        body={song.chordpro_body}
+        persistKey={`shared:${id}`}
+        originalKey={song.original_key}
+      />
     </>
   );
 }

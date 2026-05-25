@@ -131,7 +131,11 @@ export default async function SongDetailPage({ params }: { params: Params }) {
           </div>
         )}
 
-      <ChordViewer body={song.chordpro_body} persistKey={song.id} />
+      <ChordViewer
+        body={song.chordpro_body}
+        persistKey={song.id}
+        originalKey={song.original_key}
+      />
 
       {song.reference_url && <MediaEmbed url={song.reference_url} />}
 

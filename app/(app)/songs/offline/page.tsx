@@ -242,7 +242,11 @@ function OfflineSongView({
           )}
         </div>
       </div>
-      <ChordViewer body={song.chordpro_body} persistKey={song.id} />
+      <ChordViewer
+        body={song.chordpro_body}
+        persistKey={song.id}
+        originalKey={song.original_key}
+      />
     </div>
   );
 }
