@@ -126,9 +126,13 @@ function SignOutButton() {
   const [pending, startTransition] = useTransition();
 
   function confirm() {
+    // Close the dialog before kicking off the action. signOut() ends in a
+    // server redirect to /login, which unmounts this component — leaving
+    // the dialog open while we await caused users to think it hadn't
+    // registered and tap again.
+    setOpen(false);
     startTransition(async () => {
       await signOut();
-      setOpen(false);
     });
   }
 

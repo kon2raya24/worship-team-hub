@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { friendlyAuthError } from "@/lib/auth-errors";
 
 async function signupAction(formData: FormData) {
   "use server";
@@ -19,7 +20,7 @@ async function signupAction(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+    redirect(`/signup?error=${encodeURIComponent(friendlyAuthError(error.message))}`);
   }
   redirect("/login?message=Check%20your%20email%20to%20confirm%20your%20account.");
 }

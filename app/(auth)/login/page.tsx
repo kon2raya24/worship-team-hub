@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { friendlyAuthError } from "@/lib/auth-errors";
 
 async function loginAction(formData: FormData) {
   "use server";
@@ -16,7 +17,7 @@ async function loginAction(formData: FormData) {
 
   if (error) {
     redirect(
-      `/login?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`
+      `/login?error=${encodeURIComponent(friendlyAuthError(error.message))}&next=${encodeURIComponent(next)}`
     );
   }
   redirect(next);

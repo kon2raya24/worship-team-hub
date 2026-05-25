@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { friendlyAuthError } from "@/lib/auth-errors";
 
 async function resetAction(formData: FormData) {
   "use server";
@@ -21,7 +22,7 @@ async function resetAction(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/forgot-password?error=${encodeURIComponent(error.message)}`);
+    redirect(`/forgot-password?error=${encodeURIComponent(friendlyAuthError(error.message))}`);
   }
   redirect("/forgot-password?sent=1");
 }

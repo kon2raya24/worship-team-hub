@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { friendlyAuthError } from "@/lib/auth-errors";
 
 async function updatePasswordAction(formData: FormData) {
   "use server";
@@ -19,7 +20,7 @@ async function updatePasswordAction(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
   if (error) {
-    redirect(`/reset-password?error=${encodeURIComponent(error.message)}`);
+    redirect(`/reset-password?error=${encodeURIComponent(friendlyAuthError(error.message))}`);
   }
   redirect("/");
 }
