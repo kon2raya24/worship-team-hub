@@ -8,6 +8,17 @@ import {
   BookOpen,
   ArrowRight,
   Pin,
+  Gamepad2,
+  ArrowRightLeft,
+  KeyRound,
+  Timer,
+  Hash,
+  Guitar,
+  Ruler,
+  CircleDot,
+  Repeat2,
+  ListMusic,
+  type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
@@ -115,6 +126,35 @@ export default async function DashboardPage() {
         </div>
       </section>
 
+      {/* Quick Actions — mobile-only row. The bottom tab bar covers the
+          same four destinations but with finer "what for" context here. */}
+      <div className="md:hidden grid grid-cols-4 gap-2">
+        <QuickAction
+          href="/songs"
+          label="Library"
+          Icon={Music}
+          color="#8b5cf6"
+        />
+        <QuickAction
+          href={nextSetlist ? `/setlists/${nextSetlist.id}` : "/setlists"}
+          label={nextSetlist ? "Today" : "Setlists"}
+          Icon={ListMusic}
+          color="#00e8ff"
+        />
+        <QuickAction
+          href="/schedule"
+          label="Schedule"
+          Icon={Calendar}
+          color="#7dd3fc"
+        />
+        <QuickAction
+          href="/prayer"
+          label="Prayer"
+          Icon={Heart}
+          color="#ff3aa3"
+        />
+      </div>
+
       {/* Stat grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -178,6 +218,43 @@ export default async function DashboardPage() {
           accent="violet"
         />
       </div>
+
+      {/* Practice — gives mobile users one-tap access to the games from the
+          Home tab (otherwise Games lives behind the More sheet). */}
+      <section className="glass p-5 sm:p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="inline-flex items-center justify-center size-8 rounded-lg bg-[#8b5cf6]/15 text-[#8b5cf6] ring-1 ring-[#8b5cf6]/30">
+            <Gamepad2 className="size-4" />
+          </span>
+          <h2 className="font-display font-semibold text-lg">Practice</h2>
+          <Link
+            href="/games"
+            className="ml-auto text-xs text-[#8a92b4] hover:text-white inline-flex items-center gap-1 transition-colors"
+          >
+            All games <ArrowRight className="size-3" />
+          </Link>
+        </div>
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+          {GAME_TILES.map(({ href, title, Icon, color }) => (
+            <li key={href}>
+              <Link
+                href={href}
+                className="flex flex-col items-center justify-center text-center gap-2 p-3 rounded-lg border border-white/[0.08] bg-white/[0.025] text-[#c8cee6] hover:bg-white/[0.05] hover:border-white/[0.16] active:bg-white/[0.07] transition-colors min-h-[88px]"
+              >
+                <span
+                  className="inline-flex items-center justify-center size-9 rounded-md ring-1 ring-current/20"
+                  style={{ color }}
+                >
+                  <Icon className="size-5" />
+                </span>
+                <span className="text-xs font-medium leading-tight text-white/90">
+                  {title}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {/* Pinned announcements */}
       <section className="glass p-6">
@@ -329,3 +406,48 @@ function FeatureCard({
     </Link>
   );
 }
+
+function QuickAction({
+  href,
+  label,
+  Icon,
+  color,
+}: {
+  href: string;
+  label: string;
+  Icon: LucideIcon;
+  color: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-lg border border-white/[0.08] bg-white/[0.025] text-[#c8cee6] active:bg-white/[0.06] transition-colors min-h-[68px]"
+    >
+      <span
+        className="inline-flex items-center justify-center size-9 rounded-md ring-1 ring-current/20"
+        style={{ color }}
+      >
+        <Icon className="size-5" />
+      </span>
+      <span className="text-[11px] font-medium text-white/90 leading-tight">
+        {label}
+      </span>
+    </Link>
+  );
+}
+
+const GAME_TILES: {
+  href: string;
+  title: string;
+  Icon: LucideIcon;
+  color: string;
+}[] = [
+  { href: "/games/transpose", title: "Transpose", Icon: ArrowRightLeft, color: "#8b5cf6" },
+  { href: "/games/nashville", title: "Nashville", Icon: Hash, color: "#ffb547" },
+  { href: "/games/capo", title: "Capo math", Icon: Guitar, color: "#8eff6a" },
+  { href: "/games/keys", title: "Key signatures", Icon: KeyRound, color: "#00e8ff" },
+  { href: "/games/bpm", title: "BPM tapper", Icon: Timer, color: "#ff3aa3" },
+  { href: "/games/intervals", title: "Intervals", Icon: Ruler, color: "#ff7eb6" },
+  { href: "/games/chord-tones", title: "Chord tones", Icon: CircleDot, color: "#7dd3fc" },
+  { href: "/games/relative", title: "Relative key", Icon: Repeat2, color: "#c4b5fd" },
+];
