@@ -117,6 +117,34 @@ export function keyUsesFlats(key: string): boolean {
   return Object.prototype.hasOwnProperty.call(KEY_SIGNATURES[key] ?? {}, "flats");
 }
 
+/**
+ * Major scale semitone intervals from the tonic (I … vii°).
+ * 0=I, 2=ii, 4=iii, 5=IV, 7=V, 9=vi, 11=vii°.
+ */
+const MAJOR_SCALE_SEMITONES = [0, 2, 4, 5, 7, 9, 11] as const;
+const DIATONIC_QUALITY = ["", "m", "m", "", "", "m", "dim"] as const;
+
+/** Nashville / Roman numerals for the 7 diatonic chords of a major key. */
+export const ROMAN_NUMERALS = ["I", "ii", "iii", "IV", "V", "vi", "vii°"] as const;
+export type DegreeIdx = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/** Diatonic chord at a given scale degree of a major key (e.g. G + IV → C). */
+export function diatonicChord(key: string, degree: DegreeIdx): string {
+  const useFlats = keyUsesFlats(key);
+  const root = transposeChord(key, MAJOR_SCALE_SEMITONES[degree], useFlats);
+  return `${root}${DIATONIC_QUALITY[degree]}`;
+}
+
+/** Reverse: which scale degree is `chord` in `key`? Returns null if not diatonic. */
+export function degreeOfChord(key: string, chord: string): DegreeIdx | null {
+  for (let i = 0; i < 7; i++) {
+    if (chordsEqual(diatonicChord(key, i as DegreeIdx), chord)) {
+      return i as DegreeIdx;
+    }
+  }
+  return null;
+}
+
 /** Semitone delta from one major key to another. */
 export function semitonesBetween(from: string, to: string): number {
   const a = parseRoot(from);

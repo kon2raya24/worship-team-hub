@@ -5,6 +5,8 @@ import {
   KeyRound,
   Timer,
   ArrowRight,
+  Hash,
+  Guitar,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 
@@ -18,6 +20,22 @@ const GAMES = [
       "A progression appears in one key. Play it back in the target key. Sharpens the muscle every guitarist + keys player on the team uses every Sunday.",
     icon: ArrowRightLeft,
     accent: "violet" as const,
+  },
+  {
+    href: "/games/nashville",
+    title: "Nashville Number Trainer",
+    blurb:
+      "\"Go to the IV — now the vi.\" Read chord charts in Roman numerals, or translate the leader's number cues to actual chords on the fly.",
+    icon: Hash,
+    accent: "amber" as const,
+  },
+  {
+    href: "/games/capo",
+    title: "Capo Calculator",
+    blurb:
+      "Leader switches the key two minutes before service. C shape at fret 5 — what's that sounding? Trains the math you need on stage with a capo.",
+    icon: Guitar,
+    accent: "green" as const,
   },
   {
     href: "/games/keys",
@@ -55,6 +73,18 @@ const ACCENTS = {
     bg: "bg-[#ff3aa3]/15",
     text: "text-[#ff3aa3]",
     glow: "hover:shadow-[0_0_24px_rgba(255,58,163,0.35)]",
+  },
+  amber: {
+    ring: "ring-[#ffb547]/30 hover:ring-[#ffb547]/60",
+    bg: "bg-[#ffb547]/15",
+    text: "text-[#ffb547]",
+    glow: "hover:shadow-[0_0_24px_rgba(255,181,71,0.35)]",
+  },
+  green: {
+    ring: "ring-[#8eff6a]/30 hover:ring-[#8eff6a]/60",
+    bg: "bg-[#8eff6a]/15",
+    text: "text-[#8eff6a]",
+    glow: "hover:shadow-[0_0_24px_rgba(142,255,106,0.35)]",
   },
 } as const;
 
