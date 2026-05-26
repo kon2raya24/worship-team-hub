@@ -132,7 +132,7 @@ export default async function EditSetlistPage({ params }: { params: Params }) {
                 id="song_id"
                 name="song_id"
                 required
-                className="w-full rounded-lg border border-white/10 bg-white/[0.04] p-2 text-sm h-9"
+                className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 sm:px-2 text-sm h-10 sm:h-9"
               >
                 <option value="">Select a song…</option>
                 {availableSongs.map((s) => (

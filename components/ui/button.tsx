@@ -54,16 +54,17 @@ const buttonVariants = cva(base, {
       link: "border-transparent text-[#00e8ff] underline-offset-4 hover:underline shadow-none",
     },
     size: {
-      // 36px — standard web button height, comfortable tap target on mobile.
-      default: "h-9 gap-1.5 px-3.5 text-sm",
+      // 40px mobile / 36px desktop — comfortable tap target on phones.
+      default: "h-10 sm:h-9 gap-1.5 px-3.5 text-sm",
       xs: "h-7 gap-1 rounded-sm px-2 text-xs",
-      sm: "h-8 gap-1.5 rounded-sm px-3 text-[0.8125rem]",
-      // 40px — slightly bigger for prominent CTAs.
-      lg: "h-10 gap-2 px-4 text-sm",
-      icon: "size-9",
+      // 36px mobile / 32px desktop — still tappable; only used for in-row actions.
+      sm: "h-9 sm:h-8 gap-1.5 rounded-sm px-3 text-[0.8125rem]",
+      // 44px mobile / 40px desktop — prominent CTAs / "Save" buttons.
+      lg: "h-11 sm:h-10 gap-2 px-4 text-sm",
+      icon: "size-10 sm:size-9",
       "icon-xs": "size-7 rounded-sm",
-      "icon-sm": "size-8 rounded-sm",
-      "icon-lg": "size-10",
+      "icon-sm": "size-9 sm:size-8 rounded-sm",
+      "icon-lg": "size-11 sm:size-10",
     },
   },
   defaultVariants: {

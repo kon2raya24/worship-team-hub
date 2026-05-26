@@ -145,7 +145,7 @@ export default async function SchedulePage() {
                       id={`user-${d}`}
                       name="user_id"
                       required
-                      className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm dark:bg-input/30"
+                      className="h-10 sm:h-8 w-full rounded-lg border border-input bg-transparent px-3 sm:px-2.5 py-1 text-sm dark:bg-input/30"
                     >
                       <option value="">Pick…</option>
                       {(members ?? []).map((m) => (
@@ -163,7 +163,7 @@ export default async function SchedulePage() {
                       id={`role-${d}`}
                       name="role"
                       required
-                      className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm dark:bg-input/30"
+                      className="h-10 sm:h-8 w-full rounded-lg border border-input bg-transparent px-3 sm:px-2.5 py-1 text-sm dark:bg-input/30"
                     >
                       {ROLES.map((r) => (
                         <option key={r} value={r}>
@@ -207,7 +207,7 @@ export default async function SchedulePage() {
                 id="custom-user"
                 name="user_id"
                 required
-                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm dark:bg-input/30"
+                className="h-10 sm:h-8 w-full rounded-lg border border-input bg-transparent px-3 sm:px-2.5 py-1 text-sm dark:bg-input/30"
               >
                 <option value="">Pick…</option>
                 {(members ?? []).map((m) => (
