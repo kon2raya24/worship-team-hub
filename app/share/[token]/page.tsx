@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ListMusic, Calendar, Music } from "lucide-react";
 import { createServiceClient } from "@/lib/supabase/service";
 import { ChordViewer } from "@/components/chord-viewer";
+import { renderTransposedHtml } from "@/lib/chordpro";
 
 type Params = Promise<{ token: string }>;
 
@@ -118,6 +119,7 @@ async function SongShare({
       </div>
       <ChordViewer
         body={song.chordpro_body}
+        initialHtml={renderTransposedHtml(song.chordpro_body, 0)}
         persistKey={`shared:${id}`}
         originalKey={song.original_key}
       />

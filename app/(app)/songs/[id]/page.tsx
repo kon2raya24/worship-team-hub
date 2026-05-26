@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink, StickyNote } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
 import { ChordViewer } from "@/components/chord-viewer";
+import { renderTransposedHtml } from "@/lib/chordpro";
 import { MediaEmbed } from "@/components/media-embed";
 import { buttonVariants } from "@/components/ui/button";
 import { SubmitButton } from "@/components/submit-button";
@@ -133,6 +134,7 @@ export default async function SongDetailPage({ params }: { params: Params }) {
 
       <ChordViewer
         body={song.chordpro_body}
+        initialHtml={renderTransposedHtml(song.chordpro_body, 0)}
         persistKey={song.id}
         originalKey={song.original_key}
       />
