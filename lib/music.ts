@@ -145,6 +145,50 @@ export function degreeOfChord(key: string, chord: string): DegreeIdx | null {
   return null;
 }
 
+/** Relative minor key (a minor 3rd below the major). E.g. C → Am. */
+export function relativeMinor(majorKey: string): string {
+  const useFlats = keyUsesFlats(majorKey);
+  return `${transposeChord(majorKey, -3, useFlats)}m`;
+}
+
+/** Relative major key from a minor key. Strips an optional "m" suffix. */
+export function relativeMajor(minorKey: string): string {
+  const base = minorKey.endsWith("m") ? minorKey.slice(0, -1) : minorKey;
+  // Use the same spelling family as a likely-related major (if the minor
+  // root happens to be a recognized flat-key major, the result will be one
+  // too). The fallback is the sharp side.
+  const flatMajor = transposeChord(base, 3, true);
+  if (KEY_SIGNATURES[flatMajor] && keyUsesFlats(flatMajor)) return flatMajor;
+  return transposeChord(base, 3, false);
+}
+
+/**
+ * Intervals between two pitches, by semitone count. Worship-friendly subset:
+ * skip tritone / m2 / b5 since they basically never come up in chord cues.
+ */
+export const INTERVALS: { name: string; short: string; semitones: number }[] = [
+  { name: "Major 2nd", short: "M2", semitones: 2 },
+  { name: "Minor 3rd", short: "m3", semitones: 3 },
+  { name: "Major 3rd", short: "M3", semitones: 4 },
+  { name: "Perfect 4th", short: "P4", semitones: 5 },
+  { name: "Perfect 5th", short: "P5", semitones: 7 },
+  { name: "Minor 6th", short: "m6", semitones: 8 },
+  { name: "Major 6th", short: "M6", semitones: 9 },
+  { name: "Minor 7th", short: "m7", semitones: 10 },
+  { name: "Major 7th", short: "M7", semitones: 11 },
+  { name: "Octave", short: "P8", semitones: 12 },
+];
+
+/** Semitones from one note to another, mod 12 (0..11). */
+export function intervalSemitones(from: string, to: string): number {
+  return ((semitonesBetween(from, to) % 12) + 12) % 12;
+}
+
+/** Note `semitones` above `from`, respecting the key's spelling preference. */
+export function noteAbove(from: string, semitones: number, useFlats = false): string {
+  return transposeChord(from, semitones, useFlats);
+}
+
 /** Semitone delta from one major key to another. */
 export function semitonesBetween(from: string, to: string): number {
   const a = parseRoot(from);

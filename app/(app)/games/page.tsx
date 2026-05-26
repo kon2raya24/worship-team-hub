@@ -7,6 +7,9 @@ import {
   ArrowRight,
   Hash,
   Guitar,
+  Ruler,
+  CircleDot,
+  Repeat2,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 
@@ -53,6 +56,30 @@ const GAMES = [
     icon: Timer,
     accent: "magenta" as const,
   },
+  {
+    href: "/games/intervals",
+    title: "Interval Trainer",
+    blurb:
+      "What's a P5 above G? What interval is C → E? The alphabet of melody and harmony — useful for vocalists picking out parts on the fly.",
+    icon: Ruler,
+    accent: "pink" as const,
+  },
+  {
+    href: "/games/chord-tones",
+    title: "Chord Tones",
+    blurb:
+      "The 3rd of A. The ♭7th of G7. The 5th of F. Drills the harmony notes singers and string players need at fingertip speed.",
+    icon: CircleDot,
+    accent: "sky" as const,
+  },
+  {
+    href: "/games/relative",
+    title: "Relative Key",
+    blurb:
+      "Major → minor and back. Em is the relative minor of which key? Knowing relatives unlocks half of every worship reharmonization.",
+    icon: Repeat2,
+    accent: "violet-2" as const,
+  },
 ];
 
 const ACCENTS = {
@@ -85,6 +112,24 @@ const ACCENTS = {
     bg: "bg-[#8eff6a]/15",
     text: "text-[#8eff6a]",
     glow: "hover:shadow-[0_0_24px_rgba(142,255,106,0.35)]",
+  },
+  pink: {
+    ring: "ring-[#ff7eb6]/30 hover:ring-[#ff7eb6]/60",
+    bg: "bg-[#ff7eb6]/15",
+    text: "text-[#ff7eb6]",
+    glow: "hover:shadow-[0_0_24px_rgba(255,126,182,0.35)]",
+  },
+  sky: {
+    ring: "ring-[#7dd3fc]/30 hover:ring-[#7dd3fc]/60",
+    bg: "bg-[#7dd3fc]/15",
+    text: "text-[#7dd3fc]",
+    glow: "hover:shadow-[0_0_24px_rgba(125,211,252,0.35)]",
+  },
+  "violet-2": {
+    ring: "ring-[#c4b5fd]/30 hover:ring-[#c4b5fd]/60",
+    bg: "bg-[#c4b5fd]/15",
+    text: "text-[#c4b5fd]",
+    glow: "hover:shadow-[0_0_24px_rgba(196,181,253,0.35)]",
   },
 } as const;
 
