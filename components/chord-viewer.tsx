@@ -333,7 +333,13 @@ export function ChordViewer({
 
       <style jsx global>{`
         .chord-sheet .paragraph {
-          margin-bottom: 1.4em;
+          margin-bottom: 0.9em;
+        }
+        /* Collapse the space between back-to-back comment-only paragraphs
+           (e.g. an intro written as separate {c: G} {c: Dsus4} {c: D}
+           lines) so chord-name rows don't get 30+ px of dead space each. */
+        .chord-sheet .paragraph:has(> .comment:only-child) {
+          margin-bottom: 0;
         }
         .chord-sheet .row {
           display: flex;
@@ -370,8 +376,14 @@ export function ChordViewer({
         .chord-sheet .comment {
           font-style: italic;
           color: #8a92b4;
-          margin: 0.5em 0;
+          margin: 0;
           font-family: var(--font-sans);
+        }
+        /* Restore a small lead-in when a section comment sits directly
+           above its chord-over-lyric block. */
+        .chord-sheet .comment + .row,
+        .chord-sheet .paragraph:has(> .comment) + .paragraph {
+          margin-top: 0.5em;
         }
         .chord-sheet h1, .chord-sheet h2, .chord-sheet h3 {
           font-family: var(--font-heading);
