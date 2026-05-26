@@ -36,7 +36,9 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/forgot-password");
   const isPasswordResetRoute = pathname.startsWith("/reset-password");
   const isPublicRoute =
-    pathname.startsWith("/share") || pathname.startsWith("/auth");
+    pathname.startsWith("/share") ||
+    pathname.startsWith("/auth") ||
+    pathname === "/offline";
 
   if (!user && !isAuthRoute && !isPasswordResetRoute && !isPublicRoute) {
     const url = request.nextUrl.clone();

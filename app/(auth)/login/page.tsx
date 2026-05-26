@@ -40,7 +40,17 @@ export default async function LoginPage({
         <input type="hidden" name="next" value={next} />
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" required autoComplete="email" />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            inputMode="email"
+            enterKeyHint="next"
+            autoCapitalize="none"
+            spellCheck={false}
+          />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -58,6 +68,7 @@ export default async function LoginPage({
             type="password"
             required
             autoComplete="current-password"
+            enterKeyHint="go"
           />
         </div>
         {error && (

@@ -57,6 +57,10 @@ export default async function ForgotPasswordPage({
               type="email"
               required
               autoComplete="email"
+              inputMode="email"
+              enterKeyHint="send"
+              autoCapitalize="none"
+              spellCheck={false}
             />
           </div>
           {error && (

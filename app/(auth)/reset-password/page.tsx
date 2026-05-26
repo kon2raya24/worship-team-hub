@@ -48,6 +48,7 @@ export default async function ResetPasswordPage({
             required
             minLength={8}
             autoComplete="new-password"
+            enterKeyHint="next"
           />
         </div>
         <div className="space-y-2">
@@ -59,6 +60,7 @@ export default async function ResetPasswordPage({
             required
             minLength={8}
             autoComplete="new-password"
+            enterKeyHint="go"
           />
         </div>
         {error && (

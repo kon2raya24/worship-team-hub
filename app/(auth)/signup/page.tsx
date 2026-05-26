@@ -41,7 +41,14 @@ export default async function SignupPage({
       <form action={signupAction} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="display_name">Name</Label>
-          <Input id="display_name" name="display_name" required />
+          <Input
+            id="display_name"
+            name="display_name"
+            required
+            autoComplete="name"
+            enterKeyHint="next"
+            autoCapitalize="words"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -51,6 +58,10 @@ export default async function SignupPage({
             type="email"
             required
             autoComplete="email"
+            inputMode="email"
+            enterKeyHint="next"
+            autoCapitalize="none"
+            spellCheck={false}
           />
         </div>
         <div className="space-y-2">
@@ -62,6 +73,7 @@ export default async function SignupPage({
             required
             minLength={8}
             autoComplete="new-password"
+            enterKeyHint="go"
           />
         </div>
         {error && (
