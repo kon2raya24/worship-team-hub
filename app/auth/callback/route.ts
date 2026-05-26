@@ -13,7 +13,14 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? "/";
+  // Only accept same-origin relative paths. Reject absolute URLs and
+  // protocol-relative ("//evil.com") to prevent open-redirect via crafted
+  // Supabase callback links.
+  const rawNext = url.searchParams.get("next");
+  const next =
+    rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//")
+      ? rawNext
+      : "/";
 
   if (code) {
     const supabase = await createClient();
