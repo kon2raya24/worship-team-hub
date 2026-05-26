@@ -9,7 +9,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <Nav displayName={profile.display_name} role={profile.role} />
-      <main className="mx-auto max-w-6xl px-3 sm:px-4 md:px-6 py-4 sm:py-6 flex-1 w-full fade-in">
+      {/* pb-24 leaves room for the mobile bottom tab bar; md: collapses it. */}
+      <main className="mx-auto max-w-6xl px-3 sm:px-4 md:px-6 pt-4 sm:pt-6 pb-24 md:pb-6 flex-1 w-full fade-in">
         {children}
       </main>
       <SongCacheSync />

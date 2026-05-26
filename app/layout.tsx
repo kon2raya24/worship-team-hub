@@ -41,7 +41,9 @@ export const viewport: Viewport = {
   themeColor: "#070a17",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
+  // Allow pinch-zoom (accessibility) but keep it conservative so accidental
+  // multi-touch during auto-scroll on a chord chart doesn't zoom 5×.
+  maximumScale: 2,
   viewportFit: "cover",
 };
 
