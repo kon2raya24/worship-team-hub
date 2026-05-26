@@ -14,6 +14,9 @@ export function ShareReceiver({ textareaId }: { textareaId: string }) {
   const [hint, setHint] = useState<string | null>(null);
   const handled = useRef(false);
 
+  // One-shot init that reads URL params + writes to an uncontrolled DOM
+  // textarea and registers a launchQueue consumer. setHint reflects the
+  // result of those external side-effects, not derived state.
   useEffect(() => {
     if (handled.current) return;
 
@@ -31,6 +34,7 @@ export function ShareReceiver({ textareaId }: { textareaId: string }) {
       if (url) parts.push(`{artist: }`, `{reference: ${url}}`);
       if (text) parts.push("", text);
       ta.value = (parts.join("\n") + "\n" + (ta.value ?? "")).trim();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHint("Pre-filled from shared content. Edit then hit Import.");
       ta.focus();
       return;

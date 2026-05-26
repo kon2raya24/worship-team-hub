@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { createShareLink } from "@/app/(app)/share-actions";
 
@@ -17,11 +17,15 @@ export function ShareButton({
   const [clipboardFailed, setClipboardFailed] = useState(false);
 
   // Reset state if the parent reuses the button for a different resource.
-  useEffect(() => {
+  // React 19 prop-change pattern: compare during render rather than effect.
+  const resourceKey = `${resourceType}:${resourceId}`;
+  const [prevResourceKey, setPrevResourceKey] = useState(resourceKey);
+  if (prevResourceKey !== resourceKey) {
+    setPrevResourceKey(resourceKey);
     setUrl(null);
     setCopied(false);
     setClipboardFailed(false);
-  }, [resourceType, resourceId]);
+  }
 
   function generate() {
     start(async () => {

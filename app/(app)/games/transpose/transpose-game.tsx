@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, X, RefreshCw, ArrowRight } from "lucide-react";
 import {
   PROGRESSIONS,
@@ -48,16 +48,20 @@ export function TransposeGame() {
     Array.from({ length: ROUNDS_PER_GAME }, newRound),
   );
   const [roundIndex, setRoundIndex] = useState(0);
-  const [answers, setAnswers] = useState<string[]>([]);
+  const round = rounds[roundIndex];
+  const [answers, setAnswers] = useState<string[]>(() =>
+    round.progression.map(() => "")
+  );
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
 
-  const round = rounds[roundIndex];
-
-  // Reset inputs whenever the round changes.
-  useEffect(() => {
+  // Reset inputs whenever the round changes. React 19 prop-sync pattern:
+  // compare during render rather than running an effect.
+  const [prevRound, setPrevRound] = useState(round);
+  if (prevRound !== round) {
+    setPrevRound(round);
     setAnswers(round.progression.map(() => ""));
-  }, [round]);
+  }
 
   const isLast = roundIndex === rounds.length - 1;
   const allCorrect =

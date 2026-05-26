@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   DndContext,
   closestCenter,
   type DragEndEvent,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -38,13 +39,21 @@ export function SetlistSongs({
 }) {
   const [items, setItems] = useState(songs);
   const [, startTransition] = useTransition();
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  // Touch: long-press 200ms / 8px tolerance — keeps vertical scroll usable on phones.
+  // Pointer (mouse / desktop trackpad): start on 5px movement, no delay.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
 
-  // When the server re-renders with new songs (added / removed / reordered server-side),
-  // sync the local optimistic state to the fresh data.
-  useEffect(() => {
+  // React 19 prop-sync pattern: when the server re-renders with new songs
+  // (added / removed / reordered server-side), reset local optimistic state
+  // during render — not in an effect.
+  const [prevSongs, setPrevSongs] = useState(songs);
+  if (prevSongs !== songs) {
+    setPrevSongs(songs);
     setItems(songs);
-  }, [songs]);
+  }
 
   function handleDragEnd(e: DragEndEvent) {
     const { active, over } = e;

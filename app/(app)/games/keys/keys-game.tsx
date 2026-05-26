@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, X, RefreshCw } from "lucide-react";
 import { KEY_SIGNATURES, pickN, pickOne } from "@/lib/music";
 
@@ -72,16 +72,20 @@ export function KeysGame() {
   const [picked, setPicked] = useState<string | number | null>(null);
   const [score, setScore] = useState(0);
 
+  // Reset the selection whenever we move to a new question. React 19 prop-sync
+  // pattern: compare during render rather than running an effect.
+  const [prevIdx, setPrevIdx] = useState(idx);
+  if (prevIdx !== idx) {
+    setPrevIdx(idx);
+    setPicked(null);
+  }
+
   const q = questions[idx];
 
   const isLast = idx === questions.length - 1;
   const isCorrect =
     picked !== null &&
     (q.mode === "count" ? picked === q.correct : picked === q.correct);
-
-  useEffect(() => {
-    setPicked(null);
-  }, [idx]);
 
   function choose(option: string | number) {
     if (picked !== null) return;

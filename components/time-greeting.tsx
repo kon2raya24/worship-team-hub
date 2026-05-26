@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Sparkles } from "lucide-react";
 
 function greetingFor(hour: number) {
@@ -10,26 +10,31 @@ function greetingFor(hour: number) {
   return "Good evening";
 }
 
+function getSnapshot(): string {
+  const now = new Date();
+  const greet = greetingFor(now.getHours()).toUpperCase();
+  const weekday = now.toLocaleDateString(undefined, { weekday: "long" });
+  return `${greet} · ${weekday}`;
+}
+
+// No subscription — the greeting doesn't need to update mid-session.
+const subscribe = () => () => {};
+
+// Render an empty string on the server to avoid timezone-related hydration
+// mismatch (Philippines is UTC+8; server clock is UTC).
+const getServerSnapshot = (): string => "";
+
 /**
  * Renders the dashboard eyebrow ("GOOD MORNING · SUNDAY") using the
- * browser's local time, since the server runs in UTC and would otherwise
- * be 8 hours off for the Philippines.
+ * browser's local time.
  */
 export function TimeGreeting() {
-  // Use a neutral placeholder on first server render so hydration matches.
-  const [label, setLabel] = useState<string | null>(null);
-
-  useEffect(() => {
-    const now = new Date();
-    const greet = greetingFor(now.getHours()).toUpperCase();
-    const weekday = now.toLocaleDateString(undefined, { weekday: "long" });
-    setLabel(`${greet} · ${weekday}`);
-  }, []);
+  const label = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return (
     <p className="eyebrow flex items-center gap-2 min-h-[1em]" suppressHydrationWarning>
       <Sparkles className="size-3" strokeWidth={2} />
-      <span>{label ?? ""}</span>
+      <span>{label}</span>
     </p>
   );
 }

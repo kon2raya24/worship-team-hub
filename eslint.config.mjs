@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Design mockups extracted from a zip — not part of the runtime app.
+    "template/**",
   ]),
 ]);
 
