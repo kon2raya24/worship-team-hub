@@ -1,3 +1,4 @@
+import DOMPurify from "isomorphic-dompurify";
 import {
   ChordProParser,
   ChordsOverWordsParser,
@@ -24,7 +25,10 @@ export function transposeSong(song: Song, semitones: number): Song {
 }
 
 export function renderHtml(song: Song): string {
-  return new HtmlDivFormatter().format(song);
+  // chordsheetjs does NOT HTML-escape titles/comments/lyrics, so a malicious
+  // ChordPro body could inject <script>/onerror. Sanitize before this string
+  // ever reaches dangerouslySetInnerHTML (in-app viewer + public share links).
+  return DOMPurify.sanitize(new HtmlDivFormatter().format(song));
 }
 
 export function renderTransposedHtml(body: string, semitones = 0): string {

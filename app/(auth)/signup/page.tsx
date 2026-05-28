@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 import { friendlyAuthError } from "@/lib/auth-errors";
 
 async function signupAction(formData: FormData) {
@@ -11,12 +12,14 @@ async function signupAction(formData: FormData) {
   const display_name = String(formData.get("display_name") ?? "");
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
+  const captchaToken =
+    String(formData.get("cf-turnstile-response") ?? "") || undefined;
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { display_name } },
+    options: { data: { display_name }, captchaToken },
   });
 
   if (error) {
@@ -81,6 +84,7 @@ export default async function SignupPage({
             {error}
           </p>
         )}
+        <TurnstileWidget />
         <SubmitButton className="w-full" pendingLabel="Creating…">
           Create account
         </SubmitButton>

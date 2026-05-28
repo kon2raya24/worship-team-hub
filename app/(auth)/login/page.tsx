@@ -4,16 +4,28 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 import { friendlyAuthError } from "@/lib/auth-errors";
+
+// Only same-site relative paths — never an absolute/protocol-relative URL.
+function safeNext(value: string): string {
+  return value.startsWith("/") && !value.startsWith("//") ? value : "/";
+}
 
 async function loginAction(formData: FormData) {
   "use server";
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/");
+  const next = safeNext(String(formData.get("next") ?? "/"));
+  const captchaToken =
+    String(formData.get("cf-turnstile-response") ?? "") || undefined;
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+    options: { captchaToken },
+  });
 
   if (error) {
     redirect(
@@ -83,6 +95,7 @@ export default async function LoginPage({
             {error}
           </p>
         )}
+        <TurnstileWidget />
         <SubmitButton className="w-full" pendingLabel="Signing in…">
           Sign in
         </SubmitButton>
