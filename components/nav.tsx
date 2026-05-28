@@ -98,7 +98,7 @@ function DesktopNav({
             </span>
           </Link>
 
-          <nav className="flex-1 min-w-0 flex gap-0.5 text-sm overflow-x-auto no-scrollbar">
+          <nav className="flex-1 min-w-0 flex flex-wrap gap-0.5 text-sm">
             {ALL_LINKS.map(({ href, label, Icon }) => {
               const active = isActive(pathname, href);
               return (
@@ -149,15 +149,6 @@ function DesktopNav({
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        :global(.no-scrollbar) {
-          scrollbar-width: none;
-        }
-        :global(.no-scrollbar::-webkit-scrollbar) {
-          display: none;
-        }
-      `}</style>
     </header>
   );
 }
