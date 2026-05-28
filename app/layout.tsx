@@ -18,15 +18,62 @@ const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = "https://worship-team-hub.vercel.app";
+const SITE_DESCRIPTION =
+  "Chord charts, setlists, schedule, and devotions for the worship team — offline-ready and on every device.";
+
 export const metadata: Metadata = {
-  title: "Worship Hub",
-  description:
-    "Chord charts, setlists, schedule and devotions for the worship team.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Worship Hub",
+    template: "%s · Worship Hub",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: "Worship Hub",
+  keywords: [
+    "worship team",
+    "chord charts",
+    "setlists",
+    "worship schedule",
+    "song library",
+    "church worship",
+    "devotions",
+  ],
+  authors: [{ name: "Worship Hub" }],
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     title: "Worship Hub",
     statusBarStyle: "black-translucent",
+  },
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Worship Hub",
+    title: "Worship Hub",
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    images: [
+      {
+        url: "/icons/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "Worship Hub",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Worship Hub",
+    description: SITE_DESCRIPTION,
+    images: ["/icons/icon-512.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
   },
   icons: {
     icon: [
