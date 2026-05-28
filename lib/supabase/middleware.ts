@@ -55,5 +55,30 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Opt-in 2FA enforcement: a user who enrolled a verified factor must finish
+  // the code step (reach AAL2) before any protected route. Accounts without a
+  // factor report nextLevel "aal1", so they are never redirected here.
+  const isMfaRoute = pathname.startsWith("/mfa");
+  if (
+    user &&
+    !isMfaRoute &&
+    !isAuthRoute &&
+    !isPasswordResetRoute &&
+    !isPublicRoute
+  ) {
+    try {
+      const { data: aal } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal && aal.currentLevel === "aal1" && aal.nextLevel === "aal2") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/mfa";
+        url.searchParams.set("next", pathname);
+        return NextResponse.redirect(url);
+      }
+    } catch {
+      // Fail open — never lock anyone out over an MFA-status hiccup.
+    }
+  }
+
   return response;
 }

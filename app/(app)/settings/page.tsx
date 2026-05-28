@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
+import { TwoFactorSetup } from "@/components/two-factor-setup";
 import { updateProfile, changePassword } from "./actions";
 
 type SearchParams = Promise<{ error?: string; passwordChanged?: string }>;
@@ -127,6 +128,9 @@ export default async function SettingsPage({
 
         <SubmitButton pendingLabel="Updating…">Update password</SubmitButton>
       </form>
+
+      {/* Two-factor authentication */}
+      <TwoFactorSetup />
     </div>
   );
 }

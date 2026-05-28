@@ -20,6 +20,13 @@ async function loginAction(formData: FormData) {
       `/login?error=${encodeURIComponent(friendlyAuthError(error.message))}&next=${encodeURIComponent(next)}`
     );
   }
+
+  // If this account enrolled a second factor, require the code step before
+  // landing on a protected page. Accounts without 2FA have nextLevel "aal1".
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2") {
+    redirect(`/mfa?next=${encodeURIComponent(next)}`);
+  }
   redirect(next);
 }
 
