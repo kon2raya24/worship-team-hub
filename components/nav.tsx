@@ -98,7 +98,7 @@ function DesktopNav({
             </span>
           </Link>
 
-          <nav className="flex-1 min-w-0 flex flex-wrap gap-0.5 text-sm">
+          <nav className="flex-1 min-w-0 flex flex-wrap justify-center gap-0.5 text-sm">
             {ALL_LINKS.map(({ href, label, Icon }) => {
               const active = isActive(pathname, href);
               return (
