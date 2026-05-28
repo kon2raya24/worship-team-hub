@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TurnstileWidget } from "@/components/turnstile-widget";
+import { verifyTurnstile } from "@/lib/turnstile";
 import { friendlyAuthError } from "@/lib/auth-errors";
 
 async function signupAction(formData: FormData) {
@@ -14,12 +15,17 @@ async function signupAction(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const captchaToken =
     String(formData.get("cf-turnstile-response") ?? "") || undefined;
+  if (!(await verifyTurnstile(captchaToken))) {
+    redirect(
+      `/signup?error=${encodeURIComponent("Verification failed — please try again.")}`
+    );
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { display_name }, captchaToken },
+    options: { data: { display_name } },
   });
 
   if (error) {

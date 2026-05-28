@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TurnstileWidget } from "@/components/turnstile-widget";
+import { verifyTurnstile } from "@/lib/turnstile";
 import { friendlyAuthError } from "@/lib/auth-errors";
 
 // Only same-site relative paths — never an absolute/protocol-relative URL.
@@ -19,13 +20,14 @@ async function loginAction(formData: FormData) {
   const next = safeNext(String(formData.get("next") ?? "/"));
   const captchaToken =
     String(formData.get("cf-turnstile-response") ?? "") || undefined;
+  if (!(await verifyTurnstile(captchaToken))) {
+    redirect(
+      `/login?error=${encodeURIComponent("Verification failed — please try again.")}&next=${encodeURIComponent(next)}`
+    );
+  }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-    options: { captchaToken },
-  });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     redirect(

@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TurnstileWidget } from "@/components/turnstile-widget";
+import { verifyTurnstile } from "@/lib/turnstile";
 import { friendlyAuthError } from "@/lib/auth-errors";
 
 async function resetAction(formData: FormData) {
@@ -15,6 +16,11 @@ async function resetAction(formData: FormData) {
   if (!email) {
     redirect("/forgot-password?error=Email%20required");
   }
+  if (!(await verifyTurnstile(captchaToken))) {
+    redirect(
+      `/forgot-password?error=${encodeURIComponent("Verification failed — please try again.")}`
+    );
+  }
 
   const supabase = await createClient();
   const origin =
@@ -22,7 +28,6 @@ async function resetAction(formData: FormData) {
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback?next=/reset-password`,
-    captchaToken,
   });
 
   if (error) {
