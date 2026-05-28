@@ -203,12 +203,11 @@ export function ChordViewer({
 
   return (
     <div className="glass overflow-hidden">
-      {/* Sticky toolbar — compact on mobile, expanded on desktop.
-          `top` accounts for the header height + iOS notch in standalone PWA. */}
-      <div
-        className="sticky z-10 flex flex-wrap items-center gap-x-2 gap-y-2 px-2 sm:px-4 py-2 border-b border-white/[0.08] bg-[#070a17]/90 backdrop-blur-xl print:hidden"
-        style={{ top: "calc(env(safe-area-inset-top) + 57px)" }}
-      >
+      {/* Toolbar — in normal flow (not sticky) so it never overlaps the chart
+          and the first line (e.g. an "Intro" comment) stays readable. The
+          floating Pause button below keeps auto-scroll controllable once the
+          toolbar has scrolled off. */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 px-2 sm:px-4 py-2 border-b border-white/[0.08] bg-white/[0.02] print:hidden">
         {/* Key */}
         <ToolGroup label="Key">
           <ToolBtn label="−" onClick={() => setSemitones((s) => s - 1)} aria="Transpose down" />
@@ -330,6 +329,19 @@ export function ChordViewer({
         style={{ fontSize, lineHeight: 1.9 }}
         dangerouslySetInnerHTML={{ __html: html }}
       />
+
+      {/* Floating stop control — auto-scroll is hands-free, so keep a Pause
+          reachable once the (non-sticky) toolbar has scrolled off-screen. */}
+      {scrolling && (
+        <button
+          type="button"
+          onClick={() => setScrolling(false)}
+          aria-label="Pause auto-scroll"
+          className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 px-4 h-11 rounded-full bg-[#8b5cf6] text-white text-sm font-medium shadow-lg shadow-[#8b5cf6]/40 print:hidden"
+        >
+          <Pause className="size-4" /> Pause
+        </button>
+      )}
 
       <style jsx global>{`
         .chord-sheet .paragraph {
