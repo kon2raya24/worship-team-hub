@@ -9,14 +9,16 @@ import { PageHeader } from "@/components/page-header";
 import { assignMember, unassign } from "./actions";
 
 const ROLES = [
-  "lead_vocal",
-  "vocals",
-  "acoustic",
-  "electric",
-  "bass",
-  "keys",
-  "drums",
-  "tech",
+  "Worship Leader",
+  "Lead Vocals",
+  "Backing Vocals",
+  "Acoustic Guitar",
+  "Electric Guitar",
+  "Bass Guitar",
+  "Keys",
+  "Drums",
+  "Sound / Tech",
+  "Media / Slides",
 ];
 
 function fmt(d: string) {
