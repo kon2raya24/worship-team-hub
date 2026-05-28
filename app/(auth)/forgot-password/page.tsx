@@ -4,11 +4,14 @@ import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 import { friendlyAuthError } from "@/lib/auth-errors";
 
 async function resetAction(formData: FormData) {
   "use server";
   const email = String(formData.get("email") ?? "").trim();
+  const captchaToken =
+    String(formData.get("cf-turnstile-response") ?? "") || undefined;
   if (!email) {
     redirect("/forgot-password?error=Email%20required");
   }
@@ -19,6 +22,7 @@ async function resetAction(formData: FormData) {
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    captchaToken,
   });
 
   if (error) {
@@ -68,6 +72,7 @@ export default async function ForgotPasswordPage({
               {error}
             </p>
           )}
+          <TurnstileWidget />
           <SubmitButton className="w-full" pendingLabel="Sending…">
             Send reset link
           </SubmitButton>
