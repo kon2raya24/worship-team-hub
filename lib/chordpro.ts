@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 import {
   ChordProParser,
   ChordsOverWordsParser,
@@ -27,8 +27,17 @@ export function transposeSong(song: Song, semitones: number): Song {
 export function renderHtml(song: Song): string {
   // chordsheetjs does NOT HTML-escape titles/comments/lyrics, so a malicious
   // ChordPro body could inject <script>/onerror. Sanitize before this string
-  // ever reaches dangerouslySetInnerHTML (in-app viewer + public share links).
-  return DOMPurify.sanitize(new HtmlDivFormatter().format(song));
+  // ever reaches dangerouslySetInnerHTML (server-rendered song page + client
+  // viewer + public share links). sanitize-html is pure JS (no jsdom), so it
+  // runs safely in Vercel's serverless runtime — unlike isomorphic-dompurify.
+  return sanitizeHtml(new HtmlDivFormatter().format(song), {
+    allowedTags: [
+      "div", "span", "p", "br", "h1", "h2", "h3",
+      "strong", "em", "b", "i", "sub", "sup",
+      "table", "thead", "tbody", "tr", "td", "th",
+    ],
+    allowedAttributes: { "*": ["class"] },
+  });
 }
 
 export function renderTransposedHtml(body: string, semitones = 0): string {
