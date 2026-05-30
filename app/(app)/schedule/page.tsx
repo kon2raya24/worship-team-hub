@@ -6,6 +6,7 @@ import { TextSubmit } from "@/components/text-submit";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
+import { FormSelect } from "@/components/form-select";
 import { assignMember, unassign } from "./actions";
 
 const ROLES = [
@@ -143,36 +144,28 @@ export default async function SchedulePage() {
                     <Label htmlFor={`user-${d}`} className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
                       Member
                     </Label>
-                    <select
+                    <FormSelect
                       id={`user-${d}`}
                       name="user_id"
                       required
-                      className="h-10 sm:h-8 w-full rounded-lg border border-input bg-transparent px-3 sm:px-2.5 py-1 text-sm dark:bg-input/30"
-                    >
-                      <option value="">Pick…</option>
-                      {(members ?? []).map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.display_name}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Pick…"
+                      options={(members ?? []).map((m) => ({
+                        value: m.id,
+                        label: m.display_name ?? "",
+                      }))}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor={`role-${d}`} className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
                       Role
                     </Label>
-                    <select
+                    <FormSelect
                       id={`role-${d}`}
                       name="role"
                       required
-                      className="h-10 sm:h-8 w-full rounded-lg border border-input bg-transparent px-3 sm:px-2.5 py-1 text-sm dark:bg-input/30"
-                    >
-                      {ROLES.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
+                      defaultValue={ROLES[0]}
+                      options={ROLES.map((r) => ({ value: r, label: r }))}
+                    />
                   </div>
                   <SubmitButton
                     size="sm"
@@ -205,19 +198,16 @@ export default async function SchedulePage() {
               <Label htmlFor="custom-user" className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
                 Member
               </Label>
-              <select
+              <FormSelect
                 id="custom-user"
                 name="user_id"
                 required
-                className="h-10 sm:h-8 w-full rounded-lg border border-input bg-transparent px-3 sm:px-2.5 py-1 text-sm dark:bg-input/30"
-              >
-                <option value="">Pick…</option>
-                {(members ?? []).map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.display_name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Pick…"
+                options={(members ?? []).map((m) => ({
+                  value: m.id,
+                  label: m.display_name ?? "",
+                }))}
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="custom-role" className="text-[10px] uppercase tracking-wider text-[#8a92b4]">

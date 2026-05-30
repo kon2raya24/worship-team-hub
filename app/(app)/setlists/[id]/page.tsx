@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SetlistSongs, type SetlistSongRow } from "@/components/setlist-songs";
 import { ShareButton } from "@/components/share-button";
+import { FormSelect } from "@/components/form-select";
 import { addSongToSetlist, deleteSetlist } from "../actions";
 
 type Params = Promise<{ id: string }>;
@@ -148,19 +149,16 @@ export default async function SetlistDetailPage({ params }: { params: Params }) 
           >
             <div className="space-y-1.5">
               <Label htmlFor="song_id">Song</Label>
-              <select
+              <FormSelect
                 id="song_id"
                 name="song_id"
                 required
-                className="w-full rounded-lg border border-white/10 bg-white/[0.04] p-2 text-sm h-9"
-              >
-                <option value="">Select a song…</option>
-                {availableSongs.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.title} {s.original_key ? `(${s.original_key})` : ""}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select a song…"
+                options={availableSongs.map((s) => ({
+                  value: s.id,
+                  label: `${s.title}${s.original_key ? ` (${s.original_key})` : ""}`,
+                }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="played_in_key">Play in key</Label>

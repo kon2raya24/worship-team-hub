@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileLink } from "@/components/file-link";
 import { PageHeader } from "@/components/page-header";
+import { FormSelect } from "@/components/form-select";
 import { uploadFile, deleteFile } from "./actions";
 
 const kindIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -69,18 +70,15 @@ export default async function FilesPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="song_id">Attach to song (optional)</Label>
-              <select
+              <FormSelect
                 id="song_id"
                 name="song_id"
-                className="w-full rounded-lg border border-white/10 bg-white/[0.04] p-2 text-sm h-9"
-              >
-                <option value="">— General library —</option>
-                {(songs ?? []).map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.title}
-                  </option>
-                ))}
-              </select>
+                defaultValue=""
+                options={[
+                  { value: "", label: "General library" },
+                  ...(songs ?? []).map((s) => ({ value: s.id, label: s.title })),
+                ]}
+              />
             </div>
           </div>
           <SubmitButton pendingLabel="Uploading…" className="gap-1.5">
