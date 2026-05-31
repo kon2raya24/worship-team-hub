@@ -1,4 +1,6 @@
 import { Megaphone, Pin } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, isLeader } from "@/lib/auth";
 import { SubmitButton } from "@/components/submit-button";
@@ -41,7 +43,10 @@ export default async function AnnouncementsPage() {
             <Input id="title" name="title" required />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="body">Body</Label>
+            <Label htmlFor="body">
+              Body{" "}
+              <span className="font-normal text-[#8a92b4]">· markdown supported</span>
+            </Label>
             <Textarea id="body" name="body" rows={3} required className="resize-none" />
           </div>
           <label className="flex items-center gap-2 text-sm text-[#c8cee6]">
@@ -76,9 +81,9 @@ export default async function AnnouncementsPage() {
                   <div className="text-xs text-[#8a92b4] mt-0.5">
                     {author} · {new Date(a.created_at).toLocaleDateString()}
                   </div>
-                  <p className="whitespace-pre-wrap mt-2 text-sm text-white/85 leading-relaxed">
-                    {a.body}
-                  </p>
+                  <div className="prose prose-invert prose-sm max-w-none mt-2 prose-headings:font-display prose-headings:text-white prose-p:text-white/85 prose-li:text-white/85 prose-strong:text-white prose-a:text-[#00e8ff]">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{a.body}</ReactMarkdown>
+                  </div>
                 </div>
                 {canEdit && (
                   <div className="flex gap-3 shrink-0">

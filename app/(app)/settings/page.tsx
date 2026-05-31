@@ -1,4 +1,11 @@
-import { Settings as SettingsIcon, User, KeyRound, CheckCircle2 } from "lucide-react";
+import {
+  Settings as SettingsIcon,
+  User,
+  KeyRound,
+  CheckCircle2,
+  Smartphone,
+  Download,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile, roleLabel } from "@/lib/auth";
 import { SubmitButton } from "@/components/submit-button";
@@ -6,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
 import { TwoFactorSetup } from "@/components/two-factor-setup";
+import { PushNotifications } from "@/components/push-notifications";
 import { updateProfile, changePassword } from "./actions";
 
 type SearchParams = Promise<{ error?: string; passwordChanged?: string }>;
@@ -98,6 +106,16 @@ export default async function SettingsPage({
         )}
 
         <div className="space-y-1.5">
+          <Label htmlFor="current_password">Current password</Label>
+          <Input
+            id="current_password"
+            name="current_password"
+            type="password"
+            required
+            autoComplete="current-password"
+          />
+        </div>
+        <div className="space-y-1.5">
           <Label htmlFor="password">New password</Label>
           <Input
             id="password"
@@ -131,6 +149,36 @@ export default async function SettingsPage({
 
       {/* Two-factor authentication */}
       <TwoFactorSetup />
+
+      {/* Push notifications (inert until a VAPID key is configured) */}
+      <PushNotifications />
+
+      {/* Android app — links to the latest GitHub release (same source the
+          app's in-app OTA updater pulls from). */}
+      <div className="glass p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Smartphone className="size-4 text-[#00e8ff]" />
+          <h2 className="font-display font-semibold text-base">Android app</h2>
+        </div>
+        <p className="text-sm text-[#8a92b4]">
+          Install the native Android app for offline songs and setlists plus push
+          notifications. Once it&apos;s installed, it updates itself when a new
+          version ships.
+        </p>
+        <a
+          href="https://github.com/kon2raya24/worship-team-hub-mobile/releases/latest/download/app-release.apk"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-white/[0.12] bg-white/[0.04] text-white font-semibold text-sm hover:bg-white/[0.08] transition"
+        >
+          <Download className="size-4" />
+          Download for Android
+        </a>
+        <p className="text-xs text-[#8a92b4]">
+          Android only — you may need to allow installs from your browser the
+          first time. On iPhone, add this site to your home screen instead.
+        </p>
+      </div>
     </div>
   );
 }

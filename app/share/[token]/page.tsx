@@ -136,7 +136,7 @@ async function SetlistShare({
 }) {
   const { data: setlist } = await admin
     .from("setlists")
-    .select("service_date, theme, notes")
+    .select("service_date, theme")
     .eq("id", id)
     .maybeSingle();
   if (!setlist) notFound();
@@ -164,12 +164,6 @@ async function SetlistShare({
           })}
         </p>
       </div>
-
-      {setlist.notes && (
-        <div className="glass p-4 text-sm whitespace-pre-wrap text-white/85">
-          {setlist.notes}
-        </div>
-      )}
 
       <ol className="space-y-1.5">
         {(rows ?? []).map((r, i) => {

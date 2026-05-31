@@ -69,11 +69,11 @@ export default async function SongsPage({
       {/* Page header */}
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-start gap-3">
-          <span className="inline-flex items-center justify-center size-11 rounded-lg bg-primary/10 text-primary shrink-0">
-            <Music className="size-5" />
+          <span className="inline-flex items-center justify-center size-11 rounded-lg bg-white/[0.05] ring-1 ring-white/[0.12] text-[#00e8ff] shrink-0">
+            <Music className="size-5" strokeWidth={1.75} />
           </span>
           <div>
-            <h1 className="text-2xl md:text-3xl font-heading font-semibold tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-display font-semibold tracking-tight">
               Song library
             </h1>
             <p className="text-sm text-muted-foreground">

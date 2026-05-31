@@ -105,6 +105,16 @@ function MfaChallenge() {
           {busy ? "Verifying…" : "Verify"}
         </Button>
       </form>
+      <button
+        type="button"
+        onClick={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+        className="w-full text-center text-xs text-[#8a92b4] hover:text-white transition-colors"
+      >
+        Sign out
+      </button>
     </div>
   );
 }

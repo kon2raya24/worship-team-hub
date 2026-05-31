@@ -317,6 +317,11 @@ function SignOutButton({ compact = false }: { compact?: boolean }) {
     // The redirect inside signOut() unmounts everything when it completes.
     // Buttons are disabled while pending so tapping again is harmless.
     startTransition(async () => {
+      // Clear SW caches holding this user's data before the session ends, so
+      // the next user on this browser can't be served it offline.
+      try {
+        navigator.serviceWorker?.controller?.postMessage({ type: "CLEAR_CACHES" });
+      } catch {}
       await signOut();
     });
   }

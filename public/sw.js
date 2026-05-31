@@ -3,15 +3,19 @@
  *   - APP SHELL: static assets (JS/CSS/fonts/images) → cache-first.
  *   - SUPABASE REST: stale-while-revalidate for /rest/v1/* so the songs
  *     list comes from cache when offline but updates on next online open.
- *   - NAV: network-first, fall back to a cached /offline page on failure.
+ *   - NAV: network-first into a per-user PAGES cache (cleared on logout),
+ *     falling back to the cached /offline page when the network fails.
  *   - SKIP auth + write paths entirely (always network).
  *   - PUSH: shows a notification when a push message arrives.
  *   - BACKGROUND SYNC: registers a retry queue for failed writes.
  */
 
-const VERSION = "v3";
+const VERSION = "v4";
 const SHELL_CACHE = `worship-shell-${VERSION}`;
 const API_CACHE = `worship-api-${VERSION}`;
+// Navigated page HTML lives in its own cache so it can be cleared on logout
+// (it may contain the signed-in user's data) without wiping static assets.
+const PAGES_CACHE = `worship-pages-${VERSION}`;
 const OFFLINE_URL = "/offline";
 
 const SHELL_FILES = [
@@ -81,9 +85,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Navigations → network-first with offline fallback.
+  // Navigations → network-first into PAGES_CACHE (cleared on logout) with an
+  // offline fallback. Keeping page HTML out of SHELL_CACHE lets a logout drop
+  // one user's pages without re-downloading static assets.
   if (req.mode === "navigate") {
-    event.respondWith(networkFirst(req, SHELL_CACHE));
+    event.respondWith(networkFirst(req, PAGES_CACHE));
     return;
   }
 });
@@ -110,7 +116,8 @@ async function networkFirst(req, cacheName) {
   } catch {
     const cached = await cache.match(req);
     if (cached) return cached;
-    const offline = await cache.match(OFFLINE_URL);
+    const shell = await caches.open(SHELL_CACHE);
+    const offline = await shell.match(OFFLINE_URL);
     if (offline) return offline;
     return new Response("Offline", { status: 503 });
   }
@@ -187,5 +194,12 @@ self.addEventListener("sync", (event) => {
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
+  }
+  if (event.data && event.data.type === "CLEAR_CACHES") {
+    // On logout: drop per-user page HTML + RLS-scoped REST data so the next
+    // user on this device is never served the previous user's content.
+    event.waitUntil(
+      Promise.all([caches.delete(PAGES_CACHE), caches.delete(API_CACHE)])
+    );
   }
 });

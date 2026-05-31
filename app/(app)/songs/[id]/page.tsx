@@ -7,6 +7,7 @@ import { ChordViewer } from "@/components/chord-viewer";
 import { renderTransposedHtml } from "@/lib/chordpro";
 import { MediaEmbed } from "@/components/media-embed";
 import { buttonVariants } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/submit-button";
 import { TextSubmit } from "@/components/text-submit";
 import { ShareButton } from "@/components/share-button";
@@ -152,12 +153,12 @@ export default async function SongDetailPage({ params }: { params: Params }) {
         </div>
 
         <form action={addNote} className="space-y-2">
-          <textarea
+          <Textarea
             name="body"
             rows={2}
             required
             placeholder="Add a note (e.g. slow intro, build at chorus)"
-            className="w-full rounded-lg border border-white/10 bg-white/[0.04] p-2.5 text-sm placeholder:text-[#8a92b4] focus:outline-none focus:border-[#8b5cf6]/40 focus:ring-2 focus:ring-[#8b5cf6]/20 transition-colors resize-none"
+            className="resize-none"
           />
           <SubmitButton size="sm" pendingLabel="Adding…">
             Add note

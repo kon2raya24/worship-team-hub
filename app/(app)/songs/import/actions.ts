@@ -68,14 +68,17 @@ export async function importSongs(formData: FormData) {
   }));
 
   if (skipExisting) {
-    const titles = toInsert.map((s) => s.title);
-    const { data: existing } = await supabase
-      .from("songs")
-      .select("title")
-      .in("title", titles);
+    // Compare case-insensitively (Postgres .in() is case-sensitive, so fetch
+    // existing titles and lowercase them) and dedup within this paste too.
+    const { data: existing } = await supabase.from("songs").select("title");
     const have = new Set((existing ?? []).map((s) => s.title.toLowerCase()));
     const before = toInsert.length;
-    toInsert = toInsert.filter((s) => !have.has(s.title.toLowerCase()));
+    toInsert = toInsert.filter((s) => {
+      const key = s.title.toLowerCase();
+      if (have.has(key)) return false;
+      have.add(key);
+      return true;
+    });
     skipped = before - toInsert.length;
   }
 

@@ -8,8 +8,12 @@
 //
 // Deploy:  supabase functions deploy send-push
 // Secret:  supabase secrets set FCM_SERVICE_ACCOUNT="$(cat service-account.json)"
+// Secret:  supabase secrets set WEBHOOK_SECRET="<long-random-string>"
+//          ...and add header `x-webhook-secret: <same-string>` to every DB
+//          webhook that calls this function. Without it the request is rejected.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import webpush from "npm:web-push@3.6.7";
 
 interface WebhookPayload {
   type: "INSERT" | "UPDATE" | "DELETE";
@@ -124,8 +128,52 @@ function describe(
   }
 }
 
+// Where a web-push click should land, per source table.
+function urlFor(table: string): string {
+  switch (table) {
+    case "announcements":
+      return "/announcements";
+    case "setlists":
+      return "/setlists";
+    case "devotions":
+      return "/devotions";
+    case "schedule_assignments":
+      return "/schedule";
+    default:
+      return "/";
+  }
+}
+
+// Constant-time comparison so a timing side-channel can't leak the secret.
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  if (ab.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ab.length; i++) diff |= ab[i] ^ bb[i];
+  return diff === 0;
+}
+
 Deno.serve(async (req) => {
   try {
+    // Verify the request actually came from our DB webhook (configured to send
+    // `x-webhook-secret: <WEBHOOK_SECRET>`). Fail closed — this blocks
+    // unauthenticated callers even if "Verify JWT" is ever toggled off, which
+    // would otherwise let anyone broadcast a push to every registered device.
+    const expectedSecret = Deno.env.get("WEBHOOK_SECRET");
+    const providedSecret = req.headers.get("x-webhook-secret");
+    if (
+      !expectedSecret ||
+      !providedSecret ||
+      !timingSafeEqual(providedSecret, expectedSecret)
+    ) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const payload = (await req.json()) as WebhookPayload;
     if (payload.type !== "INSERT" || !payload.record) {
       return new Response(JSON.stringify({ skipped: "not an insert" }), {
@@ -139,59 +187,103 @@ Deno.serve(async (req) => {
       });
     }
 
-    const saRaw = Deno.env.get("FCM_SERVICE_ACCOUNT");
-    if (!saRaw) {
-      return new Response(JSON.stringify({ skipped: "FCM not configured" }), {
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    const sa = JSON.parse(saRaw);
-
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    let q = supabase.from("device_tokens").select("token");
-    if (msg.userIds && msg.userIds.length > 0) {
-      q = q.in("user_id", msg.userIds);
-    }
-    const { data: rows, error } = await q;
-    if (error) throw error;
-    const tokens = (rows ?? []).map((r) => r.token as string);
-    if (tokens.length === 0) {
-      return new Response(JSON.stringify({ sent: 0 }), {
-        headers: { "Content-Type": "application/json" },
-      });
+    // ---- FCM (mobile / Flutter) ----
+    let sent = 0;
+    let cleaned = 0;
+    const saRaw = Deno.env.get("FCM_SERVICE_ACCOUNT");
+    if (saRaw) {
+      const sa = JSON.parse(saRaw);
+      let q = supabase.from("device_tokens").select("token");
+      if (msg.userIds && msg.userIds.length > 0) {
+        q = q.in("user_id", msg.userIds);
+      }
+      const { data: rows, error } = await q;
+      if (error) throw error;
+      const tokens = (rows ?? []).map((r) => r.token as string);
+      if (tokens.length > 0) {
+        const accessToken = await getAccessToken(sa);
+        const endpoint = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
+        const stale: string[] = [];
+        for (const token of tokens) {
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              message: {
+                token,
+                notification: { title: msg.title, body: msg.body },
+                data: { table: payload.table },
+                android: { priority: "HIGH" },
+              },
+            }),
+          });
+          if (res.ok) sent++;
+          else if (res.status === 404 || res.status === 400) stale.push(token);
+        }
+        if (stale.length > 0) {
+          await supabase.from("device_tokens").delete().in("token", stale);
+          cleaned = stale.length;
+        }
+      }
     }
 
-    const accessToken = await getAccessToken(sa);
-    const endpoint = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
-    let sent = 0;
-    const stale: string[] = [];
-    for (const token of tokens) {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: {
-            token,
-            notification: { title: msg.title, body: msg.body },
-            data: { table: payload.table },
-            android: { priority: "HIGH" },
-          },
-        }),
+    // ---- Web Push (PWA browsers) ----
+    let webSent = 0;
+    const vapidPublic = Deno.env.get("VAPID_PUBLIC_KEY");
+    const vapidPrivate = Deno.env.get("VAPID_PRIVATE_KEY");
+    if (vapidPublic && vapidPrivate) {
+      webpush.setVapidDetails(
+        Deno.env.get("VAPID_SUBJECT") ?? "mailto:admin@worship-team-hub.app",
+        vapidPublic,
+        vapidPrivate,
+      );
+      let wq = supabase
+        .from("push_subscriptions")
+        .select("endpoint, p256dh, auth");
+      if (msg.userIds && msg.userIds.length > 0) {
+        wq = wq.in("user_id", msg.userIds);
+      }
+      const { data: subs } = await wq;
+      const body = JSON.stringify({
+        title: msg.title,
+        body: msg.body,
+        url: urlFor(payload.table),
       });
-      if (res.ok) sent++;
-      else if (res.status === 404 || res.status === 400) stale.push(token);
+      const deadEndpoints: string[] = [];
+      for (const s of subs ?? []) {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: s.endpoint as string,
+              keys: { p256dh: s.p256dh as string, auth: s.auth as string },
+            },
+            body,
+          );
+          webSent++;
+        } catch (err) {
+          const code = (err as { statusCode?: number })?.statusCode;
+          if (code === 404 || code === 410) {
+            deadEndpoints.push(s.endpoint as string);
+          }
+        }
+      }
+      if (deadEndpoints.length > 0) {
+        await supabase
+          .from("push_subscriptions")
+          .delete()
+          .in("endpoint", deadEndpoints);
+      }
     }
-    if (stale.length > 0) {
-      await supabase.from("device_tokens").delete().in("token", stale);
-    }
-    return new Response(JSON.stringify({ sent, cleaned: stale.length }), {
+
+    return new Response(JSON.stringify({ sent, cleaned, webSent }), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (e) {

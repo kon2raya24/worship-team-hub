@@ -179,7 +179,7 @@ function OfflineSongs() {
                     {s.title}
                   </h3>
                   {s.original_key && (
-                    <span className="shrink-0 inline-flex items-center justify-center min-w-9 h-7 px-2 rounded-md bg-[#00e8ff]/10 text-[#00e8ff] text-xs font-mono font-semibold">
+                    <span className="shrink-0 inline-flex items-center justify-center min-w-9 h-7 px-2 rounded-md bg-primary/10 text-primary text-xs font-mono font-semibold">
                       {s.original_key}
                     </span>
                   )}

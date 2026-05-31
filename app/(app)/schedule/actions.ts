@@ -24,7 +24,7 @@ export async function assignMember(formData: FormData) {
     user_id,
     role,
   });
-  if (error && !error.message.includes("duplicate")) throw new Error(error.message);
+  if (error && error.code !== "23505") throw new Error(error.message);
   revalidatePath("/schedule");
 }
 

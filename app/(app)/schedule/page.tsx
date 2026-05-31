@@ -33,7 +33,7 @@ function fmt(d: string) {
 function nextSunday(offsetWeeks = 0): string {
   const d = new Date();
   const day = d.getDay();
-  const diff = day === 0 ? 7 : 7 - day;
+  const diff = (7 - day) % 7;
   d.setDate(d.getDate() + diff + offsetWeeks * 7);
   return d.toISOString().slice(0, 10);
 }
@@ -213,11 +213,12 @@ export default async function SchedulePage() {
               <Label htmlFor="custom-role" className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
                 Role
               </Label>
-              <Input
+              <FormSelect
                 id="custom-role"
                 name="role"
-                placeholder="e.g. tech"
                 required
+                defaultValue={ROLES[0]}
+                options={ROLES.map((r) => ({ value: r, label: r }))}
               />
             </div>
             <SubmitButton size="sm" pendingLabel="…" className="gap-1">

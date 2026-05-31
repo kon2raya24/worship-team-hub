@@ -13,9 +13,9 @@ function s(v: FormDataEntryValue | null): string | null {
 }
 
 function inferKind(mime: string): "audio" | "pdf" | "slide" | "midi" | "other" {
+  if (mime === "audio/midi" || mime === "audio/x-midi") return "midi";
   if (mime.startsWith("audio/")) return "audio";
   if (mime === "application/pdf") return "pdf";
-  if (mime === "audio/midi" || mime === "audio/x-midi") return "midi";
   if (
     mime === "application/vnd.ms-powerpoint" ||
     mime === "application/vnd.openxmlformats-officedocument.presentationml.presentation"

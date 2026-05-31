@@ -29,12 +29,12 @@ function loadChordpro(): Promise<ChordproModule> {
   return chordproPromise;
 }
 
-// Module-level cache keyed by `${offset}${body}`. Renders are pure
+// Module-level cache keyed by `${offset} ${body}`. Renders are pure
 // functions of (body, offset), so caching here is safe across ChordViewer
 // instances and survives unmount-remount (e.g. navigating away and back).
 const renderCache = new Map<string, string>();
 const cacheKey = (body: string, offset: number) =>
-  `${offset}${body}`;
+  `${offset} ${body}`;
 
 export function ChordViewer({
   body,

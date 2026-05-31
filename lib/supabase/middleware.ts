@@ -59,11 +59,15 @@ export async function updateSession(request: NextRequest) {
   // the code step (reach AAL2) before any protected route. Accounts without a
   // factor report nextLevel "aal1", so they are never redirected here.
   const isMfaRoute = pathname.startsWith("/mfa");
+  // NOTE: /reset-password is intentionally NOT exempt from the AAL step-up. A
+  // 2FA-enrolled account must clear AAL2 before it can set a new password, so a
+  // password-only (AAL1) session can't bypass 2FA via the reset page. A genuine
+  // recovery session for a non-2FA account stays aal1/aal1 and is unaffected; a
+  // 2FA recovery session completes /mfa (which preserves ?next) and returns.
   if (
     user &&
     !isMfaRoute &&
     !isAuthRoute &&
-    !isPasswordResetRoute &&
     !isPublicRoute
   ) {
     try {

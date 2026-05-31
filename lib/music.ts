@@ -58,7 +58,7 @@ export function normalizeChord(input: string): string {
     .replace(/♭/g, "b")
     .replace(/♯/g, "#")
     .replace(/^([A-G])([Bb])/, "$1b")
-    .replace(/^([A-G])([Ss])/, "$1#");
+    .replace(/^([A-G])[Ss](?![a-z])/, "$1#");
 }
 
 /** Best-effort equivalence: same pitch class + same suffix. */
@@ -135,16 +135,6 @@ export function diatonicChord(key: string, degree: DegreeIdx): string {
   return `${root}${DIATONIC_QUALITY[degree]}`;
 }
 
-/** Reverse: which scale degree is `chord` in `key`? Returns null if not diatonic. */
-export function degreeOfChord(key: string, chord: string): DegreeIdx | null {
-  for (let i = 0; i < 7; i++) {
-    if (chordsEqual(diatonicChord(key, i as DegreeIdx), chord)) {
-      return i as DegreeIdx;
-    }
-  }
-  return null;
-}
-
 /** Relative minor key (a minor 3rd below the major). E.g. C → Am. */
 export function relativeMinor(majorKey: string): string {
   const useFlats = keyUsesFlats(majorKey);
@@ -178,11 +168,6 @@ export const INTERVALS: { name: string; short: string; semitones: number }[] = [
   { name: "Major 7th", short: "M7", semitones: 11 },
   { name: "Octave", short: "P8", semitones: 12 },
 ];
-
-/** Semitones from one note to another, mod 12 (0..11). */
-export function intervalSemitones(from: string, to: string): number {
-  return ((semitonesBetween(from, to) % 12) + 12) % 12;
-}
 
 /** Note `semitones` above `from`, respecting the key's spelling preference. */
 export function noteAbove(from: string, semitones: number, useFlats = false): string {

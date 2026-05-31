@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/page-header";
 function nextSunday(): string {
   const d = new Date();
   const day = d.getDay();
-  const diff = day === 0 ? 7 : 7 - day;
+  const diff = (7 - day) % 7;
   d.setDate(d.getDate() + diff);
   return d.toISOString().slice(0, 10);
 }
