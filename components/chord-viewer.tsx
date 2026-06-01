@@ -356,7 +356,11 @@ export function ChordViewer({
         .chord-sheet .row {
           display: flex;
           flex-wrap: wrap;
-          align-items: flex-end;
+          /* Top-align columns. A chord with no lyric under it (e.g. a trailing
+             [G#m7] at the end of a line) has an empty, zero-height lyric cell;
+             with flex-end that short column sinks and the chord drops onto the
+             lyric baseline. Top-aligning keeps every chord on the chord row. */
+          align-items: flex-start;
         }
         /* Columns flow tight against each other so mid-word chords
            (e.g. sur[G]render) don't visibly split the word. Word
