@@ -69,7 +69,7 @@ export default async function DevotionDetail({ params }: { params: Params }) {
         </div>
       </div>
 
-      <div className="glass p-6 md:p-8 prose dark:prose-invert max-w-none prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/85 prose-li:text-foreground/85 prose-strong:text-foreground prose-a:text-accent prose-blockquote:border-l-[#8b5cf6] prose-blockquote:text-foreground/80 prose-blockquote:not-italic">
+      <div className="glass p-6 md:p-8 prose dark:prose-invert max-w-none prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/85 prose-li:text-foreground/85 prose-strong:text-foreground prose-a:text-accent prose-blockquote:border-l-primary prose-blockquote:text-foreground/80 prose-blockquote:not-italic">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{devotion.body}</ReactMarkdown>
       </div>
     </article>

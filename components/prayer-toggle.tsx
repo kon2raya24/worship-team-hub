@@ -47,7 +47,7 @@ export function PrayerToggle({
         {optimisticAnswered ? "Answered" : "Open"}
       </span>
       {optimisticAnswered && !isAnswered && (
-        <span className="inline-flex items-center gap-1 text-[#8eff6a] text-[10px] font-mono uppercase tracking-wider">
+        <span className="inline-flex items-center gap-1 text-chart-5 text-[10px] font-mono uppercase tracking-wider">
           <CheckCircle2 className="size-3" /> Answered
         </span>
       )}

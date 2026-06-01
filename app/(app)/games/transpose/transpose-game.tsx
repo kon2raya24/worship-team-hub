@@ -155,14 +155,14 @@ export function TransposeGame() {
                     spellCheck={false}
                     className={[
                       "h-12 w-20 rounded-lg border bg-tint-1 px-2 text-center font-mono text-lg text-foreground placeholder:text-muted-foreground/60",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00e8ff]/50",
-                      correct ? "border-[#8eff6a]/60 bg-[#8eff6a]/10" : "",
-                      wrong ? "border-[#ff5566]/60 bg-[#ff5566]/10" : "",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+                      correct ? "border-chart-5/60 bg-chart-5/10" : "",
+                      wrong ? "border-destructive/60 bg-destructive/10" : "",
                       !submitted ? "border-border" : "",
                     ].join(" ")}
                   />
                   {submitted && wrong && (
-                    <span className="text-[10px] font-mono text-[#8eff6a]">
+                    <span className="text-[10px] font-mono text-chart-5">
                       {round.expected[i]}
                     </span>
                   )}
@@ -174,7 +174,7 @@ export function TransposeGame() {
           {!submitted ? (
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-[linear-gradient(135deg,rgba(0,232,255,0.28),rgba(139,92,246,0.32))] border border-[#00e8ff]/40 text-white font-semibold text-sm hover:brightness-110 transition"
+              className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-[linear-gradient(135deg,#0e7490,#7c3aed_55%,#db2777)] dark:bg-[linear-gradient(135deg,rgba(0,232,255,0.28),rgba(139,92,246,0.32))] border border-transparent dark:border-accent/40 text-white font-semibold text-sm hover:brightness-110 transition"
             >
               Check answer
             </button>
@@ -182,11 +182,11 @@ export function TransposeGame() {
             <div className="space-y-3 pt-2">
               <div className="text-sm">
                 {allCorrect ? (
-                  <span className="inline-flex items-center gap-2 text-[#8eff6a]">
+                  <span className="inline-flex items-center gap-2 text-chart-5">
                     <Check className="size-4" /> All correct this round!
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-2 text-[#ff5566]">
+                  <span className="inline-flex items-center gap-2 text-destructive">
                     <X className="size-4" /> Some chords were off.
                   </span>
                 )}
@@ -216,7 +216,7 @@ export function TransposeGame() {
             <div className="flex items-center gap-3 pt-1">
               <span
                 className={`inline-flex items-center gap-1.5 text-sm font-medium ${
-                  allCorrect ? "text-[#8eff6a]" : "text-[#ff5566]"
+                  allCorrect ? "text-chart-5" : "text-destructive"
                 }`}
               >
                 {allCorrect ? (
@@ -232,7 +232,7 @@ export function TransposeGame() {
               <button
                 onClick={handleNext}
                 type="button"
-                className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-[linear-gradient(135deg,rgba(0,232,255,0.28),rgba(139,92,246,0.32))] border border-[#00e8ff]/40 text-white font-semibold text-sm hover:brightness-110 transition"
+                className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-[linear-gradient(135deg,#0e7490,#7c3aed_55%,#db2777)] dark:bg-[linear-gradient(135deg,rgba(0,232,255,0.28),rgba(139,92,246,0.32))] border border-transparent dark:border-accent/40 text-white font-semibold text-sm hover:brightness-110 transition"
               >
                 Next round <ArrowRight className="size-4" />
               </button>
@@ -254,8 +254,8 @@ export function TransposeGame() {
 function KeyChip({ k, accent }: { k: string; accent: "violet" | "cyan" }) {
   const cls =
     accent === "violet"
-      ? "border-[#8b5cf6]/35 bg-[#8b5cf6]/15 text-[#c8a4ff]"
-      : "border-[#00e8ff]/35 bg-[#00e8ff]/15 text-[#00e8ff]";
+      ? "border-primary/35 bg-primary/15 text-primary dark:text-[#c8a4ff]"
+      : "border-accent/35 bg-accent/15 text-accent";
   return (
     <span
       className={`inline-flex items-center px-3 py-1 rounded-md border font-mono text-sm font-semibold ${cls}`}

@@ -114,7 +114,7 @@ export function TwoFactorSetup() {
   return (
     <div className="glass p-6 space-y-4">
       <div className="flex items-center gap-2">
-        <ShieldCheck className="size-4 text-[#8eff6a]" />
+        <ShieldCheck className="size-4 text-chart-5" />
         <h2 className="font-display font-semibold text-base">
           Two-factor authentication
         </h2>
@@ -177,7 +177,7 @@ export function TwoFactorSetup() {
             />
           </div>
           {error && (
-            <p className="text-sm text-[#ff5566] bg-[#ff5566]/10 border border-[#ff5566]/30 rounded-lg p-2">
+            <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-2">
               {error}
             </p>
           )}
@@ -195,12 +195,12 @@ export function TwoFactorSetup() {
 
       {status === "on" && (
         <>
-          <p className="flex items-center gap-2 text-sm text-[#8eff6a]">
+          <p className="flex items-center gap-2 text-sm text-chart-5">
             <ShieldCheck className="size-4" /> 2FA is on. You&apos;ll enter a
             code from your app at sign-in.
           </p>
           {error && (
-            <p className="text-sm text-[#ff5566] bg-[#ff5566]/10 border border-[#ff5566]/30 rounded-lg p-2">
+            <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-2">
               {error}
             </p>
           )}

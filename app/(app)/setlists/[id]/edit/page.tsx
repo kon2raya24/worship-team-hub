@@ -120,7 +120,7 @@ export default async function EditSetlistPage({ params }: { params: Params }) {
       {availableSongs.length > 0 ? (
         <section className="glass p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <Plus className="size-4 text-[#8b5cf6]" />
+            <Plus className="size-4 text-primary" />
             <h2 className="font-display font-semibold text-base">Add a song</h2>
           </div>
           <form

@@ -73,8 +73,8 @@ export function ShareReceiver({ textareaId }: { textareaId: string }) {
 
   if (!hint) return null;
   return (
-    <div className="glass p-3 flex items-center gap-2 text-sm border border-[#00e8ff]/30 bg-[#00e8ff]/[0.04]">
-      <Sparkles className="size-4 text-[#00e8ff] shrink-0" />
+    <div className="glass p-3 flex items-center gap-2 text-sm border border-accent/30 bg-accent/[0.04]">
+      <Sparkles className="size-4 text-accent shrink-0" />
       <span className="text-foreground/80">{hint}</span>
     </div>
   );

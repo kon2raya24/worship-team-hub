@@ -99,7 +99,7 @@ export function SetlistSongs({
               </span>
             </div>
             {(s.played_in_key || s.original_key) && (
-              <span className="font-mono text-xs px-2 py-0.5 rounded bg-[#00e8ff]/10 text-[#00e8ff] border border-[#00e8ff]/20">
+              <span className="font-mono text-xs px-2 py-0.5 rounded bg-accent/10 text-accent border border-accent/20">
                 {s.played_in_key ?? s.original_key}
               </span>
             )}

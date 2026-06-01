@@ -83,7 +83,7 @@ export default async function SchedulePage() {
             <div
               key={d}
               className={`glass p-5 ${
-                isFirst ? "ring-1 ring-[#00e8ff]/30" : ""
+                isFirst ? "ring-1 ring-accent/30" : ""
               }`}
             >
               <div className="flex items-center justify-between mb-3">
@@ -109,7 +109,7 @@ export default async function SchedulePage() {
                       key={a.id}
                       className="flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg bg-tint-1"
                     >
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-[#00e8ff] bg-[#00e8ff]/10 px-1.5 py-0.5 rounded">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded">
                         {a.role}
                       </span>
                       <span

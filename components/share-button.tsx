@@ -78,7 +78,7 @@ export function ShareButton({
         )}
       </div>
       {clipboardFailed && (
-        <p className="text-[11px] text-[#ffb547]">
+        <p className="text-[11px] text-chart-4">
           Auto-copy isn&apos;t available here — tap the link above to select it.
         </p>
       )}

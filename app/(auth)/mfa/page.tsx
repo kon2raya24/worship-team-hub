@@ -70,7 +70,7 @@ function MfaChallenge() {
     <div className="space-y-5">
       <div className="space-y-1">
         <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-          <ShieldCheck className="size-5 text-[#8eff6a]" /> Two-factor
+          <ShieldCheck className="size-5 text-chart-5" /> Two-factor
         </h2>
         <p className="text-sm text-muted-foreground">
           Enter the 6-digit code from your authenticator app.
@@ -92,7 +92,7 @@ function MfaChallenge() {
           />
         </div>
         {error && (
-          <p className="text-sm text-[#ff5566] bg-[#ff5566]/10 border border-[#ff5566]/30 rounded-lg p-2">
+          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-2">
             {error}
           </p>
         )}

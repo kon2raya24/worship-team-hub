@@ -94,9 +94,9 @@ export function ChordTonesGame() {
             <div className="eyebrow mb-2">Question</div>
             <div className="font-display text-xl sm:text-2xl leading-snug">
               What&apos;s the{" "}
-              <span className="text-[#8b5cf6] font-mono font-bold">{q.tone}</span>{" "}
+              <span className="text-primary font-mono font-bold">{q.tone}</span>{" "}
               of{" "}
-              <span className="text-[#00e8ff] font-mono font-bold">
+              <span className="text-accent font-mono font-bold">
                 {q.root}
                 {ct.suffix}
               </span>{" "}

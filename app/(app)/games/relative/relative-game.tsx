@@ -49,7 +49,7 @@ export function RelativeGame() {
             <div className="eyebrow mb-2">Question</div>
             <div className="font-display text-xl sm:text-2xl leading-snug">
               What&apos;s the relative minor of{" "}
-              <span className="text-[#00e8ff] font-mono font-bold">
+              <span className="text-accent font-mono font-bold">
                 {q.majorKey}
               </span>{" "}
               major?
@@ -60,7 +60,7 @@ export function RelativeGame() {
             <div className="eyebrow mb-2">Question</div>
             <div className="font-display text-xl sm:text-2xl leading-snug">
               What&apos;s the relative major of{" "}
-              <span className="text-[#00e8ff] font-mono font-bold">
+              <span className="text-accent font-mono font-bold">
                 {q.minorKey}
               </span>
               ?

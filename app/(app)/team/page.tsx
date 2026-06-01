@@ -89,13 +89,13 @@ function MemberCard({
   const isLeader = member.role === "leader";
   return (
     <li
-      className={`glass p-4 ${isLeader ? "ring-1 ring-[#00e8ff]/25" : ""}`}
+      className={`glass p-4 ${isLeader ? "ring-1 ring-accent/25" : ""}`}
     >
       <div className="flex items-start gap-3">
         <span
           className={`inline-flex items-center justify-center size-10 rounded-md font-display font-semibold text-base shrink-0 ${
             isLeader
-              ? "bg-gradient-to-br from-[#00e8ff]/20 to-[#8b5cf6]/20 text-white ring-1 ring-[#00e8ff]/30"
+              ? "bg-gradient-to-br from-accent/20 to-primary/20 text-foreground ring-1 ring-accent/30"
               : "bg-tint-2 text-foreground/80 ring-1 ring-border"
           }`}
         >
@@ -114,7 +114,7 @@ function MemberCard({
             <span
               className={`font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
                 isLeader
-                  ? "bg-[#00e8ff]/10 text-[#00e8ff] border-[#00e8ff]/30"
+                  ? "bg-accent/10 text-accent border-accent/30"
                   : "bg-tint-1 text-muted-foreground border-border"
               }`}
             >

@@ -4,17 +4,17 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* Aurora blobs */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-40 -left-32 h-[28rem] w-[28rem] rounded-full bg-[#8b5cf6]/30 blur-[120px] animate-pulse"
+        className="pointer-events-none absolute -top-40 -left-32 h-[28rem] w-[28rem] rounded-full bg-primary/30 blur-[120px] animate-pulse"
         style={{ animationDuration: "7s" }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute top-1/3 -right-32 h-[24rem] w-[24rem] rounded-full bg-[#00e8ff]/25 blur-[100px] animate-pulse"
+        className="pointer-events-none absolute top-1/3 -right-32 h-[24rem] w-[24rem] rounded-full bg-accent/25 blur-[100px] animate-pulse"
         style={{ animationDuration: "9s" }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-32 left-1/4 h-[20rem] w-[20rem] rounded-full bg-[#ff3aa3]/20 blur-[100px]"
+        className="pointer-events-none absolute -bottom-32 left-1/4 h-[20rem] w-[20rem] rounded-full bg-chart-3/20 blur-[100px]"
       />
 
       <div className="relative w-full max-w-sm fade-in">

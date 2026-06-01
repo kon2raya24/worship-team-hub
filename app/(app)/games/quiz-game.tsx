@@ -106,10 +106,10 @@ export function QuizGame<Q extends QuizQuestion>({
                     ? "border-border bg-tint-1 hover:bg-tint-2 hover:border-hairline-strong"
                     : "",
                   picked !== null && isRight
-                    ? "border-[#8eff6a]/60 bg-[#8eff6a]/12"
+                    ? "border-chart-5/60 bg-chart-5/12"
                     : "",
                   picked !== null && isPick && !isRight
-                    ? "border-[#ff5566]/60 bg-[#ff5566]/12"
+                    ? "border-destructive/60 bg-destructive/12"
                     : "",
                   picked !== null && !isPick && !isRight
                     ? "border-border bg-tint-1 opacity-60"
@@ -119,10 +119,10 @@ export function QuizGame<Q extends QuizQuestion>({
                 <span className="inline-flex items-center gap-2 w-full">
                   {renderOption(opt, q)}
                   {picked !== null && isRight && (
-                    <Check className="ml-auto size-4 text-[#8eff6a]" />
+                    <Check className="ml-auto size-4 text-chart-5" />
                   )}
                   {picked !== null && isPick && !isRight && (
-                    <X className="ml-auto size-4 text-[#ff5566]" />
+                    <X className="ml-auto size-4 text-destructive" />
                   )}
                 </span>
               </button>
@@ -134,14 +134,14 @@ export function QuizGame<Q extends QuizQuestion>({
           <div className="flex items-center gap-3 flex-wrap">
             <span
               className={`inline-flex items-center gap-1.5 text-sm font-medium ${
-                isCorrect ? "text-[#8eff6a]" : "text-[#ff5566]"
+                isCorrect ? "text-chart-5" : "text-destructive"
               }`}
             >
               {isCorrect ? "Correct" : <>Answer: {renderAnswer(q)}</>}
             </span>
             <button
               onClick={next}
-              className="ml-auto inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-[linear-gradient(135deg,rgba(0,232,255,0.28),rgba(139,92,246,0.32))] border border-[#00e8ff]/40 text-white font-semibold text-sm hover:brightness-110 transition"
+              className="ml-auto inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-[linear-gradient(135deg,#0e7490,#7c3aed_55%,#db2777)] dark:bg-[linear-gradient(135deg,rgba(0,232,255,0.28),rgba(139,92,246,0.32))] border border-transparent dark:border-accent/40 text-white font-semibold text-sm hover:brightness-110 transition"
             >
               Next
             </button>

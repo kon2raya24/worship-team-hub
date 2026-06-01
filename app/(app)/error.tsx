@@ -17,9 +17,9 @@ export default function AppError({
 
   return (
     <div className="mx-auto max-w-2xl mt-8 fade-in">
-      <div className="glass p-6 border border-[#ff5566]/25">
+      <div className="glass p-6 border border-destructive/25">
         <div className="flex items-center gap-2.5">
-          <span className="inline-flex items-center justify-center size-9 rounded-lg bg-[#ff5566]/10 text-[#ff5566] shrink-0">
+          <span className="inline-flex items-center justify-center size-9 rounded-lg bg-destructive/10 text-destructive shrink-0">
             <TriangleAlert className="size-4" />
           </span>
           <h2 className="text-xl font-display font-semibold tracking-tight">

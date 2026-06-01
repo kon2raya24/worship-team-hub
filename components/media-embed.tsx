@@ -45,9 +45,9 @@ export function MediaEmbed({ url }: { url: string }) {
     <section className="glass overflow-hidden">
       <div className="flex items-center gap-2 px-5 py-3 border-b border-border">
         {isYouTube ? (
-          <PlayCircle className="size-4 text-[#ff3aa3]" />
+          <PlayCircle className="size-4 text-chart-3" />
         ) : (
-          <Music2 className="size-4 text-[#8eff6a]" />
+          <Music2 className="size-4 text-chart-5" />
         )}
         <span className="eyebrow">
           {isYouTube ? "YouTube reference" : "Spotify reference"}

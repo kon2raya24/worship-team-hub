@@ -55,7 +55,7 @@ function ShareHeader() {
             Worship Hub
           </span>
         </Link>
-        <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.14em] sm:tracking-[0.18em] px-1.5 sm:px-2 py-1 rounded border border-[#00e8ff]/35 bg-[#00e8ff]/10 text-[#00e8ff] font-semibold shrink-0">
+        <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.14em] sm:tracking-[0.18em] px-1.5 sm:px-2 py-1 rounded border border-accent/35 bg-accent/10 text-accent font-semibold shrink-0">
           <span className="sm:hidden">Shared</span>
           <span className="hidden sm:inline">Shared · Read only</span>
         </span>
@@ -105,13 +105,13 @@ async function SongShare({
           {song.artist && <span>{song.artist}</span>}
           {song.original_key && (
             <span className="inline-flex items-center gap-1.5">
-              <span className="size-1 rounded-full bg-[#00e8ff]" />
+              <span className="size-1 rounded-full bg-accent" />
               Key {song.original_key}
             </span>
           )}
           {song.bpm && (
             <span className="inline-flex items-center gap-1.5">
-              <span className="size-1 rounded-full bg-[#8b5cf6]" />
+              <span className="size-1 rounded-full bg-primary" />
               {song.bpm} BPM
             </span>
           )}
@@ -195,7 +195,7 @@ async function SetlistShare({
                 </div>
               </div>
               {(r.played_in_key || song?.original_key) && (
-                <span className="font-mono text-xs px-2 py-1 rounded bg-[#00e8ff]/10 text-[#00e8ff] border border-[#00e8ff]/20">
+                <span className="font-mono text-xs px-2 py-1 rounded bg-accent/10 text-accent border border-accent/20">
                   {r.played_in_key ?? song?.original_key}
                 </span>
               )}

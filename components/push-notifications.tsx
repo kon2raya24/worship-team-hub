@@ -88,7 +88,7 @@ export function PushNotifications() {
   return (
     <div className="glass p-6 space-y-4">
       <div className="flex items-center gap-2">
-        <Bell className="size-4 text-[#00e8ff]" />
+        <Bell className="size-4 text-accent" />
         <h2 className="font-display font-semibold text-base">Notifications</h2>
       </div>
       <p className="text-sm text-muted-foreground">
@@ -96,7 +96,7 @@ export function PushNotifications() {
         devotions, and when you&apos;re added to the schedule.
       </p>
       {error && (
-        <p className="text-sm text-[#ff5566] bg-[#ff5566]/10 border border-[#ff5566]/30 rounded-lg p-2">
+        <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-2">
           {error}
         </p>
       )}

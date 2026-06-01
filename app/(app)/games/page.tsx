@@ -84,33 +84,33 @@ const GAMES = [
 
 const ACCENTS = {
   violet: {
-    ring: "ring-[#8b5cf6]/30 hover:ring-[#8b5cf6]/60",
-    bg: "bg-[#8b5cf6]/15",
-    text: "text-[#8b5cf6]",
+    ring: "ring-primary/30 hover:ring-primary/60",
+    bg: "bg-primary/15",
+    text: "text-primary",
     glow: "hover:shadow-[0_0_24px_rgba(139,92,246,0.35)]",
   },
   cyan: {
-    ring: "ring-[#00e8ff]/30 hover:ring-[#00e8ff]/60",
-    bg: "bg-[#00e8ff]/15",
-    text: "text-[#00e8ff]",
+    ring: "ring-accent/30 hover:ring-accent/60",
+    bg: "bg-accent/15",
+    text: "text-accent",
     glow: "hover:shadow-[0_0_24px_rgba(0,232,255,0.35)]",
   },
   magenta: {
-    ring: "ring-[#ff3aa3]/30 hover:ring-[#ff3aa3]/60",
-    bg: "bg-[#ff3aa3]/15",
-    text: "text-[#ff3aa3]",
+    ring: "ring-chart-3/30 hover:ring-chart-3/60",
+    bg: "bg-chart-3/15",
+    text: "text-chart-3",
     glow: "hover:shadow-[0_0_24px_rgba(255,58,163,0.35)]",
   },
   amber: {
-    ring: "ring-[#ffb547]/30 hover:ring-[#ffb547]/60",
-    bg: "bg-[#ffb547]/15",
-    text: "text-[#ffb547]",
+    ring: "ring-chart-4/30 hover:ring-chart-4/60",
+    bg: "bg-chart-4/15",
+    text: "text-chart-4",
     glow: "hover:shadow-[0_0_24px_rgba(255,181,71,0.35)]",
   },
   green: {
-    ring: "ring-[#8eff6a]/30 hover:ring-[#8eff6a]/60",
-    bg: "bg-[#8eff6a]/15",
-    text: "text-[#8eff6a]",
+    ring: "ring-chart-5/30 hover:ring-chart-5/60",
+    bg: "bg-chart-5/15",
+    text: "text-chart-5",
     glow: "hover:shadow-[0_0_24px_rgba(142,255,106,0.35)]",
   },
   pink: {

@@ -93,7 +93,7 @@ export default async function LoginPage({
           />
         </div>
         {error && (
-          <p className="text-sm text-[#ff5566] bg-[#ff5566]/10 border border-[#ff5566]/30 rounded-lg p-2">
+          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-2">
             {error}
           </p>
         )}

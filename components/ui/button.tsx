@@ -8,7 +8,7 @@ const base = [
   "rounded-md border bg-clip-padding font-sans font-semibold tracking-[-0.01em]",
   "whitespace-nowrap select-none isolate",
   "transition-[transform,background,border-color,box-shadow,filter,color] duration-150 ease-out",
-  "outline-none focus-visible:ring-2 focus-visible:ring-[#00e8ff]/50 focus-visible:border-[#00e8ff]/60",
+  "outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:border-accent/60",
   "active:scale-[0.97] active:duration-75",
   "disabled:pointer-events-none disabled:opacity-50 disabled:saturate-50",
   "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[1.05em]",
@@ -19,12 +19,17 @@ const buttonVariants = cva(base, {
   variants: {
     variant: {
       // PRIMARY — aurora gradient + neon glow. The hero CTA.
+      // Light ("day") base uses a vivid OPAQUE gradient so white text stays
+      // legible on a light page; the `dark:` overrides restore the original
+      // translucent neon-glass treatment on dark (unchanged).
       default: cn(
-        "bg-[linear-gradient(135deg,rgba(0,232,255,0.28),rgba(139,92,246,0.32)_55%,rgba(255,58,163,0.24))]",
-        "border-[#00e8ff]/40 text-white",
-        "shadow-[0_0_0_1px_rgba(255,255,255,0.05)_inset,0_8px_24px_-8px_rgba(0,232,255,0.3),0_4px_32px_-4px_rgba(139,92,246,0.25)]",
-        "hover:border-[#00e8ff]/65 hover:brightness-110",
-        "hover:shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset,0_0_28px_rgba(0,232,255,0.55),0_0_56px_rgba(139,92,246,0.4)]"
+        "bg-[linear-gradient(135deg,#0e7490,#7c3aed_55%,#db2777)] border-transparent text-white",
+        "shadow-[0_6px_18px_-6px_rgba(124,58,237,0.55)] hover:brightness-110",
+        "dark:bg-[linear-gradient(135deg,rgba(0,232,255,0.28),rgba(139,92,246,0.32)_55%,rgba(255,58,163,0.24))]",
+        "dark:border-accent/40",
+        "dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05)_inset,0_8px_24px_-8px_rgba(0,232,255,0.3),0_4px_32px_-4px_rgba(139,92,246,0.25)]",
+        "dark:hover:border-accent/65",
+        "dark:hover:shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset,0_0_28px_rgba(0,232,255,0.55),0_0_56px_rgba(139,92,246,0.4)]"
       ),
       // OUTLINE — frosted glass with hairline. Secondary actions.
       outline: cn(
@@ -44,14 +49,17 @@ const buttonVariants = cva(base, {
         "border-transparent text-muted-foreground shadow-none",
         "hover:bg-tint-2 hover:text-foreground"
       ),
-      // DESTRUCTIVE — red glow for delete actions
+      // DESTRUCTIVE — red glow for delete actions. Light base uses the
+      // theme red token (readable on white); `dark:` keeps the neon-red glow.
       destructive: cn(
-        "border-[#ff5566]/40 bg-[#ff5566]/10 text-[#ff7a89]",
-        "shadow-[0_0_0_1px_rgba(255,85,102,0.1)_inset,0_4px_18px_-6px_rgba(255,85,102,0.3)]",
-        "hover:bg-[#ff5566]/20 hover:border-[#ff5566]/65 hover:text-[#ff8a99]",
-        "hover:shadow-[0_0_0_1px_rgba(255,85,102,0.2)_inset,0_0_24px_rgba(255,85,102,0.5)]"
+        "border-destructive/40 bg-destructive/10 text-destructive",
+        "hover:bg-destructive/15 hover:border-destructive/60",
+        "dark:border-destructive/40 dark:bg-destructive/10 dark:text-[#ff7a89]",
+        "dark:shadow-[0_0_0_1px_rgba(255,85,102,0.1)_inset,0_4px_18px_-6px_rgba(255,85,102,0.3)]",
+        "dark:hover:bg-destructive/20 dark:hover:border-destructive/65 dark:hover:text-[#ff8a99]",
+        "dark:hover:shadow-[0_0_0_1px_rgba(255,85,102,0.2)_inset,0_0_24px_rgba(255,85,102,0.5)]"
       ),
-      link: "border-transparent text-[#00e8ff] underline-offset-4 hover:underline shadow-none",
+      link: "border-transparent text-accent underline-offset-4 hover:underline shadow-none",
     },
     size: {
       // 40px mobile / 36px desktop — comfortable tap target on phones.

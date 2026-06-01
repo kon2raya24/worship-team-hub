@@ -19,10 +19,10 @@ const kindIcons: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 const kindColors: Record<string, string> = {
-  audio: "text-[#00e8ff]",
-  pdf: "text-[#ff3aa3]",
-  slide: "text-[#ffb547]",
-  midi: "text-[#8b5cf6]",
+  audio: "text-accent",
+  pdf: "text-chart-3",
+  slide: "text-chart-4",
+  midi: "text-primary",
   other: "text-muted-foreground",
 };
 

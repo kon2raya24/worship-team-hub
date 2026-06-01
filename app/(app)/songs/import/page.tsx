@@ -33,8 +33,8 @@ export default async function ImportSongsPage({
       />
 
       {added && (
-        <div className="glass p-4 flex items-start gap-3 border border-[#8eff6a]/30">
-          <CheckCircle2 className="size-5 text-[#8eff6a] mt-0.5 shrink-0" />
+        <div className="glass p-4 flex items-start gap-3 border border-chart-5/30">
+          <CheckCircle2 className="size-5 text-chart-5 mt-0.5 shrink-0" />
           <div className="text-sm">
             <div className="font-semibold text-foreground/95">
               Imported {added} song{added === "1" ? "" : "s"}.
@@ -55,9 +55,9 @@ export default async function ImportSongsPage({
       )}
 
       {error && (
-        <div className="glass p-4 flex items-start gap-3 border border-[#ff5566]/30">
-          <AlertTriangle className="size-5 text-[#ff5566] mt-0.5 shrink-0" />
-          <p className="text-sm text-[#ff5566]">{error}</p>
+        <div className="glass p-4 flex items-start gap-3 border border-destructive/30">
+          <AlertTriangle className="size-5 text-destructive mt-0.5 shrink-0" />
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
 
@@ -107,7 +107,7 @@ Multiple songs? Separate them with a line of ---`}
               type="checkbox"
               name="auto_convert"
               defaultChecked
-              className="size-4 rounded border-border bg-tint-1 accent-[#8b5cf6]"
+              className="size-4 rounded border-border bg-tint-1 accent-primary"
             />
             Auto-convert &ldquo;chord-above-lyrics&rdquo; format to ChordPro
           </label>
@@ -116,7 +116,7 @@ Multiple songs? Separate them with a line of ---`}
               type="checkbox"
               name="skip_existing"
               defaultChecked
-              className="size-4 rounded border-border bg-tint-1 accent-[#8b5cf6]"
+              className="size-4 rounded border-border bg-tint-1 accent-primary"
             />
             Skip songs whose title already exists
           </label>

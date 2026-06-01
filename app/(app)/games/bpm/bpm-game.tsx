@@ -79,11 +79,11 @@ export function BpmGame() {
   const within = Math.abs(diff) <= 2;
   const close = !within && Math.abs(diff) <= 5;
   const bpmColor = within
-    ? "text-[#8eff6a]"
+    ? "text-chart-5"
     : close
-      ? "text-[#ffb547]"
+      ? "text-chart-4"
       : bpm > 0
-        ? "text-[#ff5566]"
+        ? "text-destructive"
         : "text-foreground/40";
 
   return (
@@ -101,7 +101,7 @@ export function BpmGame() {
               onChange={(e) =>
                 setTarget(Math.max(30, Math.min(240, Number(e.target.value))))
               }
-              className="h-10 w-24 rounded-lg border border-border bg-tint-1 px-3 font-mono text-lg text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00e8ff]/50"
+              className="h-10 w-24 rounded-lg border border-border bg-tint-1 px-3 font-mono text-lg text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
             />
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -112,7 +112,7 @@ export function BpmGame() {
                 className={[
                   "px-3 h-9 rounded-lg border text-xs font-mono uppercase tracking-wider transition",
                   target === p.bpm
-                    ? "border-[#00e8ff]/50 bg-[#00e8ff]/10 text-[#00e8ff]"
+                    ? "border-accent/50 bg-accent/10 text-accent"
                     : "border-border bg-tint-1 text-muted-foreground hover:bg-tint-2 hover:text-foreground",
                 ].join(" ")}
               >
@@ -158,8 +158,8 @@ export function BpmGame() {
           onClick={tap}
           className={[
             "w-full h-32 rounded-xl border text-white text-xl font-display font-semibold transition-all select-none",
-            "bg-[linear-gradient(135deg,rgba(0,232,255,0.18),rgba(139,92,246,0.22),rgba(255,58,163,0.18))]",
-            "border-white/[0.12] hover:border-white/[0.2] active:scale-[0.99]",
+            "bg-[linear-gradient(135deg,#0e7490,#7c3aed,#db2777)] dark:bg-[linear-gradient(135deg,rgba(0,232,255,0.18),rgba(139,92,246,0.22),rgba(255,58,163,0.18))]",
+            "border-transparent dark:border-white/[0.12] dark:hover:border-white/[0.2] active:scale-[0.99]",
             flash
               ? "shadow-[0_0_0_2px_rgba(0,232,255,0.55)_inset,0_0_40px_rgba(0,232,255,0.4)] brightness-110"
               : "shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset]",

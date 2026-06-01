@@ -53,7 +53,7 @@ export default async function AnnouncementsPage() {
             <input
               type="checkbox"
               name="pinned"
-              className="size-4 rounded border-hairline-strong bg-tint-1 accent-[#8b5cf6]"
+              className="size-4 rounded border-hairline-strong bg-tint-1 accent-primary"
             />
             Pin to dashboard
           </label>
@@ -73,7 +73,7 @@ export default async function AnnouncementsPage() {
                   <div className="font-display text-base font-semibold flex items-center gap-2 text-foreground/95">
                     {a.title}
                     {a.pinned && (
-                      <span className="inline-flex items-center gap-1 text-[#ff3aa3] text-[10px] font-mono uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1 text-chart-3 text-[10px] font-mono uppercase tracking-wider">
                         <Pin className="size-3" /> Pinned
                       </span>
                     )}

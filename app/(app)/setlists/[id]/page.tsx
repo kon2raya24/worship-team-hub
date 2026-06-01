@@ -119,7 +119,7 @@ export default async function SetlistDetailPage({ params }: { params: Params }) 
 
       {setlist.notes && (
         <div className="glass p-4 flex gap-3">
-          <FileText className="size-4 text-[#ffb547] mt-0.5 shrink-0" />
+          <FileText className="size-4 text-chart-4 mt-0.5 shrink-0" />
           <p className="text-sm whitespace-pre-wrap text-foreground/85">
             {setlist.notes}
           </p>
@@ -140,7 +140,7 @@ export default async function SetlistDetailPage({ params }: { params: Params }) 
       {canEdit && availableSongs.length > 0 && (
         <section className="glass p-5 space-y-4 print:hidden">
           <div className="flex items-center gap-2">
-            <Plus className="size-4 text-[#8b5cf6]" />
+            <Plus className="size-4 text-primary" />
             <h2 className="font-display font-semibold text-base">Add a song</h2>
           </div>
           <form

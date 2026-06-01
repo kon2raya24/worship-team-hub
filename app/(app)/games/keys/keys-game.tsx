@@ -72,7 +72,7 @@ export function KeysGame() {
             <div className="eyebrow mb-2">Question</div>
             <div className="font-display text-xl sm:text-2xl leading-snug">
               How many accidentals does the key of{" "}
-              <span className="text-[#00e8ff] font-mono font-bold">{q.key}</span>{" "}
+              <span className="text-accent font-mono font-bold">{q.key}</span>{" "}
               major have?
             </div>
           </div>

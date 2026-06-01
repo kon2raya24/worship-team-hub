@@ -53,7 +53,7 @@ export default async function ForgotPasswordPage({
       </div>
 
       {sent ? (
-        <div className="rounded-lg border border-[#00e8ff]/30 bg-[#00e8ff]/10 p-3 text-sm text-foreground/80">
+        <div className="rounded-lg border border-accent/30 bg-accent/10 p-3 text-sm text-foreground/80">
           Check your email for a reset link. It expires in 1 hour.
         </div>
       ) : (
@@ -73,7 +73,7 @@ export default async function ForgotPasswordPage({
             />
           </div>
           {error && (
-            <p className="text-sm text-[#ff5566] bg-[#ff5566]/10 border border-[#ff5566]/30 rounded-lg p-2">
+            <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-2">
               {error}
             </p>
           )}

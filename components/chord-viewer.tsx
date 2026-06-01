@@ -276,7 +276,7 @@ export function ChordViewer({
             aria-label={scrolling ? "Pause auto-scroll" : "Start auto-scroll"}
             className={`inline-flex items-center justify-center gap-1.5 px-3 h-9 sm:h-7 rounded-md border text-sm transition-all ${
               scrolling
-                ? "bg-[#8b5cf6]/20 border-[#8b5cf6]/40 text-white shadow-[0_0_14px_rgba(139,92,246,0.35)]"
+                ? "bg-primary/20 border-primary/40 text-primary dark:text-white shadow-[0_0_14px_rgba(139,92,246,0.35)]"
                 : "bg-tint-2 border-border text-foreground/90 hover:bg-tint-3"
             }`}
           >
@@ -304,7 +304,7 @@ export function ChordViewer({
         {/* Speed slider — only when scrolling is active; takes full second row on mobile */}
         {scrolling && (
           <div className="basis-full sm:basis-auto sm:ml-2 flex items-center gap-2 px-2.5 h-10 sm:h-7 rounded-md bg-tint-1 border border-border">
-            <Gauge className="size-3.5 sm:size-3 text-[#8b5cf6]" />
+            <Gauge className="size-3.5 sm:size-3 text-primary" />
             <input
               type="range"
               min={10}
@@ -312,7 +312,7 @@ export function ChordViewer({
               step={5}
               value={speed}
               onChange={(e) => setSpeed(Number(e.target.value))}
-              className="flex-1 sm:w-24 accent-[#8b5cf6] h-2"
+              className="flex-1 sm:w-24 accent-primary h-2"
               aria-label="Scroll speed"
             />
             <span className="w-8 text-right tabular-nums font-mono text-xs text-foreground/80">
@@ -337,7 +337,7 @@ export function ChordViewer({
           type="button"
           onClick={() => setScrolling(false)}
           aria-label="Pause auto-scroll"
-          className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 px-4 h-11 rounded-full bg-[#8b5cf6] text-white text-sm font-medium shadow-lg shadow-[#8b5cf6]/40 print:hidden"
+          className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 px-4 h-11 rounded-full bg-primary text-white text-sm font-medium shadow-lg shadow-primary/40 print:hidden"
         >
           <Pause className="size-4" /> Pause
         </button>

@@ -59,7 +59,7 @@ export default async function PrayerPage() {
                     <span>·</span>
                     <span>{new Date(r.created_at).toLocaleDateString()}</span>
                     {r.is_answered && (
-                      <span className="inline-flex items-center gap-1 text-[#8eff6a] text-[10px] font-mono uppercase tracking-wider ml-1">
+                      <span className="inline-flex items-center gap-1 text-chart-5 text-[10px] font-mono uppercase tracking-wider ml-1">
                         <CheckCircle2 className="size-3" /> Answered
                       </span>
                     )}

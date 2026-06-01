@@ -56,7 +56,7 @@ export default async function DevotionsPage() {
 
       <div className="glass p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="size-4 text-[#ffb547]" />
+          <Sparkles className="size-4 text-chart-4" />
           <p className="eyebrow">This week&apos;s reading plan</p>
         </div>
         {currentPlan ? (

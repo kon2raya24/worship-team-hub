@@ -143,7 +143,7 @@ export default function OfflineSetlistsPage() {
           ← Setlists
         </Link>
         <div className="flex items-start gap-3">
-          <span className="inline-flex items-center justify-center size-11 rounded-lg bg-[#8b5cf6]/15 text-[#8b5cf6] ring-1 ring-[#8b5cf6]/30 shrink-0">
+          <span className="inline-flex items-center justify-center size-11 rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30 shrink-0">
             <WifiOff className="size-5" />
           </span>
           <div className="flex-1 min-w-0">
@@ -161,12 +161,12 @@ export default function OfflineSetlistsPage() {
       <div className="glass p-4 flex items-center gap-3 flex-wrap text-sm">
         <span
           className={`inline-flex items-center gap-1.5 ${
-            isOnline ? "text-[#8eff6a]" : "text-[#ffb547]"
+            isOnline ? "text-chart-5" : "text-chart-4"
           }`}
         >
           <span
             className={`size-2 rounded-full ${
-              isOnline ? "bg-[#8eff6a]" : "bg-[#ffb547]"
+              isOnline ? "bg-chart-5" : "bg-chart-4"
             }`}
           />
           {isOnline ? "Online" : "Offline"}
@@ -250,7 +250,7 @@ function SetlistGrid({
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
               {r.theme ?? "Theme to be announced"}
             </p>
-            <p className="mt-3 text-[10px] text-[#8eff6a] font-mono uppercase tracking-wider inline-flex items-center gap-1">
+            <p className="mt-3 text-[10px] text-chart-5 font-mono uppercase tracking-wider inline-flex items-center gap-1">
               <Check className="size-3" />
               {r.songs.length} song{r.songs.length === 1 ? "" : "s"} · cached
             </p>
@@ -279,7 +279,7 @@ function OfflineSetlistView({
       </button>
 
       <div className="space-y-1">
-        <p className="text-[10px] font-mono uppercase tracking-wider text-[#8eff6a] inline-flex items-center gap-1">
+        <p className="text-[10px] font-mono uppercase tracking-wider text-chart-5 inline-flex items-center gap-1">
           <ListMusic className="size-3" /> Cached on this device
         </p>
         <h1 className="text-2xl md:text-4xl font-display font-semibold tracking-tight leading-tight">
@@ -292,7 +292,7 @@ function OfflineSetlistView({
 
       {setlist.notes && (
         <div className="glass p-4 flex gap-3">
-          <FileText className="size-4 text-[#ffb547] mt-0.5 shrink-0" />
+          <FileText className="size-4 text-chart-4 mt-0.5 shrink-0" />
           <p className="text-sm whitespace-pre-wrap text-foreground/85">
             {setlist.notes}
           </p>
@@ -330,7 +330,7 @@ function OfflineSetlistView({
                     </p>
                   )}
                   {isDeleted && (
-                    <p className="text-[10px] uppercase tracking-wider text-[#ffb547] mt-0.5 font-mono">
+                    <p className="text-[10px] uppercase tracking-wider text-chart-4 mt-0.5 font-mono">
                       Removed from library
                     </p>
                   )}

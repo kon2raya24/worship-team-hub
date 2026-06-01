@@ -65,14 +65,14 @@ export function IntervalsGame() {
             <div className="eyebrow mb-2">Question</div>
             <div className="font-display text-xl sm:text-2xl leading-snug">
               What note is a{" "}
-              <span className="text-[#8b5cf6] font-mono font-bold">
+              <span className="text-primary font-mono font-bold">
                 {INTERVALS[q.intervalIdx].short}
               </span>{" "}
               <span className="text-muted-foreground">
                 ({INTERVALS[q.intervalIdx].name})
               </span>{" "}
               above{" "}
-              <span className="text-[#00e8ff] font-mono font-bold">{q.from}</span>?
+              <span className="text-accent font-mono font-bold">{q.from}</span>?
             </div>
           </div>
         ) : (
@@ -80,9 +80,9 @@ export function IntervalsGame() {
             <div className="eyebrow mb-2">Question</div>
             <div className="font-display text-xl sm:text-2xl leading-snug">
               What interval is from{" "}
-              <span className="text-[#00e8ff] font-mono font-bold">{q.from}</span>{" "}
+              <span className="text-accent font-mono font-bold">{q.from}</span>{" "}
               up to{" "}
-              <span className="text-[#8b5cf6] font-mono font-bold">{q.to}</span>?
+              <span className="text-primary font-mono font-bold">{q.to}</span>?
             </div>
           </div>
         )

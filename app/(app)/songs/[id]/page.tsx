@@ -60,7 +60,7 @@ export default async function SongDetailPage({ params }: { params: Params }) {
             )}
             {song.bpm && (
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-1 rounded-full bg-[#8b5cf6]" />
+                <span className="size-1 rounded-full bg-primary" />
                 {song.bpm} BPM
               </span>
             )}
@@ -118,7 +118,7 @@ export default async function SongDetailPage({ params }: { params: Params }) {
 
       {isLeader(profile) &&
         (!song.chordpro_body || song.chordpro_body.trim().length < 40) && (
-          <div className="glass p-4 flex items-start gap-3 border border-[#ffb547]/30 print:hidden">
+          <div className="glass p-4 flex items-start gap-3 border border-chart-4/30 print:hidden">
             <span className="text-lg leading-none">✨</span>
             <div className="text-sm flex-1">
               <div className="font-semibold text-foreground/95">
@@ -145,7 +145,7 @@ export default async function SongDetailPage({ params }: { params: Params }) {
       {/* Practice notes */}
       <section className="glass p-5 space-y-4 print:hidden">
         <div className="flex items-center gap-2">
-          <StickyNote className="size-4 text-[#ffb547]" />
+          <StickyNote className="size-4 text-chart-4" />
           <h2 className="font-display font-semibold text-base">Practice notes</h2>
           <span className="ml-auto text-xs text-muted-foreground">
             {(notes ?? []).length}

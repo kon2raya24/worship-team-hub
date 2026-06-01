@@ -98,7 +98,7 @@ export default async function DashboardPage() {
             <TimeGreeting />
             <h1 className="font-display text-2xl sm:text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] md:leading-[1.05] max-w-2xl">
               {firstName},{" "}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#00e8ff] via-[#8b5cf6] to-[#ff3aa3]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-accent via-primary to-chart-3">
                 let everything that has breath
               </span>{" "}
               praise the Lord.
@@ -223,7 +223,7 @@ export default async function DashboardPage() {
           Home tab (otherwise Games lives behind the More sheet). */}
       <section className="glass p-5 sm:p-6">
         <div className="flex items-center gap-3 mb-4">
-          <span className="inline-flex items-center justify-center size-8 rounded-lg bg-[#8b5cf6]/15 text-[#8b5cf6] ring-1 ring-[#8b5cf6]/30">
+          <span className="inline-flex items-center justify-center size-8 rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30">
             <Gamepad2 className="size-4" />
           </span>
           <h2 className="font-display font-semibold text-lg">Practice</h2>
@@ -259,7 +259,7 @@ export default async function DashboardPage() {
       {/* Pinned announcements */}
       <section className="glass p-6">
         <div className="flex items-center gap-3 mb-4">
-          <span className="inline-flex items-center justify-center size-8 rounded-lg bg-[#ff3aa3]/15 text-[#ff3aa3] ring-1 ring-[#ff3aa3]/30">
+          <span className="inline-flex items-center justify-center size-8 rounded-lg bg-chart-3/15 text-chart-3 ring-1 ring-chart-3/30">
             <Megaphone className="size-4" />
           </span>
           <h2 className="font-display font-semibold text-lg">
@@ -277,7 +277,7 @@ export default async function DashboardPage() {
             pinned.map((a) => (
               <div
                 key={a.id}
-                className="border-l-2 border-[#ff3aa3]/60 pl-3 py-1"
+                className="border-l-2 border-chart-3/60 pl-3 py-1"
               >
                 <div className="font-medium text-foreground/90">{a.title}</div>
                 <div className="text-sm text-muted-foreground whitespace-pre-wrap">
@@ -299,27 +299,27 @@ const ACCENTS: Record<
   { ring: string; bg: string; text: string; glow: string }
 > = {
   violet: {
-    ring: "ring-[#8b5cf6]/30 hover:ring-[#8b5cf6]/60",
-    bg: "bg-[#8b5cf6]/15",
-    text: "text-[#8b5cf6]",
+    ring: "ring-primary/30 hover:ring-primary/60",
+    bg: "bg-primary/15",
+    text: "text-primary",
     glow: "hover:shadow-[0_0_24px_rgba(139,92,246,0.35)]",
   },
   cyan: {
-    ring: "ring-[#00e8ff]/30 hover:ring-[#00e8ff]/60",
-    bg: "bg-[#00e8ff]/15",
-    text: "text-[#00e8ff]",
+    ring: "ring-accent/30 hover:ring-accent/60",
+    bg: "bg-accent/15",
+    text: "text-accent",
     glow: "hover:shadow-[0_0_24px_rgba(0,232,255,0.35)]",
   },
   magenta: {
-    ring: "ring-[#ff3aa3]/30 hover:ring-[#ff3aa3]/60",
-    bg: "bg-[#ff3aa3]/15",
-    text: "text-[#ff3aa3]",
+    ring: "ring-chart-3/30 hover:ring-chart-3/60",
+    bg: "bg-chart-3/15",
+    text: "text-chart-3",
     glow: "hover:shadow-[0_0_24px_rgba(255,58,163,0.35)]",
   },
   amber: {
-    ring: "ring-[#ffb547]/30 hover:ring-[#ffb547]/60",
-    bg: "bg-[#ffb547]/15",
-    text: "text-[#ffb547]",
+    ring: "ring-chart-4/30 hover:ring-chart-4/60",
+    bg: "bg-chart-4/15",
+    text: "text-chart-4",
     glow: "hover:shadow-[0_0_24px_rgba(255,181,71,0.35)]",
   },
 };

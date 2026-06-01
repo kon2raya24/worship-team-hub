@@ -50,9 +50,9 @@ export function NashvilleGame() {
             <div className="eyebrow mb-2">Question</div>
             <div className="font-display text-xl sm:text-2xl leading-snug">
               In the key of{" "}
-              <span className="text-[#00e8ff] font-mono font-bold">{q.key}</span>,
+              <span className="text-accent font-mono font-bold">{q.key}</span>,
               what chord is the{" "}
-              <span className="text-[#8b5cf6] font-mono font-bold">
+              <span className="text-primary font-mono font-bold">
                 {ROMAN_NUMERALS[q.degree]}
               </span>
               ?
@@ -63,8 +63,8 @@ export function NashvilleGame() {
             <div className="eyebrow mb-2">Question</div>
             <div className="font-display text-xl sm:text-2xl leading-snug">
               In the key of{" "}
-              <span className="text-[#00e8ff] font-mono font-bold">{q.key}</span>,{" "}
-              <span className="text-[#8b5cf6] font-mono font-bold">{q.chord}</span>{" "}
+              <span className="text-accent font-mono font-bold">{q.key}</span>,{" "}
+              <span className="text-primary font-mono font-bold">{q.chord}</span>{" "}
               is which Roman numeral?
             </div>
           </div>

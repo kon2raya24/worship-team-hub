@@ -66,9 +66,9 @@ export function CapoGame() {
             <div className="eyebrow mb-2">Question</div>
             <div className="font-display text-xl sm:text-2xl leading-snug">
               You&apos;re playing the{" "}
-              <span className="text-[#00e8ff] font-mono font-bold">{q.shape}</span>{" "}
+              <span className="text-accent font-mono font-bold">{q.shape}</span>{" "}
               shape with capo at{" "}
-              <span className="text-[#8b5cf6] font-mono font-bold">
+              <span className="text-primary font-mono font-bold">
                 {q.capo === 0 ? "no capo" : `fret ${q.capo}`}
               </span>
               . What key is sounding?
@@ -79,11 +79,11 @@ export function CapoGame() {
             <div className="eyebrow mb-2">Question</div>
             <div className="font-display text-xl sm:text-2xl leading-snug">
               Service is in the key of{" "}
-              <span className="text-[#00e8ff] font-mono font-bold">
+              <span className="text-accent font-mono font-bold">
                 {q.targetKey}
               </span>
               . You want to play{" "}
-              <span className="text-[#8b5cf6] font-mono font-bold">{q.shape}</span>{" "}
+              <span className="text-primary font-mono font-bold">{q.shape}</span>{" "}
               shape — where does the capo go?
             </div>
           </div>

@@ -78,7 +78,7 @@ export default async function SettingsPage({
         <div className="space-y-1.5">
           <Label>Role</Label>
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#00e8ff]/10 text-[#00e8ff] border border-[#00e8ff]/30 font-semibold">
+            <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/30 font-semibold">
               {roleLabel(profile.role)}
             </span>
             <span className="text-muted-foreground">
@@ -95,12 +95,12 @@ export default async function SettingsPage({
       {/* Password */}
       <form action={changePassword} className="glass p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <KeyRound className="size-4 text-[#8b5cf6]" />
+          <KeyRound className="size-4 text-primary" />
           <h2 className="font-display font-semibold text-base">Change password</h2>
         </div>
 
         {passwordChanged && (
-          <p className="flex items-center gap-2 text-sm text-[#8eff6a] bg-[#8eff6a]/10 border border-[#8eff6a]/30 rounded-lg p-2">
+          <p className="flex items-center gap-2 text-sm text-chart-5 bg-chart-5/10 border border-chart-5/30 rounded-lg p-2">
             <CheckCircle2 className="size-4" /> Password updated.
           </p>
         )}
@@ -139,7 +139,7 @@ export default async function SettingsPage({
         </div>
 
         {error && (
-          <p className="text-sm text-[#ff5566] bg-[#ff5566]/10 border border-[#ff5566]/30 rounded-lg p-2">
+          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-2">
             {error}
           </p>
         )}
