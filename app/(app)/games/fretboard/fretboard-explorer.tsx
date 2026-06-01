@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Download, Pencil, RotateCcw } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,12 +18,17 @@ import {
   STANDARD_TUNING,
   buildComparison,
   buildScaleFretboard,
+  intervalLabel,
+  pitchClass,
+  rootUsesFlats,
   scaleNotes,
   sharedToneCount,
+  spell,
   type ScaleDef,
 } from "@/lib/fretboard";
 import { getPositions, noteKey, type PatternMode } from "@/lib/fretboard-patterns";
 import { buildDiatonicChords } from "@/lib/fretboard-chords";
+import { exportFretboardPng } from "@/lib/fretboard-export";
 
 const MAX_FRET = 15;
 
@@ -109,6 +114,11 @@ export function FretboardExplorer() {
   const [posIndex, setPosIndex] = useState(0);
   const [compare, setCompare] = useState(false);
   const [selectedDegree, setSelectedDegree] = useState<number | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [added, setAdded] = useState<Set<string>>(new Set());
+  const [rotateLabels, setRotateLabels] = useState(false);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   const scale = useMemo<ScaleDef>(() => SCALES.find((s) => s.id === scaleId) ?? SCALES[0], [scaleId]);
   const scaleB = useMemo<ScaleDef>(
@@ -150,6 +160,41 @@ export function FretboardExplorer() {
     setPosIndex(0);
   };
 
+  // Edit mode: clicking a board cell hides a scale note or adds an outside one.
+  const scaleKeys = useMemo(
+    () => new Set(notes.map((n) => noteKey(n.string, n.fret))),
+    [notes],
+  );
+  const toggleInSet = (setter: typeof setHidden, k: string) =>
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
+  const toggleCell = (s: number, f: number) => {
+    const k = noteKey(s, f);
+    toggleInSet(scaleKeys.has(k) ? setHidden : setAdded, k);
+  };
+  const resetEdits = () => {
+    setHidden(new Set());
+    setAdded(new Set());
+  };
+  const exportPng = (dotsOnly: boolean) => {
+    if (!svgRef.current) return;
+    exportFretboardPng(svgRef.current, {
+      dotsOnly,
+      width: SVG_W,
+      height: SVG_H,
+      fileName: `fretboard-${root}-${scaleId}${dotsOnly ? "-dots" : ""}.png`,
+    });
+  };
+  const toolbarBtn = (active: boolean) =>
+    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition-colors " +
+    (active
+      ? "bg-primary text-primary-foreground ring-transparent shadow-sm"
+      : "bg-tint-1 text-muted-foreground ring-border hover:text-foreground");
+
   const hasPositions = !compare && positions.length > 0;
   const idx = hasPositions ? ((posIndex % positions.length) + positions.length) % positions.length : 0;
   const activeKeys = hasPositions ? positions[idx].keys : null;
@@ -177,22 +222,50 @@ export function FretboardExplorer() {
       });
     }
     const selPcs = selectedChord ? new Set(selectedChord.pcs) : null;
-    return notes.map((n) => ({
-      key: `${n.string}-${n.fret}`,
-      x: noteX(n.fret),
-      y: stringY(n.string),
-      label: labelMode === "notes" ? n.note : n.interval,
-      fillClass: n.isRoot ? "fill-primary" : "fill-accent",
-      textClass: n.isRoot ? "fill-primary-foreground" : "fill-accent-foreground",
-      hollow: false,
-      ring: false,
-      dim: selPcs
-        ? !selPcs.has(n.pc)
-        : activeKeys
-          ? !activeKeys.has(noteKey(n.string, n.fret))
-          : false,
-    }));
-  }, [compare, root, scale, scaleB, notes, activeKeys, labelMode, selectedChord]);
+    const out: Dot[] = [];
+    for (const n of notes) {
+      const k = noteKey(n.string, n.fret);
+      const isHidden = hidden.has(k);
+      if (isHidden && !editMode) continue; // removed from the diagram in view mode
+      out.push({
+        key: k,
+        x: noteX(n.fret),
+        y: stringY(n.string),
+        label: labelMode === "notes" ? n.note : n.interval,
+        fillClass: n.isRoot ? "fill-primary" : "fill-accent",
+        textClass: n.isRoot ? "fill-primary-foreground" : "fill-accent-foreground",
+        hollow: false,
+        ring: false,
+        dim: isHidden
+          ? true
+          : selPcs
+            ? !selPcs.has(n.pc)
+            : activeKeys
+              ? !activeKeys.has(k)
+              : false,
+      });
+    }
+    // Outside-scale notes the user added in edit mode.
+    const useFlats = rootUsesFlats(root);
+    const rootPc = pitchClass(root) ?? 0;
+    for (const k of added) {
+      const [s, f] = k.split(":").map(Number);
+      const pc = ((pitchClass(STANDARD_TUNING[s]) ?? 0) + f) % 12;
+      const degree = (((pc - rootPc) % 12) + 12) % 12;
+      out.push({
+        key: `add-${k}`,
+        x: noteX(f),
+        y: stringY(s),
+        label: labelMode === "notes" ? spell(pc, useFlats) : intervalLabel(degree),
+        fillClass: "fill-background stroke-muted-foreground",
+        textClass: "fill-foreground",
+        hollow: true,
+        ring: false,
+        dim: false,
+      });
+    }
+    return out;
+  }, [compare, root, scale, scaleB, notes, activeKeys, labelMode, selectedChord, hidden, added, editMode]);
 
   return (
     <div className="space-y-5">
@@ -398,6 +471,7 @@ export function FretboardExplorer() {
       {/* Fretboard */}
       <div className="glass rounded-2xl p-3 sm:p-4 ring-1 ring-border overflow-x-auto">
         <svg
+          ref={svgRef}
           viewBox={`0 0 ${SVG_W} ${SVG_H}`}
           width={SVG_W}
           height={SVG_H}
@@ -405,6 +479,7 @@ export function FretboardExplorer() {
           role="img"
           aria-label={`${root} ${scale.name}${compare ? ` versus ${scaleB.name}` : ""} on a guitar fretboard`}
         >
+          <g data-layer="board">
           {/* Inlay markers */}
           {INLAY_FRETS.map((f) => (
             <circle
@@ -483,7 +558,9 @@ export function FretboardExplorer() {
             </text>
           ))}
 
+          </g>
           {/* Note dots */}
+          <g data-layer="dots">
           {dots.map((d) => (
             <g key={d.key} opacity={d.dim ? 0.14 : 1}>
               {d.ring && (
@@ -511,6 +588,7 @@ export function FretboardExplorer() {
                   className={d.textClass}
                   fontSize={10.5}
                   fontWeight={600}
+                  transform={rotateLabels ? `rotate(180 ${d.x} ${d.y})` : undefined}
                   style={{ fontFamily: "var(--font-mono)" }}
                 >
                   {d.label}
@@ -518,7 +596,70 @@ export function FretboardExplorer() {
               )}
             </g>
           ))}
+          </g>
+          {editMode && !compare && (
+            <g data-layer="hit">
+              {Array.from({ length: N_STRINGS }).flatMap((_, s) =>
+                Array.from({ length: MAX_FRET + 1 }).map((_, f) => (
+                  <rect
+                    key={`hit-${s}-${f}`}
+                    x={noteX(f) - FRET_W / 2}
+                    y={stringY(s) - STRING_GAP / 2}
+                    width={FRET_W}
+                    height={STRING_GAP}
+                    fill="transparent"
+                    className="cursor-pointer"
+                    onClick={() => toggleCell(s, f)}
+                  />
+                )),
+              )}
+            </g>
+          )}
         </svg>
+      </div>
+
+      {/* Edit & export toolbar */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {!compare && (
+            <>
+              <button
+                type="button"
+                onClick={() => setEditMode((e) => !e)}
+                aria-pressed={editMode}
+                className={toolbarBtn(editMode)}
+              >
+                <Pencil className="size-3.5" /> {editMode ? "Editing" : "Edit"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setRotateLabels((r) => !r)}
+                aria-pressed={rotateLabels}
+                className={toolbarBtn(rotateLabels)}
+              >
+                <RotateCcw className="size-3.5" /> Rotate labels
+              </button>
+              {(hidden.size > 0 || added.size > 0) && (
+                <button type="button" onClick={resetEdits} className={toolbarBtn(false)}>
+                  Reset edits
+                </button>
+              )}
+            </>
+          )}
+          <span className="mx-1 hidden h-5 w-px bg-border sm:inline-block" />
+          <button type="button" onClick={() => exportPng(false)} className={toolbarBtn(false)}>
+            <Download className="size-3.5" /> PNG
+          </button>
+          <button type="button" onClick={() => exportPng(true)} className={toolbarBtn(false)}>
+            <Download className="size-3.5" /> Dots only
+          </button>
+        </div>
+        {editMode && !compare && (
+          <p className="text-sm text-muted-foreground">
+            Tap a note to hide it; tap an empty spot to add an out-of-scale note (grey). Dots only
+            exports a transparent overlay for videos.
+          </p>
+        )}
       </div>
 
       {/* Chords — diatonic progression, hidden while comparing */}
