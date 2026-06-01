@@ -17,6 +17,15 @@ export const metadata = { title: "Games · Worship Hub" };
 
 const GAMES = [
   {
+    href: "/games/fretboard",
+    title: "Fretboard Explorer",
+    blurb:
+      "See any scale across the whole neck, in any key. Toggle note names, intervals, or hide labels for visual practice. 20+ scales — pentatonics, modes, blues, harmonic minor, and more.",
+    icon: Guitar,
+    accent: "teal" as const,
+    eyebrow: "Practice tool",
+  },
+  {
     href: "/games/transpose",
     title: "Transpose Trainer",
     blurb:
@@ -131,6 +140,12 @@ const ACCENTS = {
     text: "text-[#c4b5fd]",
     glow: "hover:shadow-[0_0_24px_rgba(196,181,253,0.35)]",
   },
+  teal: {
+    ring: "ring-[#5eead4]/30 hover:ring-[#5eead4]/60",
+    bg: "bg-[#5eead4]/15",
+    text: "text-[#5eead4]",
+    glow: "hover:shadow-[0_0_24px_rgba(94,234,212,0.35)]",
+  },
 } as const;
 
 export default function GamesIndex() {
@@ -158,7 +173,7 @@ export default function GamesIndex() {
                 >
                   <Icon className="size-5" />
                 </span>
-                <span className="eyebrow">Mini-game</span>
+                <span className="eyebrow">{"eyebrow" in g ? g.eyebrow : "Mini-game"}</span>
               </div>
               <h3 className="mt-4 text-xl font-display font-semibold text-foreground/95">
                 {g.title}
