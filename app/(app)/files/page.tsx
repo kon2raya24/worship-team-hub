@@ -23,7 +23,7 @@ const kindColors: Record<string, string> = {
   pdf: "text-[#ff3aa3]",
   slide: "text-[#ffb547]",
   midi: "text-[#8b5cf6]",
-  other: "text-[#8a92b4]",
+  other: "text-muted-foreground",
 };
 
 export default async function FilesPage() {
@@ -56,7 +56,7 @@ export default async function FilesPage() {
       {canEdit && (
         <form action={uploadFile} className="glass p-5 space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="file">File <span className="text-[#8a92b4]">(max 50 MB)</span></Label>
+            <Label htmlFor="file">File <span className="text-muted-foreground">(max 50 MB)</span></Label>
             <Input id="file" name="file" type="file" required />
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
@@ -92,7 +92,7 @@ export default async function FilesPage() {
           const songTitle =
             (f.songs as { title?: string } | null)?.title ?? null;
           const Icon = kindIcons[f.kind] ?? FilesIcon;
-          const color = kindColors[f.kind] ?? "text-[#8a92b4]";
+          const color = kindColors[f.kind] ?? "text-muted-foreground";
           return (
             <li
               key={f.id}
@@ -100,13 +100,13 @@ export default async function FilesPage() {
             >
               <div className="flex items-center gap-3 min-w-0">
                 <span
-                  className={`inline-flex items-center justify-center size-9 rounded-lg bg-white/[0.04] ring-1 ring-white/[0.08] ${color}`}
+                  className={`inline-flex items-center justify-center size-9 rounded-lg bg-tint-1 ring-1 ring-border ${color}`}
                 >
                   <Icon className="size-4" />
                 </span>
                 <div className="min-w-0">
                   <FileLink storagePath={f.storage_path} label={f.display_name} />
-                  <div className="text-xs text-[#8a92b4] flex gap-2 items-center mt-0.5">
+                  <div className="text-xs text-muted-foreground flex gap-2 items-center mt-0.5">
                     <span className="font-mono uppercase text-[10px] tracking-wider">
                       {f.kind}
                     </span>
@@ -124,7 +124,7 @@ export default async function FilesPage() {
           );
         })}
         {(files ?? []).length === 0 && (
-          <li className="glass p-8 text-center text-[#8a92b4]">No files yet.</li>
+          <li className="glass p-8 text-center text-muted-foreground">No files yet.</li>
         )}
       </ul>
     </div>

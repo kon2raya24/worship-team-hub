@@ -45,15 +45,15 @@ export default async function AnnouncementsPage() {
           <div className="space-y-1.5">
             <Label htmlFor="body">
               Body{" "}
-              <span className="font-normal text-[#8a92b4]">· markdown supported</span>
+              <span className="font-normal text-muted-foreground">· markdown supported</span>
             </Label>
             <Textarea id="body" name="body" rows={3} required className="resize-none" />
           </div>
-          <label className="flex items-center gap-2 text-sm text-[#c8cee6]">
+          <label className="flex items-center gap-2 text-sm text-foreground/80">
             <input
               type="checkbox"
               name="pinned"
-              className="size-4 rounded border-white/20 bg-white/[0.04] accent-[#8b5cf6]"
+              className="size-4 rounded border-hairline-strong bg-tint-1 accent-[#8b5cf6]"
             />
             Pin to dashboard
           </label>
@@ -70,7 +70,7 @@ export default async function AnnouncementsPage() {
             <li key={a.id} className="glass p-4">
               <div className="flex justify-between items-start gap-3">
                 <div className="min-w-0">
-                  <div className="font-display text-base font-semibold flex items-center gap-2 text-white/95">
+                  <div className="font-display text-base font-semibold flex items-center gap-2 text-foreground/95">
                     {a.title}
                     {a.pinned && (
                       <span className="inline-flex items-center gap-1 text-[#ff3aa3] text-[10px] font-mono uppercase tracking-wider">
@@ -78,10 +78,10 @@ export default async function AnnouncementsPage() {
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-[#8a92b4] mt-0.5">
+                  <div className="text-xs text-muted-foreground mt-0.5">
                     {author} · {new Date(a.created_at).toLocaleDateString()}
                   </div>
-                  <div className="prose prose-invert prose-sm max-w-none mt-2 prose-headings:font-display prose-headings:text-white prose-p:text-white/85 prose-li:text-white/85 prose-strong:text-white prose-a:text-[#00e8ff]">
+                  <div className="prose dark:prose-invert prose-sm max-w-none mt-2 prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/85 prose-li:text-foreground/85 prose-strong:text-foreground prose-a:text-accent">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{a.body}</ReactMarkdown>
                   </div>
                 </div>
@@ -102,7 +102,7 @@ export default async function AnnouncementsPage() {
           );
         })}
         {(items ?? []).length === 0 && (
-          <li className="glass p-8 text-center text-[#8a92b4]">
+          <li className="glass p-8 text-center text-muted-foreground">
             No announcements yet.
           </li>
         )}

@@ -45,7 +45,7 @@ export default async function SignupPage({
     <div className="space-y-5">
       <div className="space-y-1">
         <h2 className="font-display text-xl font-semibold">Create account</h2>
-        <p className="text-sm text-[#8a92b4]">Join your church worship team.</p>
+        <p className="text-sm text-muted-foreground">Join your church worship team.</p>
       </div>
       <form action={signupAction} className="space-y-4">
         <div className="space-y-2">
@@ -94,9 +94,9 @@ export default async function SignupPage({
         <SubmitButton className="w-full" pendingLabel="Creating…">
           Create account
         </SubmitButton>
-        <p className="text-center text-sm text-[#8a92b4]">
+        <p className="text-center text-sm text-muted-foreground">
           Already have one?{" "}
-          <Link className="text-[#00e8ff] hover:underline" href="/login">
+          <Link className="text-accent hover:underline" href="/login">
             Sign in
           </Link>
         </p>

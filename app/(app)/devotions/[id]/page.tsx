@@ -32,7 +32,7 @@ export default async function DevotionDetail({ params }: { params: Params }) {
       <div className="space-y-3">
         <Link
           href="/devotions"
-          className="inline-flex items-center gap-1.5 text-xs text-[#8a92b4] hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-3" /> Devotions
         </Link>
@@ -46,7 +46,7 @@ export default async function DevotionDetail({ params }: { params: Params }) {
             <h1 className="text-3xl md:text-4xl font-display font-semibold tracking-tight leading-tight mt-2">
               {devotion.title}
             </h1>
-            <p className="text-xs text-[#8a92b4] mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               {author} ·{" "}
               {new Date(devotion.published_at).toLocaleDateString(undefined, {
                 month: "long",
@@ -69,7 +69,7 @@ export default async function DevotionDetail({ params }: { params: Params }) {
         </div>
       </div>
 
-      <div className="glass p-6 md:p-8 prose prose-invert max-w-none prose-headings:font-display prose-headings:text-white prose-p:text-white/85 prose-li:text-white/85 prose-strong:text-white prose-a:text-[#00e8ff] prose-blockquote:border-l-[#8b5cf6] prose-blockquote:text-[#c8cee6] prose-blockquote:not-italic">
+      <div className="glass p-6 md:p-8 prose dark:prose-invert max-w-none prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/85 prose-li:text-foreground/85 prose-strong:text-foreground prose-a:text-accent prose-blockquote:border-l-[#8b5cf6] prose-blockquote:text-foreground/80 prose-blockquote:not-italic">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{devotion.body}</ReactMarkdown>
       </div>
     </article>

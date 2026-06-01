@@ -27,6 +27,11 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-tint-1: var(--glass-1);
+  --color-tint-2: var(--glass-2);
+  --color-tint-3: var(--glass-3);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -50,11 +55,78 @@
 }
 
 /* ============================================================
- * Sanctuary OS — dark space, glass panels, aurora gradients.
- * Default (and only) theme is dark; .dark class is redundant
- * but kept to satisfy shadcn primitives.
+ * Sanctuary OS — aurora gradients + glass panels.
+ * :root holds the light ("day") palette; .dark holds the dark
+ * ("night") palette. next-themes toggles the .light / .dark class
+ * on <html>; .dark must stay AFTER :root so it wins the cascade.
  * ============================================================ */
-:root,
+:root {
+  --ink-0: #f6f7fb;
+  --ink-1: #ffffff;
+  --ink-2: #eef0f7;
+  --ink-3: #e4e7f2;
+  --ink-4: #d7dcec;
+
+  /* On a light surface, "glass" is a dark-ink tint, not a white one. */
+  --glass-1: rgba(17, 24, 56, 0.03);
+  --glass-2: rgba(17, 24, 56, 0.05);
+  --glass-3: rgba(17, 24, 56, 0.08);
+  --hairline: rgba(17, 24, 56, 0.1);
+  --hairline-strong: rgba(17, 24, 56, 0.18);
+  --glass-highlight: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.7),
+    rgba(255, 255, 255, 0.15) 40%,
+    transparent 80%
+  );
+
+  /* Aurora accents, deepened so they read on white. */
+  --aurora-cyan: #0e9bb8;
+  --aurora-violet: #7c3aed;
+  --aurora-magenta: #d81b75;
+  --aurora-amber: #c77b08;
+
+  --background: var(--ink-0);
+  --foreground: #0b1024;
+  --card: rgba(255, 255, 255, 0.72);
+  --card-foreground: #0b1024;
+  --popover: #ffffff;
+  --popover-foreground: #0b1024;
+  --primary: var(--aurora-violet);
+  --primary-foreground: #ffffff;
+  --secondary: rgba(17, 24, 56, 0.05);
+  --secondary-foreground: #0b1024;
+  --muted: rgba(17, 24, 56, 0.04);
+  --muted-foreground: #5a6178;
+  --accent: var(--aurora-cyan);
+  --accent-foreground: #ffffff;
+  --destructive: #e11d48;
+  --border: rgba(17, 24, 56, 0.1);
+  --input: rgba(17, 24, 56, 0.16);
+  --ring: var(--aurora-violet);
+  --chart-1: var(--aurora-violet);
+  --chart-2: var(--aurora-cyan);
+  --chart-3: var(--aurora-magenta);
+  --chart-4: var(--aurora-amber);
+  --chart-5: #16a34a;
+  /* Sharper, more standard radii everywhere. */
+  --radius: 0.5rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0b1024;
+  --sidebar-primary: var(--aurora-violet);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(17, 24, 56, 0.05);
+  --sidebar-accent-foreground: #0b1024;
+  --sidebar-border: rgba(17, 24, 56, 0.1);
+  --sidebar-ring: var(--aurora-violet);
+  --app-bg:
+    radial-gradient(60% 40% at 18% 8%, rgba(139, 92, 246, 0.1), transparent 70%),
+    radial-gradient(50% 35% at 92% 18%, rgba(0, 180, 216, 0.08), transparent 70%),
+    radial-gradient(45% 35% at 78% 92%, rgba(255, 58, 163, 0.06), transparent 70%),
+    linear-gradient(180deg, #fbfbff 0%, #f4f6fc 60%, #eef1f9 100%);
+  color-scheme: light;
+}
+
 .dark {
   --ink-0: #04060e;
   --ink-1: #070a17;
@@ -67,6 +139,12 @@
   --glass-3: rgba(255, 255, 255, 0.09);
   --hairline: rgba(255, 255, 255, 0.08);
   --hairline-strong: rgba(255, 255, 255, 0.16);
+  --glass-highlight: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.02) 40%,
+    transparent 80%
+  );
 
   --aurora-cyan: #00e8ff;
   --aurora-violet: #8b5cf6;
@@ -96,7 +174,6 @@
   --chart-3: var(--aurora-magenta);
   --chart-4: var(--aurora-amber);
   --chart-5: #8eff6a;
-  /* Sharper, more standard radii everywhere. */
   --radius: 0.5rem;
   --sidebar: #070a17;
   --sidebar-foreground: #f5f7ff;
@@ -106,6 +183,12 @@
   --sidebar-accent-foreground: #f5f7ff;
   --sidebar-border: rgba(255, 255, 255, 0.08);
   --sidebar-ring: var(--aurora-violet);
+  --app-bg:
+    radial-gradient(60% 40% at 18% 8%, rgba(139, 92, 246, 0.32), transparent 70%),
+    radial-gradient(50% 35% at 92% 18%, rgba(0, 232, 255, 0.22), transparent 70%),
+    radial-gradient(45% 35% at 78% 92%, rgba(255, 58, 163, 0.18), transparent 70%),
+    linear-gradient(180deg, #060916 0%, #04060e 60%, #03050c 100%);
+  color-scheme: dark;
 }
 
 @layer base {
@@ -113,17 +196,12 @@
     @apply border-border outline-ring/50;
   }
   html {
-    color-scheme: dark;
     @apply font-sans;
     overflow-x: clip;
   }
   body {
     @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(60% 40% at 18% 8%, rgba(139, 92, 246, 0.32), transparent 70%),
-      radial-gradient(50% 35% at 92% 18%, rgba(0, 232, 255, 0.22), transparent 70%),
-      radial-gradient(45% 35% at 78% 92%, rgba(255, 58, 163, 0.18), transparent 70%),
-      linear-gradient(180deg, #060916 0%, #04060e 60%, #03050c 100%);
+    background-image: var(--app-bg);
     background-attachment: fixed;
     letter-spacing: -0.005em;
     overflow-x: clip;
@@ -134,21 +212,18 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Native <select> dropdown: force readable dark popup so options
-     aren't washed-out light-on-light. Chrome/Edge respect background +
-     color on <option>; Firefox falls back to system colors. */
-  select {
-    color-scheme: dark;
-  }
+  /* Native <select> dropdown popup — themed so options stay readable in
+     light and dark. Chrome/Edge respect background + color on <option>;
+     Firefox falls back to system colors (driven by color-scheme on :root). */
   select option,
   select optgroup {
-    background-color: #0b1024;
-    color: #f5f7ff;
+    background-color: var(--popover);
+    color: var(--popover-foreground);
   }
   select option:checked,
   select option:hover {
-    background-color: #1a2150;
-    color: #ffffff;
+    background-color: var(--ink-4);
+    color: var(--foreground);
   }
 }
 
@@ -168,12 +243,7 @@
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.18),
-      rgba(255, 255, 255, 0.02) 40%,
-      transparent 80%
-    );
+    background: var(--glass-highlight);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -220,7 +290,7 @@
     background: var(--glass-2);
     border: 1px solid var(--hairline);
     font: 500 11px var(--font-sans);
-    color: #c8cee6;
+    color: var(--muted-foreground);
   }
   .chip-dot {
     width: 6px;

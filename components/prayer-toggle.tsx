@@ -37,7 +37,7 @@ export function PrayerToggle({
             }
           });
         }}
-        className="text-xs text-[#8a92b4] hover:text-white disabled:opacity-50 transition-colors inline-flex items-center gap-1"
+        className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors inline-flex items-center gap-1"
       >
         {optimisticAnswered ? "Mark open" : "Mark answered"}
       </button>

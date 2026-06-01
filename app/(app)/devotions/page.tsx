@@ -61,32 +61,32 @@ export default async function DevotionsPage() {
         </div>
         {currentPlan ? (
           <div className="space-y-3">
-            <p className="text-sm text-[#8a92b4]">
+            <p className="text-sm text-muted-foreground">
               Week of {new Date(currentPlan.week_of).toLocaleDateString()}
             </p>
             <ul className="space-y-1.5">
               {currentPlan.passages.map((p: string) => (
                 <li
                   key={p}
-                  className="text-[15px] text-white/90 flex items-start gap-2"
+                  className="text-[15px] text-foreground/90 flex items-start gap-2"
                 >
-                  <span className="text-[#00e8ff] mt-1">▸</span> {p}
+                  <span className="text-accent mt-1">▸</span> {p}
                 </li>
               ))}
             </ul>
             {currentPlan.notes && (
-              <p className="text-sm whitespace-pre-wrap text-[#c8cee6] mt-2">
+              <p className="text-sm whitespace-pre-wrap text-foreground/80 mt-2">
                 {currentPlan.notes}
               </p>
             )}
           </div>
         ) : (
-          <p className="text-sm text-[#8a92b4]">No plan posted yet.</p>
+          <p className="text-sm text-muted-foreground">No plan posted yet.</p>
         )}
 
         {canEdit && (
           <details className="text-sm mt-4">
-            <summary className="cursor-pointer text-[#8a92b4] hover:text-white transition-colors">
+            <summary className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
               {currentPlan ? "Update plan" : "Add plan"}
             </summary>
             <form action={upsertBiblePlan} className="space-y-3 pt-4">
@@ -102,7 +102,7 @@ export default async function DevotionsPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="passages">
-                  Passages <span className="text-[#8a92b4]">(comma or newline separated)</span>
+                  Passages <span className="text-muted-foreground">(comma or newline separated)</span>
                 </Label>
                 <Textarea
                   id="passages"
@@ -127,7 +127,7 @@ export default async function DevotionsPage() {
       <section className="space-y-2">
         <h2 className="eyebrow">Posts</h2>
         {(devotions ?? []).length === 0 ? (
-          <p className="glass p-8 text-center text-[#8a92b4]">
+          <p className="glass p-8 text-center text-muted-foreground">
             No devotions posted yet.
           </p>
         ) : (
@@ -135,10 +135,10 @@ export default async function DevotionsPage() {
             {(devotions ?? []).map((d) => (
               <li key={d.id} className="glass p-4 card-hover">
                 <Link href={`/devotions/${d.id}`} className="block group/dev">
-                  <div className="font-display font-semibold text-base text-white/95 group-hover/dev:text-[#00e8ff] transition-colors">
+                  <div className="font-display font-semibold text-base text-foreground/95 group-hover/dev:text-accent transition-colors">
                     {d.title}
                   </div>
-                  <div className="text-xs text-[#8a92b4] mt-0.5">
+                  <div className="text-xs text-muted-foreground mt-0.5">
                     {d.scripture_ref ? `${d.scripture_ref} · ` : ""}
                     {new Date(d.published_at).toLocaleDateString()}
                   </div>

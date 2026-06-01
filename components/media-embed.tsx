@@ -43,7 +43,7 @@ export function MediaEmbed({ url }: { url: string }) {
   const isYouTube = parsed.provider === "youtube";
   return (
     <section className="glass overflow-hidden">
-      <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.06]">
+      <div className="flex items-center gap-2 px-5 py-3 border-b border-border">
         {isYouTube ? (
           <PlayCircle className="size-4 text-[#ff3aa3]" />
         ) : (
@@ -56,7 +56,7 @@ export function MediaEmbed({ url }: { url: string }) {
           href={url}
           target="_blank"
           rel="noreferrer"
-          className="ml-auto text-xs text-[#8a92b4] hover:text-white transition-colors"
+          className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           Open in new tab →
         </a>

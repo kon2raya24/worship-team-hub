@@ -24,8 +24,8 @@ export function TextSubmit({
       disabled={pending}
       className={`inline-flex items-center gap-1 text-xs transition-colors disabled:opacity-60 disabled:pointer-events-none ${
         danger
-          ? "text-[#8a92b4] hover:text-red-400"
-          : "text-[#8a92b4] hover:text-white"
+          ? "text-muted-foreground hover:text-red-400"
+          : "text-muted-foreground hover:text-foreground"
       } ${className}`}
     >
       {pending && (

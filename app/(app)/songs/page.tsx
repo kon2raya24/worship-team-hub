@@ -69,7 +69,7 @@ export default async function SongsPage({
       {/* Page header */}
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-start gap-3">
-          <span className="inline-flex items-center justify-center size-11 rounded-lg bg-white/[0.05] ring-1 ring-white/[0.12] text-[#00e8ff] shrink-0">
+          <span className="inline-flex items-center justify-center size-11 rounded-lg bg-tint-2 ring-1 ring-hairline-strong text-accent shrink-0">
             <Music className="size-5" strokeWidth={1.75} />
           </span>
           <div>
@@ -199,8 +199,8 @@ export default async function SongsPage({
                   )}
                 </div>
                 {s._snippet && (
-                  <p className="mt-2 text-xs text-[#c8cee6]/80 italic line-clamp-2 border-l-2 border-[#00e8ff]/40 pl-2">
-                    <span className="not-italic font-mono text-[9px] uppercase tracking-wider text-[#00e8ff] mr-1">
+                  <p className="mt-2 text-xs text-foreground/80 italic line-clamp-2 border-l-2 border-accent/40 pl-2">
+                    <span className="not-italic font-mono text-[9px] uppercase tracking-wider text-accent mr-1">
                       lyrics
                     </span>
                     {s._snippet}

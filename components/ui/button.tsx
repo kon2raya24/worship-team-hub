@@ -28,21 +28,21 @@ const buttonVariants = cva(base, {
       ),
       // OUTLINE — frosted glass with hairline. Secondary actions.
       outline: cn(
-        "border-white/[0.12] bg-white/[0.04] backdrop-blur-md text-white/90",
+        "border-input bg-tint-1 backdrop-blur-md text-foreground/90",
         "shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset]",
-        "hover:bg-white/[0.08] hover:border-white/[0.28] hover:text-white",
+        "hover:bg-tint-2 hover:border-hairline-strong hover:text-foreground",
         "hover:shadow-[0_1px_0_0_rgba(255,255,255,0.12)_inset,0_4px_16px_-6px_rgba(0,232,255,0.2)]"
       ),
       // SECONDARY — solid soft surface
       secondary: cn(
-        "border-white/[0.08] bg-white/[0.06] text-white/95",
+        "border-border bg-tint-2 text-foreground",
         "shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset]",
-        "hover:bg-white/[0.1] hover:border-white/[0.16]"
+        "hover:bg-tint-3 hover:border-hairline-strong"
       ),
       // GHOST — no chrome until hover
       ghost: cn(
-        "border-transparent text-white/70 shadow-none",
-        "hover:bg-white/[0.06] hover:text-white"
+        "border-transparent text-muted-foreground shadow-none",
+        "hover:bg-tint-2 hover:text-foreground"
       ),
       // DESTRUCTIVE — red glow for delete actions
       destructive: cn(

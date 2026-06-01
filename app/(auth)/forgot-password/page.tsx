@@ -47,13 +47,13 @@ export default async function ForgotPasswordPage({
     <div className="space-y-5">
       <div className="space-y-1">
         <h2 className="font-display text-xl font-semibold">Reset password</h2>
-        <p className="text-sm text-[#8a92b4]">
+        <p className="text-sm text-muted-foreground">
           Enter your email and we&apos;ll send you a reset link.
         </p>
       </div>
 
       {sent ? (
-        <div className="rounded-lg border border-[#00e8ff]/30 bg-[#00e8ff]/10 p-3 text-sm text-[#c8cee6]">
+        <div className="rounded-lg border border-[#00e8ff]/30 bg-[#00e8ff]/10 p-3 text-sm text-foreground/80">
           Check your email for a reset link. It expires in 1 hour.
         </div>
       ) : (
@@ -84,8 +84,8 @@ export default async function ForgotPasswordPage({
         </form>
       )}
 
-      <p className="text-center text-sm text-[#8a92b4]">
-        <Link className="text-[#00e8ff] hover:underline" href="/login">
+      <p className="text-center text-sm text-muted-foreground">
+        <Link className="text-accent hover:underline" href="/login">
           ← Back to sign in
         </Link>
       </p>

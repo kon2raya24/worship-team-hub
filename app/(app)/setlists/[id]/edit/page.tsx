@@ -107,9 +107,9 @@ export default async function EditSetlistPage({ params }: { params: Params }) {
       {/* Songs */}
       <section className="glass p-5 space-y-4">
         <div className="flex items-center gap-2">
-          <ListMusic className="size-4 text-[#00e8ff]" />
+          <ListMusic className="size-4 text-accent" />
           <h2 className="font-display font-semibold text-base">Songs</h2>
-          <span className="ml-auto text-xs text-[#8a92b4]">
+          <span className="ml-auto text-xs text-muted-foreground">
             {rows.length} song{rows.length === 1 ? "" : "s"}
           </span>
         </div>
@@ -152,7 +152,7 @@ export default async function EditSetlistPage({ params }: { params: Params }) {
           </form>
         </section>
       ) : (
-        <p className="glass p-4 text-sm text-[#8a92b4] text-center">
+        <p className="glass p-4 text-sm text-muted-foreground text-center">
           Every song in your library is already in this setlist.
         </p>
       )}

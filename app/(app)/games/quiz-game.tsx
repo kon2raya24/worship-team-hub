@@ -101,9 +101,9 @@ export function QuizGame<Q extends QuizQuestion>({
                 disabled={picked !== null}
                 onClick={() => choose(opt)}
                 className={[
-                  "h-12 px-4 rounded-lg border text-left font-mono text-base text-white transition",
+                  "h-12 px-4 rounded-lg border text-left font-mono text-base text-foreground transition",
                   picked === null
-                    ? "border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20"
+                    ? "border-border bg-tint-1 hover:bg-tint-2 hover:border-hairline-strong"
                     : "",
                   picked !== null && isRight
                     ? "border-[#8eff6a]/60 bg-[#8eff6a]/12"
@@ -112,7 +112,7 @@ export function QuizGame<Q extends QuizQuestion>({
                     ? "border-[#ff5566]/60 bg-[#ff5566]/12"
                     : "",
                   picked !== null && !isPick && !isRight
-                    ? "border-white/[0.06] bg-white/[0.02] opacity-60"
+                    ? "border-border bg-tint-1 opacity-60"
                     : "",
                 ].join(" ")}
               >
@@ -150,16 +150,16 @@ export function QuizGame<Q extends QuizQuestion>({
 
         {finished && (
           <div className="space-y-3 pt-2">
-            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4 space-y-2">
+            <div className="rounded-lg border border-border bg-tint-1 p-4 space-y-2">
               <div className="eyebrow">Done</div>
               <div className="font-display text-2xl font-semibold">
                 {score} / {rounds}
               </div>
-              <p className="text-sm text-[#8a92b4]">{message}</p>
+              <p className="text-sm text-muted-foreground">{message}</p>
             </div>
             <button
               onClick={restart}
-              className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-white/[0.12] bg-white/[0.04] text-white font-semibold text-sm hover:bg-white/[0.08] transition"
+              className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-hairline-strong bg-tint-1 text-foreground font-semibold text-sm hover:bg-tint-2 transition"
             >
               <RefreshCw className="size-4" /> Play again
             </button>

@@ -55,7 +55,7 @@ export default async function LoginPage({
     <div className="space-y-5">
       <div className="space-y-1">
         <h2 className="font-display text-xl font-semibold">Sign in</h2>
-        <p className="text-sm text-[#8a92b4]">Welcome back.</p>
+        <p className="text-sm text-muted-foreground">Welcome back.</p>
       </div>
       <form action={loginAction} className="space-y-4">
         <input type="hidden" name="next" value={next} />
@@ -78,7 +78,7 @@ export default async function LoginPage({
             <Label htmlFor="password">Password</Label>
             <Link
               href="/forgot-password"
-              className="text-xs text-[#8a92b4] hover:text-[#00e8ff] transition-colors"
+              className="text-xs text-muted-foreground hover:text-accent transition-colors"
             >
               Forgot?
             </Link>
@@ -101,9 +101,9 @@ export default async function LoginPage({
         <SubmitButton className="w-full" pendingLabel="Signing in…">
           Sign in
         </SubmitButton>
-        <p className="text-center text-sm text-[#8a92b4]">
+        <p className="text-center text-sm text-muted-foreground">
           New to the team?{" "}
-          <Link className="text-[#00e8ff] hover:underline" href="/signup">
+          <Link className="text-accent hover:underline" href="/signup">
             Create an account
           </Link>
         </p>

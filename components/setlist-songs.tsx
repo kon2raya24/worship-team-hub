@@ -68,7 +68,7 @@ export function SetlistSongs({
   }
 
   if (items.length === 0) {
-    return <p className="text-sm text-zinc-500">No songs in this setlist yet.</p>;
+    return <p className="text-sm text-muted-foreground">No songs in this setlist yet.</p>;
   }
 
   if (!canEdit) {
@@ -77,19 +77,19 @@ export function SetlistSongs({
         {items.map((s, i) => (
           <li
             key={s.song_id}
-            className="flex items-center gap-3 p-2.5 rounded-lg bg-white/[0.025] border border-white/[0.06]"
+            className="flex items-center gap-3 p-2.5 rounded-lg bg-tint-1 border border-border"
           >
-            <span className="font-mono text-xs tabular-nums text-[#8a92b4] w-5 text-center">
+            <span className="font-mono text-xs tabular-nums text-muted-foreground w-5 text-center">
               {i + 1}
             </span>
             <div className="flex-1 min-w-0">
               <a
                 href={`/songs/${s.song_id}`}
-                className="font-medium text-white/95 hover:text-[#00e8ff] transition-colors"
+                className="font-medium text-foreground/95 hover:text-accent transition-colors"
               >
                 {s.title}
               </a>
-              <span className="text-[#8a92b4] text-sm">
+              <span className="text-muted-foreground text-sm">
                 {s.played_in_key
                   ? ` · key ${s.played_in_key}`
                   : s.original_key
@@ -144,28 +144,28 @@ function SortableRow({
     <li
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.025] border border-white/[0.06] hover:border-white/[0.12] transition-colors"
+      className="flex items-center gap-2 p-2.5 rounded-lg bg-tint-1 border border-border hover:border-hairline-strong transition-colors"
     >
       <button
         type="button"
-        className="cursor-grab active:cursor-grabbing px-1 text-[#8a92b4] hover:text-white transition-colors"
+        className="cursor-grab active:cursor-grabbing px-1 text-muted-foreground hover:text-foreground transition-colors"
         aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
       >
         ⋮⋮
       </button>
-      <span className="font-mono text-xs tabular-nums text-[#8a92b4] w-5 text-center">
+      <span className="font-mono text-xs tabular-nums text-muted-foreground w-5 text-center">
         {index + 1}
       </span>
       <div className="flex-1 min-w-0">
         <a
           href={`/songs/${row.song_id}`}
-          className="font-medium text-white/95 hover:text-[#00e8ff] transition-colors"
+          className="font-medium text-foreground/95 hover:text-accent transition-colors"
         >
           {row.title}
         </a>
-        <span className="text-[#8a92b4] text-sm">
+        <span className="text-muted-foreground text-sm">
           {row.played_in_key
             ? ` · key ${row.played_in_key}`
             : row.original_key

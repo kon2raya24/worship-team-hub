@@ -66,7 +66,7 @@ export default async function TeamPage() {
       )}
 
       {(members ?? []).length === 0 && (
-        <p className="glass p-8 text-center text-[#8a92b4]">No team members yet.</p>
+        <p className="glass p-8 text-center text-muted-foreground">No team members yet.</p>
       )}
     </div>
   );
@@ -96,16 +96,16 @@ function MemberCard({
           className={`inline-flex items-center justify-center size-10 rounded-md font-display font-semibold text-base shrink-0 ${
             isLeader
               ? "bg-gradient-to-br from-[#00e8ff]/20 to-[#8b5cf6]/20 text-white ring-1 ring-[#00e8ff]/30"
-              : "bg-white/[0.06] text-[#c8cee6] ring-1 ring-white/[0.1]"
+              : "bg-tint-2 text-foreground/80 ring-1 ring-border"
           }`}
         >
           {member.display_name[0]?.toUpperCase() ?? "?"}
         </span>
         <div className="flex-1 min-w-0">
-          <div className="font-display font-semibold text-white/95 flex items-center gap-2">
+          <div className="font-display font-semibold text-foreground/95 flex items-center gap-2">
             {member.display_name}
             {isMe && (
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[#8a92b4]">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                 you
               </span>
             )}
@@ -115,13 +115,13 @@ function MemberCard({
               className={`font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${
                 isLeader
                   ? "bg-[#00e8ff]/10 text-[#00e8ff] border-[#00e8ff]/30"
-                  : "bg-white/[0.04] text-[#8a92b4] border-white/[0.08]"
+                  : "bg-tint-1 text-muted-foreground border-border"
               }`}
             >
               {roleLabel(member.role as "leader" | "member")}
             </span>
             {member.instruments.length > 0 && (
-              <span className="text-xs text-[#8a92b4] truncate">
+              <span className="text-xs text-muted-foreground truncate">
                 {member.instruments.join(" · ")}
               </span>
             )}
@@ -130,7 +130,7 @@ function MemberCard({
       </div>
 
       {canEdit && !isMe && (
-        <div className="mt-3 pt-3 border-t border-white/[0.06] flex justify-end">
+        <div className="mt-3 pt-3 border-t border-border flex justify-end">
           <form
             action={setRole.bind(
               null,

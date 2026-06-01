@@ -115,7 +115,7 @@ export function TransposeGame() {
         <div className="flex flex-wrap items-baseline gap-3">
           <span className="eyebrow">Original</span>
           <KeyChip k={round.fromKey} accent="violet" />
-          <span className="text-[#8a92b4] text-sm">→</span>
+          <span className="text-muted-foreground text-sm">→</span>
           <span className="eyebrow">Target</span>
           <KeyChip k={round.toKey} accent="cyan" />
         </div>
@@ -125,7 +125,7 @@ export function TransposeGame() {
           {round.progression.map((c, i) => (
             <span
               key={`${c}-${i}`}
-              className="inline-flex items-center justify-center min-w-[44px] px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/10 font-mono text-base text-white/95"
+              className="inline-flex items-center justify-center min-w-[44px] px-3 py-1.5 rounded-lg bg-tint-1 border border-border font-mono text-base text-foreground/95"
             >
               {c}
             </span>
@@ -154,11 +154,11 @@ export function TransposeGame() {
                     autoComplete="off"
                     spellCheck={false}
                     className={[
-                      "h-12 w-20 rounded-lg border bg-white/[0.04] px-2 text-center font-mono text-lg text-white placeholder:text-[#4a5278]",
+                      "h-12 w-20 rounded-lg border bg-tint-1 px-2 text-center font-mono text-lg text-foreground placeholder:text-muted-foreground/60",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00e8ff]/50",
                       correct ? "border-[#8eff6a]/60 bg-[#8eff6a]/10" : "",
                       wrong ? "border-[#ff5566]/60 bg-[#ff5566]/10" : "",
-                      !submitted ? "border-white/10" : "",
+                      !submitted ? "border-border" : "",
                     ].join(" ")}
                   />
                   {submitted && wrong && (
@@ -191,12 +191,12 @@ export function TransposeGame() {
                   </span>
                 )}
               </div>
-              <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4 space-y-2">
+              <div className="rounded-lg border border-border bg-tint-1 p-4 space-y-2">
                 <div className="eyebrow">Game over</div>
                 <div className="font-display text-2xl font-semibold">
                   {score} / {ROUNDS_PER_GAME}
                 </div>
-                <p className="text-sm text-[#8a92b4]">
+                <p className="text-sm text-muted-foreground">
                   {score === ROUNDS_PER_GAME
                     ? "Perfect run. The whole band trusts you on key changes."
                     : score >= 3
@@ -207,7 +207,7 @@ export function TransposeGame() {
               <button
                 onClick={handleRestart}
                 type="button"
-                className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-white/[0.12] bg-white/[0.04] text-white font-semibold text-sm hover:bg-white/[0.08] transition"
+                className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-hairline-strong bg-tint-1 text-foreground font-semibold text-sm hover:bg-tint-2 transition"
               >
                 <RefreshCw className="size-4" /> Play again
               </button>
@@ -241,7 +241,7 @@ export function TransposeGame() {
         </form>
       </div>
 
-      <p className="text-xs text-[#8a92b4]">
+      <p className="text-xs text-muted-foreground">
         Tips: minor chords use lowercase <span className="font-mono">m</span> (
         <span className="font-mono">Am</span>). Flats use{" "}
         <span className="font-mono">b</span> (<span className="font-mono">Bb</span>

@@ -11,7 +11,7 @@ export default function OfflinePage() {
           <WifiOff className="size-6" />
         </span>
         <h1 className="font-display text-2xl font-semibold">You&apos;re offline</h1>
-        <p className="text-sm text-[#8a92b4]">
+        <p className="text-sm text-muted-foreground">
           Most of Worship Hub needs an internet connection. But your synced
           songs and recent setlists are still available.
         </p>
@@ -24,11 +24,11 @@ export default function OfflinePage() {
           </Link>
           <Link
             href="/setlists/offline"
-            className="inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-white/[0.06] border border-white/[0.12] text-white hover:bg-white/[0.1] transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-tint-2 border border-border text-foreground hover:bg-tint-3 transition-colors"
           >
             <ListMusic className="size-4" /> Open offline setlists
           </Link>
-          <p className="text-xs text-[#8a92b4] pt-1">
+          <p className="text-xs text-muted-foreground pt-1">
             Reconnect to use schedule, prayer, and uploads.
           </p>
         </div>

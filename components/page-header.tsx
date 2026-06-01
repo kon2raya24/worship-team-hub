@@ -20,14 +20,14 @@ export function PageHeader({
       {back && (
         <Link
           href={back.href}
-          className="inline-flex items-center gap-1.5 text-xs text-[#8a92b4] hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-3" /> {back.label}
         </Link>
       )}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="inline-flex items-center justify-center size-11 rounded-lg bg-white/[0.05] ring-1 ring-white/[0.12] text-[#00e8ff] shrink-0">
+          <span className="inline-flex items-center justify-center size-11 rounded-lg bg-tint-2 ring-1 ring-hairline-strong text-accent shrink-0">
             <Icon className="size-5" strokeWidth={1.75} />
           </span>
           <div className="min-w-0">
@@ -35,7 +35,7 @@ export function PageHeader({
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm text-[#8a92b4] mt-0.5">{subtitle}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
             )}
           </div>
         </div>

@@ -100,7 +100,7 @@ export function ChordTonesGame() {
                 {q.root}
                 {ct.suffix}
               </span>{" "}
-              <span className="text-[#8a92b4]">({ct.label})</span>?
+              <span className="text-muted-foreground">({ct.label})</span>?
             </div>
           </div>
         );

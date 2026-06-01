@@ -68,7 +68,7 @@ export function IntervalsGame() {
               <span className="text-[#8b5cf6] font-mono font-bold">
                 {INTERVALS[q.intervalIdx].short}
               </span>{" "}
-              <span className="text-[#8a92b4]">
+              <span className="text-muted-foreground">
                 ({INTERVALS[q.intervalIdx].name})
               </span>{" "}
               above{" "}

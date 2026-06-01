@@ -36,7 +36,7 @@ export default async function ResetPasswordPage({
     <div className="space-y-5">
       <div className="space-y-1">
         <h2 className="font-display text-xl font-semibold">Set new password</h2>
-        <p className="text-sm text-[#8a92b4]">Choose a password at least 8 characters long.</p>
+        <p className="text-sm text-muted-foreground">Choose a password at least 8 characters long.</p>
       </div>
       <form action={updatePasswordAction} className="space-y-4">
         <div className="space-y-2">

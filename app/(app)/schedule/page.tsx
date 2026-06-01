@@ -95,19 +95,19 @@ export default async function SchedulePage() {
                     {fmt(d)}
                   </h3>
                 </div>
-                <span className="text-xs text-[#8a92b4]">
+                <span className="text-xs text-muted-foreground">
                   {items.length} assigned
                 </span>
               </div>
 
               {items.length === 0 ? (
-                <p className="text-sm text-[#8a92b4] py-2">No assignments yet.</p>
+                <p className="text-sm text-muted-foreground py-2">No assignments yet.</p>
               ) : (
                 <ul className="space-y-1.5 mb-3">
                   {items.map((a) => (
                     <li
                       key={a.id}
-                      className="flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg bg-white/[0.025]"
+                      className="flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg bg-tint-1"
                     >
                       <span className="font-mono text-[10px] uppercase tracking-wider text-[#00e8ff] bg-[#00e8ff]/10 px-1.5 py-0.5 rounded">
                         {a.role}
@@ -115,8 +115,8 @@ export default async function SchedulePage() {
                       <span
                         className={
                           a.user_id === profile.id
-                            ? "font-medium text-white"
-                            : "text-white/85"
+                            ? "font-medium text-foreground"
+                            : "text-foreground/85"
                         }
                       >
                         {a.name}
@@ -137,11 +137,11 @@ export default async function SchedulePage() {
               {canEdit && (
                 <form
                   action={assignMember}
-                  className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end pt-3 border-t border-white/[0.06]"
+                  className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end pt-3 border-t border-border"
                 >
                   <input type="hidden" name="service_date" value={d} />
                   <div className="space-y-1">
-                    <Label htmlFor={`user-${d}`} className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+                    <Label htmlFor={`user-${d}`} className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       Member
                     </Label>
                     <FormSelect
@@ -156,7 +156,7 @@ export default async function SchedulePage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor={`role-${d}`} className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+                    <Label htmlFor={`role-${d}`} className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       Role
                     </Label>
                     <FormSelect
@@ -189,13 +189,13 @@ export default async function SchedulePage() {
             className="grid sm:grid-cols-[140px_1fr_1fr_auto] gap-3 items-end"
           >
             <div className="space-y-1">
-              <Label htmlFor="custom-date" className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+              <Label htmlFor="custom-date" className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 Date
               </Label>
               <Input id="custom-date" name="service_date" type="date" required />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="custom-user" className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+              <Label htmlFor="custom-user" className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 Member
               </Label>
               <FormSelect
@@ -210,7 +210,7 @@ export default async function SchedulePage() {
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="custom-role" className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+              <Label htmlFor="custom-role" className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 Role
               </Label>
               <FormSelect

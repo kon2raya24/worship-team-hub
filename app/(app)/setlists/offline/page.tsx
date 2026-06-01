@@ -138,7 +138,7 @@ export default function OfflineSetlistsPage() {
       <header className="space-y-2">
         <Link
           href="/setlists"
-          className="inline-flex items-center gap-1.5 text-xs text-[#8a92b4] hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           ← Setlists
         </Link>
@@ -150,7 +150,7 @@ export default function OfflineSetlistsPage() {
             <h1 className="text-2xl md:text-3xl font-display font-semibold tracking-tight">
               Offline setlists
             </h1>
-            <p className="text-sm text-[#8a92b4]">
+            <p className="text-sm text-muted-foreground">
               {setlists.length} setlist{setlists.length === 1 ? "" : "s"} cached
               on this device · works without internet
             </p>
@@ -171,7 +171,7 @@ export default function OfflineSetlistsPage() {
           />
           {isOnline ? "Online" : "Offline"}
         </span>
-        <span className="text-[#8a92b4]">
+        <span className="text-muted-foreground">
           Last sync:{" "}
           {lastSync ? new Date(lastSync).toLocaleString() : "never"}
         </span>
@@ -179,7 +179,7 @@ export default function OfflineSetlistsPage() {
           type="button"
           onClick={syncNow}
           disabled={syncing || !isOnline}
-          className="ml-auto inline-flex items-center gap-1.5 px-3 h-8 rounded-md bg-white/[0.06] border border-white/[0.12] text-sm text-white/90 hover:bg-white/[0.1] disabled:opacity-50 disabled:pointer-events-none"
+          className="ml-auto inline-flex items-center gap-1.5 px-3 h-8 rounded-md bg-tint-2 border border-border text-sm text-foreground/90 hover:bg-tint-3 disabled:opacity-50 disabled:pointer-events-none"
         >
           <RefreshCw
             className={`size-3.5 ${syncing ? "animate-spin" : ""}`}
@@ -189,7 +189,7 @@ export default function OfflineSetlistsPage() {
       </div>
 
       {setlists.length === 0 ? (
-        <div className="glass p-8 text-center text-[#8a92b4]">
+        <div className="glass p-8 text-center text-muted-foreground">
           No setlists cached yet. Tap Sync now while online.
         </div>
       ) : (
@@ -273,7 +273,7 @@ function OfflineSetlistView({
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-xs text-[#8a92b4] hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="size-3" /> Offline setlists
       </button>
@@ -286,14 +286,14 @@ function OfflineSetlistView({
           {fmtDate(setlist.service_date)}
         </h1>
         {setlist.theme && (
-          <p className="text-[#c8cee6] mt-1">{setlist.theme}</p>
+          <p className="text-foreground/80 mt-1">{setlist.theme}</p>
         )}
       </div>
 
       {setlist.notes && (
         <div className="glass p-4 flex gap-3">
           <FileText className="size-4 text-[#ffb547] mt-0.5 shrink-0" />
-          <p className="text-sm whitespace-pre-wrap text-white/85">
+          <p className="text-sm whitespace-pre-wrap text-foreground/85">
             {setlist.notes}
           </p>
         </div>
@@ -301,16 +301,16 @@ function OfflineSetlistView({
 
       <section className="glass p-5 space-y-4">
         <div className="flex items-center gap-2">
-          <ListMusic className="size-4 text-[#00e8ff]" />
+          <ListMusic className="size-4 text-accent" />
           <h2 className="font-display font-semibold text-base">Songs</h2>
-          <span className="ml-auto text-xs text-[#8a92b4]">
+          <span className="ml-auto text-xs text-muted-foreground">
             {setlist.songs.length} song{setlist.songs.length === 1 ? "" : "s"}
           </span>
         </div>
         {setlist.songs.length === 0 ? (
           <p className="text-sm text-muted-foreground">No songs in this setlist.</p>
         ) : (
-          <ul className="divide-y divide-white/5">
+          <ul className="divide-y divide-border">
             {setlist.songs.map((s, i) => {
               const isDeleted = s.title === "(deleted)";
               const Row = (
@@ -318,14 +318,14 @@ function OfflineSetlistView({
                   <p
                     className={`font-medium leading-snug truncate transition-colors ${
                       isDeleted
-                        ? "line-through text-[#8a92b4]"
+                        ? "line-through text-muted-foreground"
                         : "group-hover/song:text-primary"
                     }`}
                   >
                     {s.title}
                   </p>
                   {s.artist && (
-                    <p className="text-xs text-[#8a92b4] truncate mt-0.5">
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
                       {s.artist}
                     </p>
                   )}
@@ -343,7 +343,7 @@ function OfflineSetlistView({
                     isDeleted ? "opacity-60" : ""
                   }`}
                 >
-                  <span className="text-xs font-mono text-[#8a92b4] w-6 text-right">
+                  <span className="text-xs font-mono text-muted-foreground w-6 text-right">
                     {i + 1}
                   </span>
                   {isDeleted ? (
@@ -362,7 +362,7 @@ function OfflineSetlistView({
                     </Link>
                   )}
                   {!isDeleted && (s.played_in_key ?? s.original_key) && (
-                    <span className="shrink-0 inline-flex items-center justify-center min-w-9 h-7 px-2 rounded-md bg-[#00e8ff]/10 text-[#00e8ff] text-xs font-mono font-semibold">
+                    <span className="shrink-0 inline-flex items-center justify-center min-w-9 h-7 px-2 rounded-md bg-accent/10 text-accent text-xs font-mono font-semibold">
                       {s.played_in_key ?? s.original_key}
                     </span>
                   )}

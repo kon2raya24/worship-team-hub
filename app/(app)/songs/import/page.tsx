@@ -36,17 +36,17 @@ export default async function ImportSongsPage({
         <div className="glass p-4 flex items-start gap-3 border border-[#8eff6a]/30">
           <CheckCircle2 className="size-5 text-[#8eff6a] mt-0.5 shrink-0" />
           <div className="text-sm">
-            <div className="font-semibold text-white/95">
+            <div className="font-semibold text-foreground/95">
               Imported {added} song{added === "1" ? "" : "s"}.
             </div>
             {skipped && skipped !== "0" && (
-              <div className="text-[#8a92b4] mt-0.5">
+              <div className="text-muted-foreground mt-0.5">
                 Skipped {skipped} duplicate{skipped === "1" ? "" : "s"} by title.
               </div>
             )}
             <Link
               href="/songs"
-              className="text-[#00e8ff] hover:underline mt-2 inline-block"
+              className="text-accent hover:underline mt-2 inline-block"
             >
               See the library →
             </Link>
@@ -92,31 +92,31 @@ A[G]mazing how [C]sweet the [G]sound...
 Paste lyrics with chord lines above.
 
 Multiple songs? Separate them with a line of ---`}
-            className="font-mono text-sm resize-y bg-[#04060e]/40"
+            className="font-mono text-sm resize-y bg-background/40"
           />
-          <p className="text-xs text-[#8a92b4]">
+          <p className="text-xs text-muted-foreground">
             Multiple songs? Separate them with a line containing only{" "}
-            <code className="text-[#00e8ff]">---</code>, or each block starts
-            with its own <code className="text-[#00e8ff]">{`{title: ...}`}</code> directive.
+            <code className="text-accent">---</code>, or each block starts
+            with its own <code className="text-accent">{`{title: ...}`}</code> directive.
           </p>
         </div>
 
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm text-[#c8cee6]">
+          <label className="flex items-center gap-2 text-sm text-foreground/80">
             <input
               type="checkbox"
               name="auto_convert"
               defaultChecked
-              className="size-4 rounded border-white/20 bg-white/[0.04] accent-[#8b5cf6]"
+              className="size-4 rounded border-border bg-tint-1 accent-[#8b5cf6]"
             />
             Auto-convert &ldquo;chord-above-lyrics&rdquo; format to ChordPro
           </label>
-          <label className="flex items-center gap-2 text-sm text-[#c8cee6]">
+          <label className="flex items-center gap-2 text-sm text-foreground/80">
             <input
               type="checkbox"
               name="skip_existing"
               defaultChecked
-              className="size-4 rounded border-white/20 bg-white/[0.04] accent-[#8b5cf6]"
+              className="size-4 rounded border-border bg-tint-1 accent-[#8b5cf6]"
             />
             Skip songs whose title already exists
           </label>
@@ -128,14 +128,14 @@ Multiple songs? Separate them with a line of ---`}
       </form>
 
       {/* Reminder */}
-      <div className="glass p-4 text-sm text-[#c8cee6]/80">
-        <strong className="text-white/95">Where to get chord charts:</strong>{" "}
+      <div className="glass p-4 text-sm text-foreground/80">
+        <strong className="text-foreground/95">Where to get chord charts:</strong>{" "}
         Your church&apos;s <strong>CCLI SongSelect</strong> subscription provides ChordPro/text downloads for almost every modern worship song.{" "}
         <a
           href="https://songselect.ccli.com"
           target="_blank"
           rel="noreferrer"
-          className="text-[#00e8ff] hover:underline"
+          className="text-accent hover:underline"
         >
           songselect.ccli.com
         </a>{" "}
@@ -144,7 +144,7 @@ Multiple songs? Separate them with a line of ---`}
           href="https://hymnary.org"
           target="_blank"
           rel="noreferrer"
-          className="text-[#00e8ff] hover:underline"
+          className="text-accent hover:underline"
         >
           hymnary.org
         </a>.

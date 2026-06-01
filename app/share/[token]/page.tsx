@@ -47,7 +47,7 @@ export default async function SharePage({ params }: { params: Params }) {
 
 function ShareHeader() {
   return (
-    <header className="border-b border-white/[0.08] bg-[#070a17]/70 backdrop-blur-md print:hidden">
+    <header className="border-b border-border bg-sidebar/70 backdrop-blur-md print:hidden">
       <div className="mx-auto max-w-4xl px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
         <Link href="/" className="flex items-center gap-2.5 group min-w-0">
           <span className="brand-mark inline-block size-7 shrink-0" />
@@ -66,10 +66,10 @@ function ShareHeader() {
 
 function ShareFooter() {
   return (
-    <footer className="pt-8 border-t border-white/[0.06] text-xs text-[#8a92b4] flex items-center justify-between flex-wrap gap-2 print:hidden">
+    <footer className="pt-8 border-t border-border text-xs text-muted-foreground flex items-center justify-between flex-wrap gap-2 print:hidden">
       <span>
         Shared from{" "}
-        <Link href="/" className="text-[#00e8ff] hover:underline">
+        <Link href="/" className="text-accent hover:underline">
           Worship Hub
         </Link>
       </span>
@@ -101,7 +101,7 @@ async function SongShare({
         <h1 className="text-3xl md:text-4xl font-display font-semibold tracking-tight leading-tight">
           {song.title}
         </h1>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-[#8a92b4]">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-muted-foreground">
           {song.artist && <span>{song.artist}</span>}
           {song.original_key && (
             <span className="inline-flex items-center gap-1.5">
@@ -156,8 +156,8 @@ async function SetlistShare({
         <h1 className="text-3xl md:text-4xl font-display font-semibold tracking-tight leading-tight">
           {fmt(setlist.service_date)}
         </h1>
-        {setlist.theme && <p className="text-[#c8cee6]">{setlist.theme}</p>}
-        <p className="text-xs text-[#8a92b4] flex items-center gap-1.5">
+        {setlist.theme && <p className="text-foreground/80">{setlist.theme}</p>}
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
           <Calendar className="size-3" />{" "}
           {new Date(setlist.service_date).toLocaleDateString(undefined, {
             weekday: "long",
@@ -177,14 +177,14 @@ async function SetlistShare({
               key={r.song_id}
               className="glass p-4 flex items-center gap-3"
             >
-              <span className="font-mono text-xs tabular-nums text-[#8a92b4] w-6 text-center">
+              <span className="font-mono text-xs tabular-nums text-muted-foreground w-6 text-center">
                 {i + 1}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="font-display font-semibold text-base text-white/95">
+                <div className="font-display font-semibold text-base text-foreground/95">
                   {song?.title ?? "(deleted)"}
                 </div>
-                <div className="text-sm text-[#8a92b4]">
+                <div className="text-sm text-muted-foreground">
                   {song?.artist}
                   {song?.artist && (r.played_in_key || song?.original_key) && " · "}
                   {r.played_in_key

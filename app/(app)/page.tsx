@@ -103,7 +103,7 @@ export default async function DashboardPage() {
               </span>{" "}
               praise the Lord.
             </h1>
-            <p className="text-sm text-[#c8cee6]/70 max-w-xl">
+            <p className="text-sm text-foreground/70 max-w-xl">
               — Psalm 150:6. Here&apos;s what your worship team is up to today.
             </p>
           </div>
@@ -111,16 +111,16 @@ export default async function DashboardPage() {
           {nextSetlist && (
             <Link
               href={`/setlists/${nextSetlist.id}`}
-              className="shrink-0 inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.16] hover:bg-white/[0.09] transition-colors"
+              className="shrink-0 inline-flex items-center gap-3 px-4 py-3 rounded-lg bg-tint-2 border border-hairline-strong hover:bg-tint-3 transition-colors"
             >
               <span className="live-dot" />
               <div className="text-left">
-                <div className="eyebrow text-[#c8cee6]">Next service</div>
+                <div className="eyebrow text-foreground/80">Next service</div>
                 <div className="font-display text-base">
                   {formatDate(nextSetlist.service_date)}
                 </div>
               </div>
-              <ArrowRight className="size-4 text-[#c8cee6]" />
+              <ArrowRight className="size-4 text-foreground/80" />
             </Link>
           )}
         </div>
@@ -229,7 +229,7 @@ export default async function DashboardPage() {
           <h2 className="font-display font-semibold text-lg">Practice</h2>
           <Link
             href="/games"
-            className="ml-auto text-xs text-[#8a92b4] hover:text-white inline-flex items-center gap-1 transition-colors"
+            className="ml-auto text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
           >
             All games <ArrowRight className="size-3" />
           </Link>
@@ -239,7 +239,7 @@ export default async function DashboardPage() {
             <li key={href}>
               <Link
                 href={href}
-                className="flex flex-col items-center justify-center text-center gap-2 p-3 rounded-lg border border-white/[0.08] bg-white/[0.025] text-[#c8cee6] hover:bg-white/[0.05] hover:border-white/[0.16] active:bg-white/[0.07] transition-colors min-h-[88px]"
+                className="flex flex-col items-center justify-center text-center gap-2 p-3 rounded-lg border border-border bg-tint-1 text-foreground/80 hover:bg-tint-2 hover:border-hairline-strong active:bg-tint-2 transition-colors min-h-[88px]"
               >
                 <span
                   className="inline-flex items-center justify-center size-9 rounded-md ring-1 ring-current/20"
@@ -247,7 +247,7 @@ export default async function DashboardPage() {
                 >
                   <Icon className="size-5" />
                 </span>
-                <span className="text-xs font-medium leading-tight text-white/90">
+                <span className="text-xs font-medium leading-tight text-foreground/90">
                   {title}
                 </span>
               </Link>
@@ -267,7 +267,7 @@ export default async function DashboardPage() {
           </h2>
           <Link
             href="/announcements"
-            className="ml-auto text-xs text-[#8a92b4] hover:text-white inline-flex items-center gap-1 transition-colors"
+            className="ml-auto text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
           >
             All news <ArrowRight className="size-3" />
           </Link>
@@ -279,14 +279,14 @@ export default async function DashboardPage() {
                 key={a.id}
                 className="border-l-2 border-[#ff3aa3]/60 pl-3 py-1"
               >
-                <div className="font-medium text-white/90">{a.title}</div>
-                <div className="text-sm text-[#8a92b4] whitespace-pre-wrap">
+                <div className="font-medium text-foreground/90">{a.title}</div>
+                <div className="text-sm text-muted-foreground whitespace-pre-wrap">
                   {a.body}
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-sm text-[#8a92b4]">Nothing pinned right now.</p>
+            <p className="text-sm text-muted-foreground">Nothing pinned right now.</p>
           )}
         </div>
       </section>
@@ -353,10 +353,10 @@ function StatCard({
         </span>
         <div className="flex-1 min-w-0">
           <p className="eyebrow">{label}</p>
-          <p className="font-display text-2xl mt-1 truncate text-white/95">
+          <p className="font-display text-2xl mt-1 truncate text-foreground/95">
             {value}
           </p>
-          {sub && <p className="text-xs text-[#8a92b4] mt-0.5 truncate">{sub}</p>}
+          {sub && <p className="text-xs text-muted-foreground mt-0.5 truncate">{sub}</p>}
         </div>
       </div>
     </Link>
@@ -394,10 +394,10 @@ function FeatureCard({
         </span>
         <span className="eyebrow">{eyebrow}</span>
       </div>
-      <h3 className="mt-4 text-xl font-display font-semibold text-white/95">
+      <h3 className="mt-4 text-xl font-display font-semibold text-foreground/95">
         {title}
       </h3>
-      <p className="text-sm text-[#8a92b4] mt-1 line-clamp-2">{body}</p>
+      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{body}</p>
       <p
         className={`mt-4 inline-flex items-center gap-1 text-sm font-medium ${a.text} group-hover/feature:gap-2 transition-all`}
       >
@@ -421,7 +421,7 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-lg border border-white/[0.08] bg-white/[0.025] text-[#c8cee6] active:bg-white/[0.06] transition-colors min-h-[68px]"
+      className="flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-lg border border-border bg-tint-1 text-foreground/80 active:bg-tint-2 transition-colors min-h-[68px]"
     >
       <span
         className="inline-flex items-center justify-center size-9 rounded-md ring-1 ring-current/20"
@@ -429,7 +429,7 @@ function QuickAction({
       >
         <Icon className="size-5" />
       </span>
-      <span className="text-[11px] font-medium text-white/90 leading-tight">
+      <span className="text-[11px] font-medium text-foreground/90 leading-tight">
         {label}
       </span>
     </Link>

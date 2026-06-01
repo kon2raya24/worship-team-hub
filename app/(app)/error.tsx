@@ -26,11 +26,11 @@ export default function AppError({
             Something went wrong
           </h2>
         </div>
-        <p className="text-sm text-[#c8cee6]/80 mt-3 font-mono whitespace-pre-wrap break-words">
+        <p className="text-sm text-foreground/80 mt-3 font-mono whitespace-pre-wrap break-words">
           {error.message}
         </p>
         {error.digest && (
-          <p className="text-xs text-[#8a92b4] mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             Digest: <code>{error.digest}</code>
           </p>
         )}

@@ -72,7 +72,7 @@ function MfaChallenge() {
         <h2 className="font-display text-xl font-semibold flex items-center gap-2">
           <ShieldCheck className="size-5 text-[#8eff6a]" /> Two-factor
         </h2>
-        <p className="text-sm text-[#8a92b4]">
+        <p className="text-sm text-muted-foreground">
           Enter the 6-digit code from your authenticator app.
         </p>
       </div>
@@ -111,7 +111,7 @@ function MfaChallenge() {
           await supabase.auth.signOut();
           router.replace("/login");
         }}
-        className="w-full text-center text-xs text-[#8a92b4] hover:text-white transition-colors"
+        className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
         Sign out
       </button>
@@ -123,7 +123,7 @@ export default function MfaPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center py-10 text-[#8a92b4]">
+        <div className="flex items-center justify-center py-10 text-muted-foreground">
           <Loader2 className="size-5 animate-spin" />
         </div>
       }

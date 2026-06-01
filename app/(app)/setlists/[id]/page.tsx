@@ -71,7 +71,7 @@ export default async function SetlistDetailPage({ params }: { params: Params }) 
       <div className="space-y-3 print:hidden">
         <Link
           href="/setlists"
-          className="inline-flex items-center gap-1.5 text-xs text-[#8a92b4] hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-3" /> Setlists
         </Link>
@@ -81,7 +81,7 @@ export default async function SetlistDetailPage({ params }: { params: Params }) 
             {fmt(setlist.service_date)}
           </h1>
           {setlist.theme && (
-            <p className="text-[#c8cee6] mt-1">{setlist.theme}</p>
+            <p className="text-foreground/80 mt-1">{setlist.theme}</p>
           )}
         </div>
         {canEdit && (
@@ -120,7 +120,7 @@ export default async function SetlistDetailPage({ params }: { params: Params }) 
       {setlist.notes && (
         <div className="glass p-4 flex gap-3">
           <FileText className="size-4 text-[#ffb547] mt-0.5 shrink-0" />
-          <p className="text-sm whitespace-pre-wrap text-white/85">
+          <p className="text-sm whitespace-pre-wrap text-foreground/85">
             {setlist.notes}
           </p>
         </div>
@@ -128,9 +128,9 @@ export default async function SetlistDetailPage({ params }: { params: Params }) 
 
       <section className="glass p-5 space-y-4">
         <div className="flex items-center gap-2">
-          <ListMusic className="size-4 text-[#00e8ff]" />
+          <ListMusic className="size-4 text-accent" />
           <h2 className="font-display font-semibold text-base">Songs</h2>
-          <span className="ml-auto text-xs text-[#8a92b4]">
+          <span className="ml-auto text-xs text-muted-foreground">
             {rows.length} song{rows.length === 1 ? "" : "s"}
           </span>
         </div>

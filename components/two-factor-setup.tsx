@@ -121,14 +121,14 @@ export function TwoFactorSetup() {
       </div>
 
       {status === "loading" && (
-        <p className="flex items-center gap-2 text-sm text-[#8a92b4]">
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" /> Checking status…
         </p>
       )}
 
       {status === "off" && (
         <>
-          <p className="text-sm text-[#8a92b4]">
+          <p className="text-sm text-muted-foreground">
             Add a second step at sign-in using an authenticator app (Google
             Authenticator, Authy, 1Password). Recommended for editors.
           </p>
@@ -141,7 +141,7 @@ export function TwoFactorSetup() {
 
       {status === "enrolling" && (
         <form onSubmit={verifyEnroll} className="space-y-4">
-          <p className="text-sm text-[#8a92b4]">
+          <p className="text-sm text-muted-foreground">
             Scan this with your authenticator app, then enter the 6-digit code
             it shows.
           </p>
@@ -155,10 +155,10 @@ export function TwoFactorSetup() {
           )}
           {secret && (
             <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-wider text-[#8a92b4]">
+              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 Or enter this key manually
               </Label>
-              <code className="block text-xs font-mono break-all rounded-lg bg-white/[0.04] border border-white/[0.08] p-2 text-white/90">
+              <code className="block text-xs font-mono break-all rounded-lg bg-tint-1 border border-border p-2 text-foreground/90">
                 {secret}
               </code>
             </div>

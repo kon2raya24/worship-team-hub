@@ -42,7 +42,7 @@ export default async function SongDetailPage({ params }: { params: Params }) {
       <div className="space-y-3 print:hidden">
         <Link
           href="/songs"
-          className="inline-flex items-center gap-1.5 text-xs text-[#8a92b4] hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="size-3" /> Songs
         </Link>
@@ -50,11 +50,11 @@ export default async function SongDetailPage({ params }: { params: Params }) {
           <h1 className="text-2xl md:text-4xl font-display font-semibold tracking-tight leading-tight">
             {song.title}
           </h1>
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-[#8a92b4]">
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-muted-foreground">
             {song.artist && <span>{song.artist}</span>}
             {song.original_key && (
               <span className="inline-flex items-center gap-1.5">
-                <span className="size-1 rounded-full bg-[#00e8ff]" />
+                <span className="size-1 rounded-full bg-accent" />
                 Key {song.original_key}
               </span>
             )}
@@ -69,7 +69,7 @@ export default async function SongDetailPage({ params }: { params: Params }) {
                 href={song.reference_url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-[#00e8ff] hover:underline"
+                className="inline-flex items-center gap-1 text-accent hover:underline"
               >
                 Reference <ExternalLink className="size-3" />
               </a>
@@ -80,7 +80,7 @@ export default async function SongDetailPage({ params }: { params: Params }) {
               {(song.tags ?? []).map((t: string) => (
                 <span
                   key={t}
-                  className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-[#c8cee6]"
+                  className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-tint-1 border border-border text-foreground"
                 >
                   {t}
                 </span>
@@ -121,13 +121,13 @@ export default async function SongDetailPage({ params }: { params: Params }) {
           <div className="glass p-4 flex items-start gap-3 border border-[#ffb547]/30 print:hidden">
             <span className="text-lg leading-none">✨</span>
             <div className="text-sm flex-1">
-              <div className="font-semibold text-white/95">
+              <div className="font-semibold text-foreground/95">
                 No chords yet — add them now.
               </div>
-              <p className="text-[#c8cee6]/80 mt-0.5">
-                Open <Link href={`/songs/${song.id}/edit`} className="text-[#00e8ff] hover:underline">Edit</Link>,
+              <p className="text-foreground/80 mt-0.5">
+                Open <Link href={`/songs/${song.id}/edit`} className="text-accent hover:underline">Edit</Link>,
                 paste a chord-above-lyrics chart into the body field, then click{" "}
-                <span className="font-mono text-[#00e8ff]">Convert chord lines</span>.
+                <span className="font-mono text-accent">Convert chord lines</span>.
               </p>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default async function SongDetailPage({ params }: { params: Params }) {
         <div className="flex items-center gap-2">
           <StickyNote className="size-4 text-[#ffb547]" />
           <h2 className="font-display font-semibold text-base">Practice notes</h2>
-          <span className="ml-auto text-xs text-[#8a92b4]">
+          <span className="ml-auto text-xs text-muted-foreground">
             {(notes ?? []).length}
           </span>
         </div>
@@ -175,14 +175,14 @@ export default async function SongDetailPage({ params }: { params: Params }) {
               return (
                 <div
                   key={n.id}
-                  className="rounded-lg bg-white/[0.025] border border-white/[0.06] p-3 text-sm flex justify-between gap-3"
+                  className="rounded-lg bg-tint-1 border border-border p-3 text-sm flex justify-between gap-3"
                 >
                   <div className="min-w-0">
-                    <div className="text-[#8a92b4] text-xs">
-                      <span className="text-white/80">{authorName}</span> ·{" "}
+                    <div className="text-muted-foreground text-xs">
+                      <span className="text-foreground/80">{authorName}</span> ·{" "}
                       {new Date(n.created_at).toLocaleDateString()}
                     </div>
-                    <div className="whitespace-pre-wrap mt-1 text-white/90">
+                    <div className="whitespace-pre-wrap mt-1 text-foreground/90">
                       {n.body}
                     </div>
                   </div>
@@ -196,7 +196,7 @@ export default async function SongDetailPage({ params }: { params: Params }) {
             })}
           </div>
         ) : (
-          <p className="text-sm text-[#8a92b4]">No notes yet.</p>
+          <p className="text-sm text-muted-foreground">No notes yet.</p>
         )}
       </section>
     </div>

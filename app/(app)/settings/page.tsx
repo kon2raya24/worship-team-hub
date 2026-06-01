@@ -42,14 +42,14 @@ export default async function SettingsPage({
       {/* Profile */}
       <form action={updateProfile} className="glass p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <User className="size-4 text-[#00e8ff]" />
+          <User className="size-4 text-accent" />
           <h2 className="font-display font-semibold text-base">Profile</h2>
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
           <Input id="email" value={user?.email ?? ""} disabled />
-          <p className="text-xs text-[#8a92b4]">
+          <p className="text-xs text-muted-foreground">
             Email can&apos;t be changed from here.
           </p>
         </div>
@@ -72,7 +72,7 @@ export default async function SettingsPage({
             placeholder="e.g. acoustic, vocals, keys"
             defaultValue={profile.instruments.join(", ")}
           />
-          <p className="text-xs text-[#8a92b4]">Comma-separated.</p>
+          <p className="text-xs text-muted-foreground">Comma-separated.</p>
         </div>
 
         <div className="space-y-1.5">
@@ -81,7 +81,7 @@ export default async function SettingsPage({
             <span className="font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#00e8ff]/10 text-[#00e8ff] border border-[#00e8ff]/30 font-semibold">
               {roleLabel(profile.role)}
             </span>
-            <span className="text-[#8a92b4]">
+            <span className="text-muted-foreground">
               {profile.role === "leader"
                 ? "You can manage the song library, setlists, schedule, and devotions."
                 : "Ask an editor to upgrade your account if you need to add or edit content."}
@@ -157,10 +157,10 @@ export default async function SettingsPage({
           app's in-app OTA updater pulls from). */}
       <div className="glass p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <Smartphone className="size-4 text-[#00e8ff]" />
+          <Smartphone className="size-4 text-accent" />
           <h2 className="font-display font-semibold text-base">Android app</h2>
         </div>
-        <p className="text-sm text-[#8a92b4]">
+        <p className="text-sm text-muted-foreground">
           Install the native Android app for offline songs and setlists plus push
           notifications. Once it&apos;s installed, it updates itself when a new
           version ships.
@@ -169,12 +169,12 @@ export default async function SettingsPage({
           href="https://github.com/kon2raya24/worship-team-hub-mobile/releases/latest/download/app-release.apk"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-white/[0.12] bg-white/[0.04] text-white font-semibold text-sm hover:bg-white/[0.08] transition"
+          className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border bg-tint-1 text-foreground font-semibold text-sm hover:bg-tint-2 transition"
         >
           <Download className="size-4" />
           Download for Android
         </a>
-        <p className="text-xs text-[#8a92b4]">
+        <p className="text-xs text-muted-foreground">
           Android only — you may need to allow installs from your browser the
           first time. On iPhone, add this site to your home screen instead.
         </p>

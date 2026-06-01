@@ -91,7 +91,7 @@ export function PushNotifications() {
         <Bell className="size-4 text-[#00e8ff]" />
         <h2 className="font-display font-semibold text-base">Notifications</h2>
       </div>
-      <p className="text-sm text-[#8a92b4]">
+      <p className="text-sm text-muted-foreground">
         Get a push notification on this device for new announcements, setlists,
         devotions, and when you&apos;re added to the schedule.
       </p>
@@ -104,7 +104,7 @@ export function PushNotifications() {
         type="button"
         disabled={busy}
         onClick={enabled ? disable : enable}
-        className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-white/[0.12] bg-white/[0.04] text-white font-semibold text-sm hover:bg-white/[0.08] transition disabled:opacity-60"
+        className="inline-flex items-center gap-2 px-4 h-10 rounded-lg border border-border bg-tint-1 text-foreground font-semibold text-sm hover:bg-tint-2 transition disabled:opacity-60"
       >
         {busy && <Loader2 className="size-4 animate-spin" />}
         {enabled ? "Turn off on this device" : "Enable on this device"}

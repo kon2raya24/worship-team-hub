@@ -207,13 +207,13 @@ export function ChordViewer({
           and the first line (e.g. an "Intro" comment) stays readable. The
           floating Pause button below keeps auto-scroll controllable once the
           toolbar has scrolled off. */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 px-2 sm:px-4 py-2 border-b border-white/[0.08] bg-white/[0.02] print:hidden">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 px-2 sm:px-4 py-2 border-b border-border bg-tint-1 print:hidden">
         {/* Key */}
         <ToolGroup label="Key">
           <ToolBtn label="−" onClick={() => setSemitones((s) => s - 1)} aria="Transpose down" />
           <span
             className={`min-w-[2.5rem] px-1.5 text-center text-sm font-mono ${
-              semitones === 0 ? "text-white" : "text-[#00e8ff]"
+              semitones === 0 ? "text-foreground" : "text-accent"
             }`}
           >
             {keyLabel}
@@ -239,7 +239,7 @@ export function ChordViewer({
               onClick={() => setCapo((c) => Math.max(0, c - 1))}
               aria="Capo down"
             />
-            <span className="w-7 text-center text-sm tabular-nums font-mono text-white">
+            <span className="w-7 text-center text-sm tabular-nums font-mono text-foreground">
               {capo}
             </span>
             <ToolBtn
@@ -277,7 +277,7 @@ export function ChordViewer({
             className={`inline-flex items-center justify-center gap-1.5 px-3 h-9 sm:h-7 rounded-md border text-sm transition-all ${
               scrolling
                 ? "bg-[#8b5cf6]/20 border-[#8b5cf6]/40 text-white shadow-[0_0_14px_rgba(139,92,246,0.35)]"
-                : "bg-white/[0.06] border-white/[0.12] text-white/90 hover:bg-white/[0.1]"
+                : "bg-tint-2 border-border text-foreground/90 hover:bg-tint-3"
             }`}
           >
             {scrolling ? (
@@ -294,7 +294,7 @@ export function ChordViewer({
             type="button"
             onClick={() => window.print()}
             aria-label="Print"
-            className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-2.5 h-9 sm:h-7 rounded-md bg-white/[0.06] border border-white/[0.12] text-sm text-white/90 hover:bg-white/[0.1]"
+            className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-2.5 h-9 sm:h-7 rounded-md bg-tint-2 border border-border text-sm text-foreground/90 hover:bg-tint-3"
           >
             <Printer className="size-4 sm:size-3.5" />
             <span className="hidden sm:inline">Print</span>
@@ -303,7 +303,7 @@ export function ChordViewer({
 
         {/* Speed slider — only when scrolling is active; takes full second row on mobile */}
         {scrolling && (
-          <div className="basis-full sm:basis-auto sm:ml-2 flex items-center gap-2 px-2.5 h-10 sm:h-7 rounded-md bg-white/[0.03] border border-white/[0.06]">
+          <div className="basis-full sm:basis-auto sm:ml-2 flex items-center gap-2 px-2.5 h-10 sm:h-7 rounded-md bg-tint-1 border border-border">
             <Gauge className="size-3.5 sm:size-3 text-[#8b5cf6]" />
             <input
               type="range"
@@ -315,7 +315,7 @@ export function ChordViewer({
               className="flex-1 sm:w-24 accent-[#8b5cf6] h-2"
               aria-label="Scroll speed"
             />
-            <span className="w-8 text-right tabular-nums font-mono text-xs text-[#c8cee6]">
+            <span className="w-8 text-right tabular-nums font-mono text-xs text-foreground/80">
               {speed}
             </span>
           </div>
@@ -325,7 +325,7 @@ export function ChordViewer({
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className="chord-sheet px-3 sm:px-5 py-5 sm:py-6 md:px-8 md:py-10 font-mono text-white/90"
+        className="chord-sheet px-3 sm:px-5 py-5 sm:py-6 md:px-8 md:py-10 font-mono text-foreground/90"
         style={{ fontSize, lineHeight: 1.9 }}
         dangerouslySetInnerHTML={{ __html: html }}
       />
@@ -371,7 +371,7 @@ export function ChordViewer({
           margin: 0;
         }
         .chord-sheet .chord {
-          color: #00e8ff;
+          color: var(--accent);
           font-weight: 600;
           min-height: 1.4em;
           line-height: 1.4em;
@@ -387,11 +387,11 @@ export function ChordViewer({
         }
         .chord-sheet .lyrics {
           white-space: pre;
-          color: rgba(245, 247, 255, 0.95);
+          color: var(--foreground);
         }
         .chord-sheet .comment {
           font-style: italic;
-          color: #8a92b4;
+          color: var(--muted-foreground);
           margin: 0;
           font-family: var(--font-sans);
         }
@@ -403,7 +403,7 @@ export function ChordViewer({
         }
         .chord-sheet h1, .chord-sheet h2, .chord-sheet h3 {
           font-family: var(--font-heading);
-          color: #f5f7ff;
+          color: var(--foreground);
           margin: 0.4em 0;
         }
         @media print {
@@ -459,8 +459,8 @@ function ToolBtn({
       aria-label={aria}
       className={`inline-flex items-center justify-center min-w-9 sm:min-w-7 h-9 sm:h-7 px-2 rounded-md border transition-colors text-sm ${
         subtle
-          ? "bg-transparent border-white/[0.08] text-[#8a92b4] hover:text-white hover:bg-white/[0.05]"
-          : "bg-white/[0.06] border-white/[0.12] text-white/90 hover:bg-white/[0.1] hover:border-white/[0.2]"
+          ? "bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-tint-2"
+          : "bg-tint-2 border-border text-foreground/90 hover:bg-tint-3 hover:border-hairline-strong"
       }`}
     >
       {icon ?? label}
@@ -469,5 +469,5 @@ function ToolBtn({
 }
 
 function Divider() {
-  return <span className="h-5 w-px bg-white/[0.1]" />;
+  return <span className="h-5 w-px bg-border" />;
 }

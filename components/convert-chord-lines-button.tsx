@@ -36,7 +36,7 @@ export function ConvertChordLinesButton({ targetId }: { targetId: string }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 text-xs text-[#00e8ff] hover:text-white px-2 py-1 rounded-sm border border-[#00e8ff]/30 hover:border-[#00e8ff]/60 bg-[#00e8ff]/[0.04] hover:bg-[#00e8ff]/[0.1] transition-colors"
+      className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-foreground px-2 py-1 rounded-sm border border-[#00e8ff]/30 hover:border-[#00e8ff]/60 bg-[#00e8ff]/[0.04] hover:bg-[#00e8ff]/[0.1] transition-colors"
       title="Convert chord-above-lyrics format to inline ChordPro"
     >
       <Wand2 className="size-3" />

@@ -97,7 +97,7 @@ function OfflineSongs() {
       <header className="space-y-2">
         <Link
           href="/songs"
-          className="inline-flex items-center gap-1.5 text-xs text-[#8a92b4] hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           ← Songs
         </Link>
@@ -109,7 +109,7 @@ function OfflineSongs() {
             <h1 className="text-2xl md:text-3xl font-display font-semibold tracking-tight">
               Offline library
             </h1>
-            <p className="text-sm text-[#8a92b4]">
+            <p className="text-sm text-muted-foreground">
               {songs.length} song{songs.length === 1 ? "" : "s"} cached on this
               device · works without internet
             </p>
@@ -130,7 +130,7 @@ function OfflineSongs() {
           />
           {isOnline ? "Online" : "Offline"}
         </span>
-        <span className="text-[#8a92b4]">
+        <span className="text-muted-foreground">
           Last sync:{" "}
           {lastSync ? new Date(lastSync).toLocaleString() : "never"}
         </span>
@@ -138,7 +138,7 @@ function OfflineSongs() {
           type="button"
           onClick={syncNow}
           disabled={syncing || !isOnline}
-          className="ml-auto inline-flex items-center gap-1.5 px-3 h-8 rounded-md bg-white/[0.06] border border-white/[0.12] text-sm text-white/90 hover:bg-white/[0.1] disabled:opacity-50 disabled:pointer-events-none"
+          className="ml-auto inline-flex items-center gap-1.5 px-3 h-8 rounded-md bg-tint-2 border border-border text-sm text-foreground/90 hover:bg-tint-3 disabled:opacity-50 disabled:pointer-events-none"
         >
           {syncing ? (
             <RefreshCw className="size-3.5 animate-spin" />
@@ -150,7 +150,7 @@ function OfflineSongs() {
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#8a92b4] pointer-events-none" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -160,7 +160,7 @@ function OfflineSongs() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="glass p-8 text-center text-[#8a92b4]">
+        <div className="glass p-8 text-center text-muted-foreground">
           {songs.length === 0
             ? "No songs cached yet. Tap Sync now while online."
             : "No songs match that search."}
@@ -185,7 +185,7 @@ function OfflineSongs() {
                   )}
                 </div>
                 {s.artist && (
-                  <p className="text-sm text-[#8a92b4] truncate mt-0.5">
+                  <p className="text-sm text-muted-foreground truncate mt-0.5">
                     {s.artist}
                   </p>
                 )}
@@ -215,7 +215,7 @@ function OfflineSongView({
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-xs text-[#8a92b4] hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
         ← Offline library
       </button>
@@ -226,11 +226,11 @@ function OfflineSongView({
         <h1 className="text-2xl md:text-3xl font-display font-semibold tracking-tight leading-tight">
           {song.title}
         </h1>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-[#8a92b4]">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 items-center text-sm text-muted-foreground">
           {song.artist && <span>{song.artist}</span>}
           {song.original_key && (
             <span className="inline-flex items-center gap-1.5">
-              <span className="size-1 rounded-full bg-[#00e8ff]" />
+              <span className="size-1 rounded-full bg-accent" />
               Key {song.original_key}
             </span>
           )}

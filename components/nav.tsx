@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type NavLink = { href: string; label: string; Icon: LucideIcon };
 
@@ -83,14 +84,14 @@ function DesktopNav({
 }) {
   return (
     <header
-      className="hidden md:block sticky top-0 z-30 border-b border-white/[0.08] bg-[#070a17]/75 backdrop-blur-xl"
+      className="hidden md:block sticky top-0 z-30 border-b border-border bg-sidebar/75 backdrop-blur-xl"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="px-4 md:px-6 py-2.5">
-        <div className="flex items-center gap-1 p-1 bg-white/[0.025] border border-white/[0.08] rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-tint-1 border border-border rounded-lg">
           <Link
             href="/"
-            className="flex items-center gap-2 group shrink-0 px-1.5 py-1 rounded-md hover:bg-white/[0.05] transition-colors"
+            className="flex items-center gap-2 group shrink-0 px-1.5 py-1 rounded-md hover:bg-tint-2 transition-colors"
           >
             <span className="brand-mark h-6 w-6 inline-block" />
             <span className="font-display font-semibold tracking-wide text-[14px]">
@@ -109,8 +110,8 @@ function DesktopNav({
                   className={cn(
                     "relative inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md transition-all shrink-0",
                     active
-                      ? "text-white bg-white/[0.09] ring-1 ring-white/[0.16] shadow-[0_0_18px_rgba(139,92,246,0.18)]"
-                      : "text-[#8a92b4] hover:text-white hover:bg-white/[0.05]"
+                      ? "text-foreground bg-tint-3 ring-1 ring-hairline-strong shadow-[0_0_18px_rgba(139,92,246,0.18)]"
+                      : "text-muted-foreground hover:text-foreground hover:bg-tint-2"
                   )}
                 >
                   <Icon className="size-3.5" strokeWidth={1.75} />
@@ -126,17 +127,18 @@ function DesktopNav({
               className={cn(
                 "inline-flex items-center justify-center size-8 rounded-md transition-colors",
                 isActive(pathname, "/settings")
-                  ? "text-white bg-white/[0.09]"
-                  : "text-[#8a92b4] hover:text-white hover:bg-white/[0.05]"
+                  ? "text-foreground bg-tint-3"
+                  : "text-muted-foreground hover:text-foreground hover:bg-tint-2"
               )}
               aria-label="Settings"
             >
               <SettingsIcon className="size-3.5" strokeWidth={1.75} />
             </Link>
-            <span className="hidden lg:flex items-center gap-2 px-2 text-[#8a92b4]">
-              <span className="text-white/90">{displayName}</span>
+            <ThemeToggle />
+            <span className="hidden lg:flex items-center gap-2 px-2 text-muted-foreground">
+              <span className="text-foreground/90">{displayName}</span>
               <span
-                className="font-mono text-[9px] tracking-[0.18em] px-1.5 py-[3px] rounded-md border border-[#00e8ff]/35 text-[#00e8ff] uppercase font-semibold"
+                className="font-mono text-[9px] tracking-[0.18em] px-1.5 py-[3px] rounded-md border border-accent/40 text-accent uppercase font-semibold"
                 style={{
                   background:
                     "linear-gradient(135deg, rgba(0,232,255,0.18), rgba(139,92,246,0.18))",
@@ -154,13 +156,13 @@ function DesktopNav({
 }
 
 // ─── Mobile top bar ───────────────────────────────────────────────────────
-// Minimal: brand on the left, settings + sign-out on the right. Primary
-// navigation lives in the bottom tab bar where the thumb actually is.
+// Minimal: brand on the left, theme + settings + sign-out on the right.
+// Primary navigation lives in the bottom tab bar where the thumb actually is.
 
 function MobileTopBar({ pathname }: { pathname: string }) {
   return (
     <header
-      className="md:hidden sticky top-0 z-30 border-b border-white/[0.08] bg-[#070a17]/85 backdrop-blur-xl"
+      className="md:hidden sticky top-0 z-30 border-b border-border bg-sidebar/85 backdrop-blur-xl"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="flex items-center gap-2 px-3 py-2.5">
@@ -176,13 +178,14 @@ function MobileTopBar({ pathname }: { pathname: string }) {
         </Link>
 
         <div className="ml-auto flex items-center gap-1">
+          <ThemeToggle compact />
           <Link
             href="/settings"
             className={cn(
               "inline-flex items-center justify-center size-10 rounded-md transition-colors",
               isActive(pathname, "/settings")
-                ? "text-white bg-white/[0.09]"
-                : "text-[#8a92b4] hover:text-white active:bg-white/[0.05]"
+                ? "text-foreground bg-tint-3"
+                : "text-muted-foreground hover:text-foreground active:bg-tint-2"
             )}
             aria-label="Settings"
           >
@@ -207,7 +210,7 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
   return (
     <>
       <nav
-        className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-white/[0.08] bg-[#070a17]/95 backdrop-blur-xl"
+        className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-border bg-sidebar/95 backdrop-blur-xl"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Primary"
       >
@@ -221,8 +224,8 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] transition-colors",
                     active
-                      ? "text-white"
-                      : "text-[#8a92b4] active:bg-white/[0.04]"
+                      ? "text-foreground"
+                      : "text-muted-foreground active:bg-tint-1"
                   )}
                   aria-current={active ? "page" : undefined}
                 >
@@ -230,7 +233,7 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
                     className={cn(
                       "inline-flex items-center justify-center size-9 rounded-lg transition-all",
                       active &&
-                        "bg-white/[0.09] ring-1 ring-white/[0.16] shadow-[0_0_18px_rgba(139,92,246,0.22)]"
+                        "bg-tint-3 ring-1 ring-hairline-strong shadow-[0_0_18px_rgba(139,92,246,0.22)]"
                     )}
                   >
                     <Icon className="size-5" strokeWidth={1.75} />
@@ -249,8 +252,8 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
               className={cn(
                 "w-full flex flex-col items-center justify-center gap-1 py-2 min-h-[56px] transition-colors",
                 onSecondary
-                  ? "text-white"
-                  : "text-[#8a92b4] active:bg-white/[0.04]"
+                  ? "text-foreground"
+                  : "text-muted-foreground active:bg-tint-1"
               )}
               aria-haspopup="dialog"
               aria-expanded={moreOpen}
@@ -260,7 +263,7 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
                 className={cn(
                   "inline-flex items-center justify-center size-9 rounded-lg transition-all",
                   onSecondary &&
-                    "bg-white/[0.09] ring-1 ring-white/[0.16] shadow-[0_0_18px_rgba(139,92,246,0.22)]"
+                    "bg-tint-3 ring-1 ring-hairline-strong shadow-[0_0_18px_rgba(139,92,246,0.22)]"
                 )}
               >
                 <MoreHorizontal className="size-5" strokeWidth={1.75} />
@@ -288,8 +291,8 @@ function MobileBottomNav({ pathname }: { pathname: string }) {
                     className={cn(
                       "flex flex-col items-center justify-center gap-2 p-3 rounded-lg border transition-colors min-h-[80px]",
                       active
-                        ? "border-white/[0.16] bg-white/[0.06] text-white"
-                        : "border-white/[0.08] bg-white/[0.02] text-[#c8cee6] active:bg-white/[0.05]"
+                        ? "border-hairline-strong bg-tint-2 text-foreground"
+                        : "border-border bg-tint-1 text-foreground/80 active:bg-tint-2"
                     )}
                     aria-current={active ? "page" : undefined}
                   >
@@ -333,8 +336,8 @@ function SignOutButton({ compact = false }: { compact?: boolean }) {
         disabled={pending}
         onClick={() => setOpen(true)}
         className={cn(
-          "inline-flex items-center gap-1.5 text-[#8a92b4] hover:text-white active:bg-white/[0.05] transition-colors rounded-md disabled:opacity-60 disabled:pointer-events-none",
-          compact ? "size-10 justify-center" : "px-2 py-1 hover:bg-white/[0.05]"
+          "inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground active:bg-tint-2 transition-colors rounded-md disabled:opacity-60 disabled:pointer-events-none",
+          compact ? "size-10 justify-center" : "px-2 py-1 hover:bg-tint-2"
         )}
         aria-label="Sign out"
       >

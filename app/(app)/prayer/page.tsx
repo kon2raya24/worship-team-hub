@@ -34,7 +34,7 @@ export default async function PrayerPage() {
           rows={3}
           required
           placeholder="What can the team pray about?"
-          className="bg-white/[0.04] border-white/[0.1] resize-none"
+          className="bg-tint-1 border-border resize-none"
         />
         <SubmitButton pendingLabel="Posting…">Post request</SubmitButton>
       </form>
@@ -54,8 +54,8 @@ export default async function PrayerPage() {
             >
               <div className="flex justify-between items-start gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs text-[#8a92b4] flex gap-2 items-center">
-                    <span className="text-white/80">{author}</span>
+                  <div className="text-xs text-muted-foreground flex gap-2 items-center">
+                    <span className="text-foreground/80">{author}</span>
                     <span>·</span>
                     <span>{new Date(r.created_at).toLocaleDateString()}</span>
                     {r.is_answered && (
@@ -64,7 +64,7 @@ export default async function PrayerPage() {
                       </span>
                     )}
                   </div>
-                  <p className="whitespace-pre-wrap mt-1.5 text-[15px] text-white/90 leading-relaxed">
+                  <p className="whitespace-pre-wrap mt-1.5 text-[15px] text-foreground/90 leading-relaxed">
                     {r.body}
                   </p>
                 </div>
@@ -81,7 +81,7 @@ export default async function PrayerPage() {
           );
         })}
         {(requests ?? []).length === 0 && (
-          <li className="glass p-8 text-center text-[#8a92b4]">
+          <li className="glass p-8 text-center text-muted-foreground">
             No prayer requests yet.
           </li>
         )}

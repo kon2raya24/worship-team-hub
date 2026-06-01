@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               Worship Hub
             </div>
             <div className="eyebrow mt-1.5">Worship · Team · Hub</div>
-            <div className="text-xs text-[#8a92b4] italic mt-3 max-w-[18rem] mx-auto">
+            <div className="text-xs text-muted-foreground italic mt-3 max-w-[18rem] mx-auto">
               &ldquo;Sing to the Lord a new song; sing to the Lord, all the
               earth.&rdquo;
               <span className="not-italic"> — Psalm 96:1</span>

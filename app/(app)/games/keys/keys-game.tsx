@@ -86,7 +86,7 @@ export function KeysGame() {
               {q.list.map((n) => (
                 <span
                   key={n}
-                  className="inline-flex items-center justify-center min-w-[44px] px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/10 font-mono text-base text-white/95"
+                  className="inline-flex items-center justify-center min-w-[44px] px-3 py-1.5 rounded-lg bg-tint-1 border border-border font-mono text-base text-foreground/95"
                 >
                   {n}
                 </span>
@@ -99,7 +99,7 @@ export function KeysGame() {
         q.mode === "count" ? (
           <>
             <span>{opt}</span>
-            <span className="text-xs text-[#8a92b4]">
+            <span className="text-xs text-muted-foreground">
               {opt === 1 ? "accidental" : "accidentals"}
             </span>
           </>

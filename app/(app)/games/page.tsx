@@ -160,10 +160,10 @@ export default function GamesIndex() {
                 </span>
                 <span className="eyebrow">Mini-game</span>
               </div>
-              <h3 className="mt-4 text-xl font-display font-semibold text-white/95">
+              <h3 className="mt-4 text-xl font-display font-semibold text-foreground/95">
                 {g.title}
               </h3>
-              <p className="text-sm text-[#8a92b4] mt-1.5 leading-relaxed">
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
                 {g.blurb}
               </p>
               <p
