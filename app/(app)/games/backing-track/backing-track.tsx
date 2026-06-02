@@ -25,19 +25,19 @@ const PROGRESSIONS = [
   { id: "blues", label: "12-bar blues", degrees: [1, 1, 1, 1, 4, 4, 1, 1, 5, 4, 1, 5] },
 ];
 
-const SOUNDS: { id: SoundId; label: string }[] = [
-  { id: "pad", label: "Pad" },
-  { id: "epiano", label: "E-Piano" },
-  { id: "piano", label: "Piano" },
-  { id: "organ", label: "Organ" },
-  { id: "strings", label: "Strings" },
-  { id: "synth", label: "Synth" },
-  { id: "brass", label: "Brass" },
-  { id: "flute", label: "Flute" },
-  { id: "choir", label: "Choir" },
-  { id: "pluck", label: "Pluck" },
-  { id: "marimba", label: "Marimba" },
-  { id: "bell", label: "Bell" },
+const SOUNDS: { id: SoundId; label: string; icon: string }[] = [
+  { id: "pad", label: "Pad", icon: "🌊" },
+  { id: "epiano", label: "E-Piano", icon: "🎵" },
+  { id: "piano", label: "Piano", icon: "🎹" },
+  { id: "organ", label: "Organ", icon: "🪗" },
+  { id: "strings", label: "Strings", icon: "🎻" },
+  { id: "synth", label: "Synth", icon: "🎛️" },
+  { id: "brass", label: "Brass", icon: "🎺" },
+  { id: "flute", label: "Flute", icon: "🪈" },
+  { id: "choir", label: "Choir", icon: "🎤" },
+  { id: "pluck", label: "Pluck", icon: "🎸" },
+  { id: "marimba", label: "Marimba", icon: "🎶" },
+  { id: "bell", label: "Bell", icon: "🔔" },
 ];
 const FEELS: { id: FeelId; label: string }[] = [
   { id: "sustained", label: "Sustained" },
@@ -228,25 +228,44 @@ export function BackingTrack() {
         </div>
       </div>
 
-      {/* Sound, feel, drums, mix */}
-      <div className="glass space-y-4 rounded-2xl p-4 ring-1 ring-border sm:p-5">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-1.5">
-            <span className="eyebrow">Sound</span>
-            <div className="flex flex-wrap gap-1.5">
-              {SOUNDS.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setSound(s.id)}
-                  aria-pressed={s.id === sound}
-                  className={`${chipBase} ${s.id === sound ? chipOn : chipOff}`}
+      {/* Instrument — visual picker */}
+      <div className="glass space-y-2 rounded-2xl p-4 ring-1 ring-border sm:p-5">
+        <span className="eyebrow">Instrument</span>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {SOUNDS.map((s) => {
+            const active = s.id === sound;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setSound(s.id)}
+                aria-pressed={active}
+                className={
+                  "flex flex-col items-center gap-1 rounded-xl p-3 ring-1 transition-all " +
+                  (active
+                    ? "scale-[1.03] bg-primary/15 ring-primary/60"
+                    : "bg-tint-1 ring-border hover:bg-tint-2")
+                }
+              >
+                <span className="text-2xl leading-none" aria-hidden>
+                  {s.icon}
+                </span>
+                <span
+                  className={
+                    "text-xs font-medium " + (active ? "text-primary" : "text-foreground/80")
+                  }
                 >
                   {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Feel, drums, swing, mix */}
+      <div className="glass space-y-4 rounded-2xl p-4 ring-1 ring-border sm:p-5">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <span className="eyebrow">Feel</span>
             <div className="flex flex-wrap gap-1.5">
