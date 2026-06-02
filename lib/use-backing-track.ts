@@ -10,29 +10,67 @@ const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD = 0.2;
 const EIGHTHS_PER_BAR = 8; // 4/4
 
-export type SoundId = "pad" | "epiano" | "organ" | "pluck" | "strings" | "synth";
+export type SoundId =
+  | "pad"
+  | "epiano"
+  | "piano"
+  | "organ"
+  | "pluck"
+  | "strings"
+  | "synth"
+  | "brass"
+  | "flute"
+  | "bell"
+  | "marimba"
+  | "choir";
 export type FeelId = "sustained" | "pulse" | "arpeggio" | "strum" | "offbeat";
-export type DrumId = "none" | "pop" | "rock" | "ballad" | "funk" | "dance" | "halftime";
+export type DrumId = "none" | "pop" | "rock" | "ballad" | "funk" | "dance" | "halftime" | "ride";
 export type TrackChord = { pcs: number[] }; // triad pitch classes; pcs[0]=root, pcs[2]=fifth
 export type Mix = { chords: number; bass: number; drums: number };
 
 const midiToFreq = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
-// Kick/snare/hat hit positions, as eighth-note indexes within a 4/4 bar.
-const DRUM_PATTERNS: Record<
-  Exclude<DrumId, "none">,
-  { kick: number[]; snare: number[]; hat: number[] }
-> = {
-  pop: { kick: [0, 4], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7] },
-  rock: { kick: [0, 4, 5], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7] },
-  ballad: { kick: [0], snare: [4], hat: [0, 2, 4, 6] },
-  funk: { kick: [0, 3, 4, 6], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7] },
-  dance: { kick: [0, 2, 4, 6], snare: [2, 6], hat: [1, 3, 5, 7] },
-  halftime: { kick: [0], snare: [4], hat: [0, 1, 2, 3, 4, 5, 6, 7] },
+// Drum-kit hit positions, as eighth-note indexes within a 4/4 bar. Every voice
+// is optional, so a pattern uses as much of the kit as it needs. `crashFirst`
+// adds a crash on beat 1 of the first bar of each chord.
+type DrumPattern = {
+  kick?: number[];
+  snare?: number[];
+  hat?: number[]; // closed hi-hat
+  openhat?: number[];
+  ride?: number[];
+  clap?: number[];
+  rim?: number[];
+  crashFirst?: boolean;
 };
+const DRUM_PATTERNS: Record<Exclude<DrumId, "none">, DrumPattern> = {
+  pop: { kick: [0, 4], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7], crashFirst: true },
+  rock: { kick: [0, 4, 5], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7], openhat: [7], crashFirst: true },
+  ballad: { kick: [0], snare: [4], hat: [0, 2, 4, 6], crashFirst: true },
+  funk: { kick: [0, 3, 4, 6], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7], rim: [5] },
+  dance: { kick: [0, 2, 4, 6], snare: [2, 6], clap: [2, 6], openhat: [1, 3, 5, 7], crashFirst: true },
+  halftime: { kick: [0, 5], snare: [4], hat: [0, 1, 2, 3, 4, 5, 6, 7], crashFirst: true },
+  ride: { kick: [0, 4], snare: [2, 6], ride: [0, 1, 2, 3, 4, 5, 6, 7], crashFirst: true },
+};
+
+// A one-bar tom fill, played on the final bar of the progression loop.
+const TOM_FILL: { eighth: number; tom: "hi" | "mid" | "lo" }[] = [
+  { eighth: 4, tom: "hi" },
+  { eighth: 5, tom: "hi" },
+  { eighth: 6, tom: "mid" },
+  { eighth: 7, tom: "lo" },
+];
 
 // Strum velocity per eighth — strong downbeats, lighter up-strokes on the "ands".
 const STRUM: Record<number, number> = { 0: 1, 2: 0.7, 3: 0.55, 4: 1, 6: 0.7, 7: 0.55 };
+
+// Struck-instrument partials: [frequency ratio, gain, waveform]. Bell uses
+// inharmonic ratios for its metallic shimmer.
+type Partial = [number, number, OscillatorType];
+const PARTIALS_PIANO: Partial[] = [[1, 1, "triangle"], [2, 0.5, "sine"], [3, 0.25, "sine"], [4, 0.12, "sine"]];
+const PARTIALS_EPIANO: Partial[] = [[1, 1, "sine"], [2, 0.4, "sine"]];
+const PARTIALS_BELL: Partial[] = [[1, 1, "sine"], [2, 0.6, "sine"], [2.76, 0.5, "sine"], [3.76, 0.3, "sine"], [5.4, 0.2, "sine"]];
+const PARTIALS_MARIMBA: Partial[] = [[1, 1, "sine"], [4, 0.4, "sine"], [10, 0.1, "sine"]];
 
 // --- Chord instrument voices ---------------------------------------------
 
@@ -49,13 +87,14 @@ function voiceNote(
   const g = ctx.createGain();
   g.connect(dest);
 
-  // Sustained-envelope timbres (attack → hold → release).
+  // Sustained-envelope timbres (attack → hold → release), with optional vibrato.
   const sustainVoice = (
     attack: number,
     peak: number,
     cutoff: number,
     type: OscillatorType,
     detunes: number[],
+    vibrato?: { rate: number; depth: number },
   ) => {
     const filter = ctx.createBiquadFilter();
     filter.type = "lowpass";
@@ -66,71 +105,95 @@ function voiceNote(
     g.gain.linearRampToValueAtTime(peak * vel, start + attack);
     g.gain.setValueAtTime(peak * vel, hold);
     g.gain.linearRampToValueAtTime(0, end - 0.02);
+    let lfoGain: GainNode | null = null;
+    if (vibrato) {
+      const lfo = ctx.createOscillator();
+      lfo.type = "sine";
+      lfo.frequency.value = vibrato.rate;
+      lfoGain = ctx.createGain();
+      lfoGain.gain.value = vibrato.depth; // cents
+      lfo.connect(lfoGain);
+      lfo.start(start);
+      lfo.stop(end);
+    }
     for (const detune of detunes) {
       const osc = ctx.createOscillator();
       osc.type = type;
       osc.frequency.value = freq;
       osc.detune.value = detune;
       osc.connect(filter);
+      if (lfoGain) lfoGain.connect(osc.detune);
       osc.start(start);
       osc.stop(end);
     }
   };
 
-  if (sound === "pad") return sustainVoice(0.06, 0.1, 1400, "triangle", [-7, 7]);
-  if (sound === "strings") return sustainVoice(0.15, 0.07, 1500, "sawtooth", [-10, 0, 10]);
-  if (sound === "synth") return sustainVoice(0.02, 0.08, 2600, "sawtooth", [-6, 6]);
-
-  if (sound === "organ") {
-    const hold = Math.max(start + 0.02, end - 0.05);
-    g.gain.setValueAtTime(0, start);
-    g.gain.linearRampToValueAtTime(0.07 * vel, start + 0.01);
-    g.gain.setValueAtTime(0.07 * vel, hold);
-    g.gain.linearRampToValueAtTime(0, end - 0.01);
-    for (const [mult, amp] of [[1, 1], [2, 0.5], [3, 0.3]] as const) {
+  // Struck timbres (fast attack → exponential decay) from harmonic partials.
+  const struckVoice = (peak: number, partials: Partial[], cutoff?: number) => {
+    let node: AudioNode = g;
+    if (cutoff) {
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = cutoff;
+      filter.connect(g);
+      node = filter;
+    }
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(peak * vel, start + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, end);
+    for (const [ratio, amp, type] of partials) {
       const osc = ctx.createOscillator();
-      osc.type = "sine";
-      osc.frequency.value = freq * mult;
+      osc.type = type;
+      osc.frequency.value = freq * ratio;
       const og = ctx.createGain();
       og.gain.value = amp;
-      osc.connect(og).connect(g);
+      osc.connect(og).connect(node);
       osc.start(start);
       osc.stop(end);
     }
-    return;
-  }
+  };
 
-  // epiano / pluck — a struck note: fast attack, exponential decay.
-  const peak = (sound === "epiano" ? 0.2 : 0.18) * vel;
-  g.gain.setValueAtTime(0.0001, start);
-  g.gain.exponentialRampToValueAtTime(peak, start + 0.005);
-  g.gain.exponentialRampToValueAtTime(0.0001, end);
-  if (sound === "epiano") {
-    const o1 = ctx.createOscillator();
-    o1.type = "sine";
-    o1.frequency.value = freq;
-    o1.connect(g);
-    const o2 = ctx.createOscillator();
-    o2.type = "sine";
-    o2.frequency.value = freq * 2;
-    const o2g = ctx.createGain();
-    o2g.gain.value = 0.4;
-    o2.connect(o2g).connect(g);
-    o1.start(start);
-    o1.stop(end);
-    o2.start(start);
-    o2.stop(end);
-  } else {
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 2000;
-    filter.connect(g);
-    const osc = ctx.createOscillator();
-    osc.type = "sawtooth";
-    osc.frequency.value = freq;
-    osc.connect(filter);
-    osc.start(start);
-    osc.stop(end);
+  switch (sound) {
+    case "pad":
+      return sustainVoice(0.06, 0.1, 1400, "triangle", [-7, 7]);
+    case "strings":
+      return sustainVoice(0.15, 0.07, 1500, "sawtooth", [-10, 0, 10]);
+    case "synth":
+      return sustainVoice(0.02, 0.08, 2600, "sawtooth", [-6, 6]);
+    case "brass":
+      return sustainVoice(0.08, 0.075, 1600, "sawtooth", [-5, 5], { rate: 6, depth: 8 });
+    case "flute":
+      return sustainVoice(0.06, 0.1, 3000, "sine", [0], { rate: 5, depth: 12 });
+    case "choir":
+      return sustainVoice(0.12, 0.06, 1200, "triangle", [-8, 0, 8], { rate: 5.5, depth: 6 });
+    case "piano":
+      return struckVoice(0.13, PARTIALS_PIANO, 3500);
+    case "epiano":
+      return struckVoice(0.2, PARTIALS_EPIANO);
+    case "bell":
+      return struckVoice(0.12, PARTIALS_BELL);
+    case "marimba":
+      return struckVoice(0.16, PARTIALS_MARIMBA);
+    case "pluck":
+      return struckVoice(0.18, [[1, 1, "sawtooth"]], 2000);
+    case "organ": {
+      const hold = Math.max(start + 0.02, end - 0.05);
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(0.07 * vel, start + 0.01);
+      g.gain.setValueAtTime(0.07 * vel, hold);
+      g.gain.linearRampToValueAtTime(0, end - 0.01);
+      for (const [mult, amp] of [[1, 1], [2, 0.5], [3, 0.3]] as const) {
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.value = freq * mult;
+        const og = ctx.createGain();
+        og.gain.value = amp;
+        osc.connect(og).connect(g);
+        osc.start(start);
+        osc.stop(end);
+      }
+      return;
+    }
   }
 }
 
@@ -188,19 +251,102 @@ function playNoise(
   src.stop(time + decay + 0.02);
 }
 
+function playSnare(ctx: AudioContext, dest: AudioNode, noise: AudioBuffer, time: number, vel: number) {
+  playNoise(ctx, dest, noise, time, 1500, 0.5 * vel, 0.12);
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = "triangle";
+  osc.frequency.value = 180;
+  g.gain.setValueAtTime(0.0001, time);
+  g.gain.exponentialRampToValueAtTime(0.18 * vel, time + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.08);
+  osc.connect(g).connect(dest);
+  osc.start(time);
+  osc.stop(time + 0.1);
+}
+
+function playClap(ctx: AudioContext, dest: AudioNode, noise: AudioBuffer, time: number, vel: number) {
+  for (const off of [0, 0.012, 0.024]) playNoise(ctx, dest, noise, time + off, 1000, 0.4 * vel, 0.05);
+  playNoise(ctx, dest, noise, time + 0.03, 1000, 0.3 * vel, 0.12);
+}
+
+function playRim(ctx: AudioContext, dest: AudioNode, noise: AudioBuffer, time: number, vel: number) {
+  playNoise(ctx, dest, noise, time, 2000, 0.35 * vel, 0.03);
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = "triangle";
+  osc.frequency.value = 400;
+  g.gain.setValueAtTime(0.0001, time);
+  g.gain.exponentialRampToValueAtTime(0.3 * vel, time + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.03);
+  osc.connect(g).connect(dest);
+  osc.start(time);
+  osc.stop(time + 0.04);
+}
+
+function playRide(ctx: AudioContext, dest: AudioNode, noise: AudioBuffer, time: number, vel: number) {
+  playNoise(ctx, dest, noise, time, 5000, 0.1 * vel, 0.3);
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = "square";
+  osc.frequency.value = 520;
+  g.gain.setValueAtTime(0.0001, time);
+  g.gain.exponentialRampToValueAtTime(0.05 * vel, time + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.25);
+  osc.connect(g).connect(dest);
+  osc.start(time);
+  osc.stop(time + 0.27);
+}
+
+function playTom(
+  ctx: AudioContext,
+  dest: AudioNode,
+  tom: "hi" | "mid" | "lo",
+  time: number,
+  vel: number,
+) {
+  const f0 = tom === "hi" ? 220 : tom === "mid" ? 160 : 110;
+  const f1 = tom === "hi" ? 140 : tom === "mid" ? 100 : 70;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.frequency.setValueAtTime(f0, time);
+  osc.frequency.exponentialRampToValueAtTime(f1, time + 0.2);
+  g.gain.setValueAtTime(0.0001, time);
+  g.gain.exponentialRampToValueAtTime(0.7 * vel, time + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.25);
+  osc.connect(g).connect(dest);
+  osc.start(time);
+  osc.stop(time + 0.27);
+}
+
 function scheduleDrums(
   ctx: AudioContext,
   dest: AudioNode,
   noise: AudioBuffer,
   pattern: Exclude<DrumId, "none">,
   eighth: number,
+  isLoopStart: boolean,
+  isFillBar: boolean,
   time: number,
   vel: number,
 ) {
   const p = DRUM_PATTERNS[pattern];
-  if (p.kick.includes(eighth)) playKick(ctx, dest, time, vel);
-  if (p.snare.includes(eighth)) playNoise(ctx, dest, noise, time, 1500, 0.5 * vel, 0.12);
-  if (p.hat.includes(eighth)) playNoise(ctx, dest, noise, time, 7000, (eighth % 2 ? 0.18 : 0.26) * vel, 0.03);
+  if (p.crashFirst && isLoopStart && eighth === 0) {
+    playNoise(ctx, dest, noise, time, 3000, 0.35 * vel, 1.0); // crash cymbal
+  }
+  // A tom fill takes over the second half of the loop's final bar.
+  if (isFillBar && eighth >= 4) {
+    const f = TOM_FILL.find((x) => x.eighth === eighth);
+    if (f) playTom(ctx, dest, f.tom, time, vel);
+    return;
+  }
+  if (p.kick?.includes(eighth)) playKick(ctx, dest, time, vel);
+  if (p.snare?.includes(eighth)) playSnare(ctx, dest, noise, time, vel);
+  if (p.clap?.includes(eighth)) playClap(ctx, dest, noise, time, vel);
+  if (p.rim?.includes(eighth)) playRim(ctx, dest, noise, time, vel);
+  if (p.hat?.includes(eighth)) playNoise(ctx, dest, noise, time, 7000, (eighth % 2 ? 0.16 : 0.24) * vel, 0.03);
+  if (p.openhat?.includes(eighth)) playNoise(ctx, dest, noise, time, 6000, 0.2 * vel, 0.18);
+  if (p.ride?.includes(eighth)) playRide(ctx, dest, noise, time, (eighth % 2 ? 0.7 : 1) * vel);
 }
 
 function makeNoise(ctx: AudioContext): AudioBuffer {
@@ -285,7 +431,10 @@ export function useBackingTrack(opts: {
     if (!masterRef.current) {
       const master = ctx.createGain();
       master.gain.value = 0.8;
-      master.connect(ctx.destination);
+      // A gentle limiter glues the mix and keeps the fuller kit from clipping.
+      const comp = ctx.createDynamicsCompressor();
+      master.connect(comp);
+      comp.connect(ctx.destination);
       masterRef.current = master;
     }
     if (!noiseRef.current) noiseRef.current = makeNoise(ctx);
@@ -356,7 +505,11 @@ export function useBackingTrack(opts: {
 
         // Drums
         if (mix.drums > 0 && drumsRef.current !== "none") {
-          scheduleDrums(c, master, noise, drumsRef.current, eighth, time, mix.drums);
+          const bar = Math.floor(step / EIGHTHS_PER_BAR);
+          const loopBars = chords.length * bars;
+          const isLoopStart = index === 0 && bar === 0;
+          const isFillBar = loopBars >= 2 && index === chords.length - 1 && bar === bars - 1;
+          scheduleDrums(c, master, noise, drumsRef.current, eighth, isLoopStart, isFillBar, time, mix.drums);
         }
 
         nextTimeRef.current += stepDur;

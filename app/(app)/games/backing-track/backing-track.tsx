@@ -28,10 +28,16 @@ const PROGRESSIONS = [
 const SOUNDS: { id: SoundId; label: string }[] = [
   { id: "pad", label: "Pad" },
   { id: "epiano", label: "E-Piano" },
+  { id: "piano", label: "Piano" },
   { id: "organ", label: "Organ" },
-  { id: "pluck", label: "Pluck" },
   { id: "strings", label: "Strings" },
   { id: "synth", label: "Synth" },
+  { id: "brass", label: "Brass" },
+  { id: "flute", label: "Flute" },
+  { id: "choir", label: "Choir" },
+  { id: "pluck", label: "Pluck" },
+  { id: "marimba", label: "Marimba" },
+  { id: "bell", label: "Bell" },
 ];
 const FEELS: { id: FeelId; label: string }[] = [
   { id: "sustained", label: "Sustained" },
@@ -48,6 +54,7 @@ const DRUMS: { id: DrumId; label: string }[] = [
   { id: "funk", label: "Funk" },
   { id: "dance", label: "Dance" },
   { id: "halftime", label: "Half-time" },
+  { id: "ride", label: "Ride" },
 ];
 
 const chipBase = "rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition-colors";
