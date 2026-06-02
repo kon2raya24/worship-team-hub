@@ -1,7 +1,7 @@
 // Backing-track engine (Phase 6). Client-only — Web Audio API.
 // A small groove machine: loops a chord progression with a selectable
-// instrument sound, rhythmic feel, synthesized drums, and a per-part mix.
-// Same drift-free lookahead scheduler as the metronome, but stepping at the
+// instrument sound, rhythmic feel, swing, synthesized drums, and a per-part
+// mix. Same drift-free lookahead scheduler as the metronome, stepping at the
 // eighth note so drums and rhythmic comping land in time.
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -10,20 +10,29 @@ const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD = 0.2;
 const EIGHTHS_PER_BAR = 8; // 4/4
 
-export type SoundId = "pad" | "epiano" | "organ" | "pluck";
-export type FeelId = "sustained" | "pulse" | "arpeggio";
-export type DrumId = "none" | "pop" | "rock" | "ballad";
+export type SoundId = "pad" | "epiano" | "organ" | "pluck" | "strings" | "synth";
+export type FeelId = "sustained" | "pulse" | "arpeggio" | "strum" | "offbeat";
+export type DrumId = "none" | "pop" | "rock" | "ballad" | "funk" | "dance" | "halftime";
 export type TrackChord = { pcs: number[] }; // triad pitch classes; pcs[0]=root, pcs[2]=fifth
 export type Mix = { chords: number; bass: number; drums: number };
 
 const midiToFreq = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
 // Kick/snare/hat hit positions, as eighth-note indexes within a 4/4 bar.
-const DRUM_PATTERNS: Record<Exclude<DrumId, "none">, { kick: number[]; snare: number[]; hat: number[] }> = {
+const DRUM_PATTERNS: Record<
+  Exclude<DrumId, "none">,
+  { kick: number[]; snare: number[]; hat: number[] }
+> = {
   pop: { kick: [0, 4], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7] },
   rock: { kick: [0, 4, 5], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7] },
   ballad: { kick: [0], snare: [4], hat: [0, 2, 4, 6] },
+  funk: { kick: [0, 3, 4, 6], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7] },
+  dance: { kick: [0, 2, 4, 6], snare: [2, 6], hat: [1, 3, 5, 7] },
+  halftime: { kick: [0], snare: [4], hat: [0, 1, 2, 3, 4, 5, 6, 7] },
 };
+
+// Strum velocity per eighth — strong downbeats, lighter up-strokes on the "ands".
+const STRUM: Record<number, number> = { 0: 1, 2: 0.7, 3: 0.55, 4: 1, 6: 0.7, 7: 0.55 };
 
 // --- Chord instrument voices ---------------------------------------------
 
@@ -40,27 +49,37 @@ function voiceNote(
   const g = ctx.createGain();
   g.connect(dest);
 
-  if (sound === "pad") {
+  // Sustained-envelope timbres (attack → hold → release).
+  const sustainVoice = (
+    attack: number,
+    peak: number,
+    cutoff: number,
+    type: OscillatorType,
+    detunes: number[],
+  ) => {
     const filter = ctx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value = 1400;
+    filter.frequency.value = cutoff;
     filter.connect(g);
-    const hold = Math.max(start + 0.06, end - 0.15);
+    const hold = Math.max(start + attack, end - Math.min(0.2, dur * 0.4));
     g.gain.setValueAtTime(0, start);
-    g.gain.linearRampToValueAtTime(0.1 * vel, start + 0.06);
-    g.gain.setValueAtTime(0.1 * vel, hold);
+    g.gain.linearRampToValueAtTime(peak * vel, start + attack);
+    g.gain.setValueAtTime(peak * vel, hold);
     g.gain.linearRampToValueAtTime(0, end - 0.02);
-    for (const detune of [-7, 7]) {
+    for (const detune of detunes) {
       const osc = ctx.createOscillator();
-      osc.type = "triangle";
+      osc.type = type;
       osc.frequency.value = freq;
       osc.detune.value = detune;
       osc.connect(filter);
       osc.start(start);
       osc.stop(end);
     }
-    return;
-  }
+  };
+
+  if (sound === "pad") return sustainVoice(0.06, 0.1, 1400, "triangle", [-7, 7]);
+  if (sound === "strings") return sustainVoice(0.15, 0.07, 1500, "sawtooth", [-10, 0, 10]);
+  if (sound === "synth") return sustainVoice(0.02, 0.08, 2600, "sawtooth", [-6, 6]);
 
   if (sound === "organ") {
     const hold = Math.max(start + 0.02, end - 0.05);
@@ -206,6 +225,7 @@ export function useBackingTrack(opts: {
   sound: SoundId;
   feel: FeelId;
   drums: DrumId;
+  swing: number; // 0..60 (% of an eighth note)
   mix: Mix;
 }): BackingTrack {
   const [running, setRunning] = useState(false);
@@ -229,6 +249,7 @@ export function useBackingTrack(opts: {
   const soundRef = useRef(opts.sound);
   const feelRef = useRef(opts.feel);
   const drumsRef = useRef(opts.drums);
+  const swingRef = useRef(opts.swing);
   const mixRef = useRef(opts.mix);
   useEffect(() => {
     chordsRef.current = opts.chords;
@@ -248,6 +269,9 @@ export function useBackingTrack(opts: {
   useEffect(() => {
     drumsRef.current = opts.drums;
   }, [opts.drums]);
+  useEffect(() => {
+    swingRef.current = opts.swing;
+  }, [opts.swing]);
   useEffect(() => {
     mixRef.current = opts.mix;
   }, [opts.mix]);
@@ -288,28 +312,30 @@ export function useBackingTrack(opts: {
         const eighth = step % EIGHTHS_PER_BAR;
         const index = indexRef.current % chords.length;
         const chord = chords[index];
-        const time = nextTimeRef.current;
+        const gridTime = nextTimeRef.current;
+        // Swing pushes the off-beat eighths later for a looser groove.
+        const time = eighth % 2 === 1 ? gridTime + (swingRef.current / 100) * stepDur : gridTime;
         const mix = mixRef.current;
+        const sound = soundRef.current;
 
-        if (step === 0) queueRef.current.push({ index, time });
+        if (step === 0) queueRef.current.push({ index, time: gridTime });
+
+        const playChord = (t: number, dur: number, vel: number) => {
+          for (const pc of chord.pcs) voiceNote(c, master, midiToFreq(60 + pc), t, dur, sound, vel);
+        };
 
         // Chord comping
         if (mix.chords > 0) {
-          const sound = soundRef.current;
           const feel = feelRef.current;
           if (feel === "sustained") {
-            if (step === 0) {
-              const dur = stepsPerChord * stepDur;
-              for (const pc of chord.pcs) {
-                voiceNote(c, master, midiToFreq(60 + pc), time, dur, sound, mix.chords);
-              }
-            }
+            if (step === 0) playChord(gridTime, stepsPerChord * stepDur, mix.chords);
           } else if (feel === "pulse") {
-            if (eighth % 2 === 0) {
-              for (const pc of chord.pcs) {
-                voiceNote(c, master, midiToFreq(60 + pc), time, beat * 0.9, sound, mix.chords);
-              }
-            }
+            if (eighth % 2 === 0) playChord(time, beat * 0.9, mix.chords);
+          } else if (feel === "strum") {
+            const sv = STRUM[eighth];
+            if (sv) playChord(time, stepDur * 1.6, mix.chords * sv);
+          } else if (feel === "offbeat") {
+            if (eighth % 2 === 1) playChord(time, stepDur * 0.6, mix.chords);
           } else {
             // arpeggio — one tone per eighth, climbing an octave each pass
             const n = chord.pcs.length;
@@ -322,9 +348,9 @@ export function useBackingTrack(opts: {
         // Bass — root on beat 1, fifth on beat 3
         if (mix.bass > 0) {
           if (eighth === 0) {
-            voiceBass(c, master, midiToFreq(36 + chord.pcs[0]), time, beat * 2 * 0.95, mix.bass);
+            voiceBass(c, master, midiToFreq(36 + chord.pcs[0]), gridTime, beat * 2 * 0.95, mix.bass);
           } else if (eighth === 4) {
-            voiceBass(c, master, midiToFreq(36 + (chord.pcs[2] ?? chord.pcs[0])), time, beat * 2 * 0.95, mix.bass);
+            voiceBass(c, master, midiToFreq(36 + (chord.pcs[2] ?? chord.pcs[0])), gridTime, beat * 2 * 0.95, mix.bass);
           }
         }
 

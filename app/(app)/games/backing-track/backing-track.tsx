@@ -14,9 +14,15 @@ type QualityId = (typeof QUALITIES)[number]["id"];
 
 const PROGRESSIONS = [
   { id: "pop", label: "Pop", degrees: [1, 5, 6, 4] },
+  { id: "axis", label: "Axis", degrees: [6, 4, 1, 5] },
+  { id: "worship", label: "Worship", degrees: [1, 4, 6, 5] },
   { id: "classic", label: "Classic", degrees: [1, 4, 5] },
   { id: "fifties", label: "'50s", degrees: [1, 6, 4, 5] },
+  { id: "turnaround", label: "Turnaround", degrees: [1, 6, 2, 5] },
   { id: "twofiveone", label: "ii–V–I", degrees: [2, 5, 1] },
+  { id: "andalusian", label: "Andalusian", degrees: [1, 7, 6, 5] },
+  { id: "canon", label: "Canon", degrees: [1, 5, 6, 3, 4, 1, 4, 5] },
+  { id: "blues", label: "12-bar blues", degrees: [1, 1, 1, 1, 4, 4, 1, 1, 5, 4, 1, 5] },
 ];
 
 const SOUNDS: { id: SoundId; label: string }[] = [
@@ -24,17 +30,24 @@ const SOUNDS: { id: SoundId; label: string }[] = [
   { id: "epiano", label: "E-Piano" },
   { id: "organ", label: "Organ" },
   { id: "pluck", label: "Pluck" },
+  { id: "strings", label: "Strings" },
+  { id: "synth", label: "Synth" },
 ];
 const FEELS: { id: FeelId; label: string }[] = [
   { id: "sustained", label: "Sustained" },
   { id: "pulse", label: "Pulse" },
   { id: "arpeggio", label: "Arpeggio" },
+  { id: "strum", label: "Strum" },
+  { id: "offbeat", label: "Offbeat" },
 ];
 const DRUMS: { id: DrumId; label: string }[] = [
   { id: "none", label: "Off" },
   { id: "pop", label: "Pop" },
   { id: "rock", label: "Rock" },
   { id: "ballad", label: "Ballad" },
+  { id: "funk", label: "Funk" },
+  { id: "dance", label: "Dance" },
+  { id: "halftime", label: "Half-time" },
 ];
 
 const chipBase = "rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition-colors";
@@ -50,6 +63,7 @@ export function BackingTrack() {
   const [sound, setSound] = useState<SoundId>("epiano");
   const [feel, setFeel] = useState<FeelId>("pulse");
   const [drums, setDrums] = useState<DrumId>("pop");
+  const [swing, setSwing] = useState(0);
   const [mixChords, setMixChords] = useState(80);
   const [mixBass, setMixBass] = useState(80);
   const [mixDrums, setMixDrums] = useState(70);
@@ -75,7 +89,7 @@ export function BackingTrack() {
     [mixChords, mixBass, mixDrums],
   );
 
-  const track = useBackingTrack({ chords: voices, bpm, barsPerChord, sound, feel, drums, mix });
+  const track = useBackingTrack({ chords: voices, bpm, barsPerChord, sound, feel, drums, swing, mix });
   const { toggle } = track;
 
   // Spacebar starts/stops.
@@ -258,6 +272,20 @@ export function BackingTrack() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Swing */}
+        <div className="space-y-1.5">
+          <span className="eyebrow">Swing — {swing === 0 ? "straight" : `${swing}%`}</span>
+          <input
+            type="range"
+            min={0}
+            max={60}
+            value={swing}
+            onChange={(e) => setSwing(Number(e.target.value))}
+            aria-label="Swing amount"
+            className="w-full max-w-md accent-primary"
+          />
         </div>
 
         {/* Mix */}
