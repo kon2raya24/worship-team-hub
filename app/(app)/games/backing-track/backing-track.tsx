@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import { ROOTS, SCALES, type ScaleDef } from "@/lib/fretboard";
 import { buildDiatonicChords } from "@/lib/fretboard-chords";
-import { useBackingTrack } from "@/lib/use-backing-track";
+import { useBackingTrack, type DrumId, type FeelId, type SoundId } from "@/lib/use-backing-track";
 
 const QUALITIES = [
   { id: "major", label: "Major" },
@@ -19,13 +19,40 @@ const PROGRESSIONS = [
   { id: "twofiveone", label: "ii–V–I", degrees: [2, 5, 1] },
 ];
 
+const SOUNDS: { id: SoundId; label: string }[] = [
+  { id: "pad", label: "Pad" },
+  { id: "epiano", label: "E-Piano" },
+  { id: "organ", label: "Organ" },
+  { id: "pluck", label: "Pluck" },
+];
+const FEELS: { id: FeelId; label: string }[] = [
+  { id: "sustained", label: "Sustained" },
+  { id: "pulse", label: "Pulse" },
+  { id: "arpeggio", label: "Arpeggio" },
+];
+const DRUMS: { id: DrumId; label: string }[] = [
+  { id: "none", label: "Off" },
+  { id: "pop", label: "Pop" },
+  { id: "rock", label: "Rock" },
+  { id: "ballad", label: "Ballad" },
+];
+
+const chipBase = "rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition-colors";
+const chipOn = "bg-primary/15 text-primary ring-primary/40";
+const chipOff = "bg-tint-1 text-foreground/80 ring-border hover:bg-tint-2 hover:text-foreground";
+
 export function BackingTrack() {
   const [root, setRoot] = useState("G");
   const [qualityId, setQualityId] = useState<QualityId>("major");
   const [progId, setProgId] = useState("pop");
   const [bpm, setBpm] = useState(90);
   const [barsPerChord, setBarsPerChord] = useState(1);
-  const [click, setClick] = useState(false);
+  const [sound, setSound] = useState<SoundId>("epiano");
+  const [feel, setFeel] = useState<FeelId>("pulse");
+  const [drums, setDrums] = useState<DrumId>("pop");
+  const [mixChords, setMixChords] = useState(80);
+  const [mixBass, setMixBass] = useState(80);
+  const [mixDrums, setMixDrums] = useState(70);
 
   const scale = useMemo<ScaleDef>(
     () => SCALES.find((s) => s.id === qualityId) ?? SCALES[0],
@@ -42,12 +69,13 @@ export function BackingTrack() {
       .map((d) => all.find((c) => c.degree === d))
       .filter((c): c is NonNullable<typeof c> => Boolean(c));
   }, [root, scale, degrees]);
-  const voices = useMemo(
-    () => progChords.map((c) => ({ pcs: c.pcs, bassPc: c.pcs[0] })),
-    [progChords],
+  const voices = useMemo(() => progChords.map((c) => ({ pcs: c.pcs })), [progChords]);
+  const mix = useMemo(
+    () => ({ chords: mixChords / 100, bass: mixBass / 100, drums: mixDrums / 100 }),
+    [mixChords, mixBass, mixDrums],
   );
 
-  const track = useBackingTrack({ chords: voices, bpm, barsPerChord, click });
+  const track = useBackingTrack({ chords: voices, bpm, barsPerChord, sound, feel, drums, mix });
   const { toggle } = track;
 
   // Spacebar starts/stops.
@@ -123,25 +151,17 @@ export function BackingTrack() {
           <div className="space-y-1.5">
             <span className="eyebrow">Progression</span>
             <div className="flex flex-wrap gap-1.5">
-              {PROGRESSIONS.map((p) => {
-                const active = p.id === progId;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setProgId(p.id)}
-                    aria-pressed={active}
-                    className={
-                      "rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition-colors " +
-                      (active
-                        ? "bg-primary/15 text-primary ring-primary/40"
-                        : "bg-tint-1 text-foreground/80 ring-border hover:bg-tint-2 hover:text-foreground")
-                    }
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
+              {PROGRESSIONS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setProgId(p.id)}
+                  aria-pressed={p.id === progId}
+                  className={`${chipBase} ${p.id === progId ? chipOn : chipOff}`}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -160,41 +180,111 @@ export function BackingTrack() {
           />
         </div>
 
-        {/* Bars per chord + click */}
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+        {/* Bars per chord */}
+        <div className="space-y-1.5">
+          <span className="eyebrow">Bars per chord</span>
+          <div className="inline-flex rounded-xl bg-tint-1 p-1 ring-1 ring-border">
+            {[1, 2].map((n) => {
+              const active = n === barsPerChord;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setBarsPerChord(n)}
+                  aria-pressed={active}
+                  className={
+                    "min-w-[44px] rounded-lg px-3 py-1.5 text-sm font-medium tabular-nums transition-colors " +
+                    (active
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground")
+                  }
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Sound, feel, drums, mix */}
+      <div className="glass space-y-4 rounded-2xl p-4 ring-1 ring-border sm:p-5">
+        <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">
-            <span className="eyebrow">Bars per chord</span>
-            <div className="inline-flex rounded-xl bg-tint-1 p-1 ring-1 ring-border">
-              {[1, 2].map((n) => {
-                const active = n === barsPerChord;
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setBarsPerChord(n)}
-                    aria-pressed={active}
-                    className={
-                      "min-w-[44px] rounded-lg px-3 py-1.5 text-sm font-medium tabular-nums transition-colors " +
-                      (active
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground")
-                    }
-                  >
-                    {n}
-                  </button>
-                );
-              })}
+            <span className="eyebrow">Sound</span>
+            <div className="flex flex-wrap gap-1.5">
+              {SOUNDS.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSound(s.id)}
+                  aria-pressed={s.id === sound}
+                  className={`${chipBase} ${s.id === sound ? chipOn : chipOff}`}
+                >
+                  {s.label}
+                </button>
+              ))}
             </div>
           </div>
-          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-foreground/85">
-            <input
-              type="checkbox"
-              checked={click}
-              onChange={(e) => setClick(e.target.checked)}
-              className="size-4 accent-primary"
-            />
-            Metronome click
-          </label>
+          <div className="space-y-1.5">
+            <span className="eyebrow">Feel</span>
+            <div className="flex flex-wrap gap-1.5">
+              {FEELS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFeel(f.id)}
+                  aria-pressed={f.id === feel}
+                  className={`${chipBase} ${f.id === feel ? chipOn : chipOff}`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <span className="eyebrow">Drums</span>
+            <div className="flex flex-wrap gap-1.5">
+              {DRUMS.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setDrums(d.id)}
+                  aria-pressed={d.id === drums}
+                  className={`${chipBase} ${d.id === drums ? chipOn : chipOff}`}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Mix */}
+        <div className="space-y-1.5">
+          <span className="eyebrow">Mix</span>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {(
+              [
+                ["Chords", mixChords, setMixChords],
+                ["Bass", mixBass, setMixBass],
+                ["Drums", mixDrums, setMixDrums],
+              ] as const
+            ).map(([label, value, set]) => (
+              <label key={label} className="flex items-center gap-3 text-sm">
+                <span className="w-14 shrink-0 text-muted-foreground">{label}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={value}
+                  onChange={(e) => set(Number(e.target.value))}
+                  aria-label={`${label} volume`}
+                  className="w-full accent-primary"
+                />
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -224,16 +314,12 @@ export function BackingTrack() {
                 key={`${c.degree}-${i}`}
                 className={
                   "min-w-[84px] rounded-xl p-3 text-center ring-1 transition-all " +
-                  (active
-                    ? "bg-primary/15 ring-primary/60 scale-105"
-                    : "bg-tint-1 ring-border")
+                  (active ? "bg-primary/15 ring-primary/60 scale-105" : "bg-tint-1 ring-border")
                 }
               >
                 <div className="eyebrow">{c.roman}</div>
                 <div className="font-display text-lg font-semibold text-foreground/95">{c.name}</div>
-                <div className="font-mono text-[11px] text-muted-foreground">
-                  {c.notes.join(" ")}
-                </div>
+                <div className="font-mono text-[11px] text-muted-foreground">{c.notes.join(" ")}</div>
               </div>
             );
           })}
@@ -241,8 +327,8 @@ export function BackingTrack() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Pick a key and a progression, then solo over it with the matching {scale.name.toLowerCase()}{" "}
-        scale on the{" "}
+        Pick a sound and feel, add drums, then solo over it with the matching{" "}
+        {scale.name.toLowerCase()} scale on the{" "}
         <a href="/games/fretboard" className="text-primary hover:underline">
           Fretboard Explorer
         </a>
