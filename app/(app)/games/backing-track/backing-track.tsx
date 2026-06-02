@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import { ROOTS, SCALES, type ScaleDef } from "@/lib/fretboard";
 import { buildDiatonicChords } from "@/lib/fretboard-chords";
-import { useBackingTrack, type DrumId, type FeelId, type SoundId } from "@/lib/use-backing-track";
+import {
+  useBackingTrack,
+  type DrumId,
+  type FeelId,
+  type InstSettings,
+  type SoundId,
+} from "@/lib/use-backing-track";
 
 const QUALITIES = [
   { id: "major", label: "Major" },
@@ -61,19 +67,46 @@ const chipBase = "rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition-c
 const chipOn = "bg-primary/15 text-primary ring-primary/40";
 const chipOff = "bg-tint-1 text-foreground/80 ring-border hover:bg-tint-2 hover:text-foreground";
 
+const DEFAULT_INST: InstSettings = {
+  volume: 80,
+  octave: 0,
+  attack: 0,
+  release: 40,
+  tone: 100,
+  reverb: 15,
+  pan: 0,
+};
+// Per-instrument channel-strip controls (each its own slider).
+const INST_CONTROLS: { key: keyof InstSettings; label: string; min: number; max: number; fmt: (v: number) => string }[] = [
+  { key: "volume", label: "Volume", min: 0, max: 100, fmt: (v) => `${v}%` },
+  { key: "octave", label: "Octave", min: -2, max: 2, fmt: (v) => (v > 0 ? `+${v}` : `${v}`) },
+  { key: "attack", label: "Attack", min: 0, max: 100, fmt: (v) => `${v}%` },
+  { key: "release", label: "Release", min: 0, max: 100, fmt: (v) => `${v}%` },
+  { key: "tone", label: "Tone", min: 0, max: 100, fmt: (v) => `${v}%` },
+  { key: "reverb", label: "Reverb", min: 0, max: 100, fmt: (v) => `${v}%` },
+  { key: "pan", label: "Pan", min: -100, max: 100, fmt: (v) => (v === 0 ? "C" : v < 0 ? `L${-v}` : `R${v}`) },
+];
+
 export function BackingTrack() {
   const [root, setRoot] = useState("G");
   const [qualityId, setQualityId] = useState<QualityId>("major");
   const [progId, setProgId] = useState("pop");
   const [bpm, setBpm] = useState(90);
   const [barsPerChord, setBarsPerChord] = useState(1);
-  const [sound, setSound] = useState<SoundId>("epiano");
+  const [sound, setSound] = useState<SoundId>("piano");
   const [feel, setFeel] = useState<FeelId>("pulse");
   const [drums, setDrums] = useState<DrumId>("pop");
   const [swing, setSwing] = useState(0);
   const [mixChords, setMixChords] = useState(80);
   const [mixBass, setMixBass] = useState(80);
   const [mixDrums, setMixDrums] = useState(70);
+  // Each instrument keeps its own channel-strip settings.
+  const [instSettings, setInstSettings] = useState<Record<SoundId, InstSettings>>(
+    () => Object.fromEntries(SOUNDS.map((s) => [s.id, { ...DEFAULT_INST }])) as Record<SoundId, InstSettings>,
+  );
+  const activeInst = instSettings[sound];
+  const updateInst = (key: keyof InstSettings, value: number) =>
+    setInstSettings((prev) => ({ ...prev, [sound]: { ...prev[sound], [key]: value } }));
 
   const scale = useMemo<ScaleDef>(
     () => SCALES.find((s) => s.id === qualityId) ?? SCALES[0],
@@ -96,7 +129,17 @@ export function BackingTrack() {
     [mixChords, mixBass, mixDrums],
   );
 
-  const track = useBackingTrack({ chords: voices, bpm, barsPerChord, sound, feel, drums, swing, mix });
+  const track = useBackingTrack({
+    chords: voices,
+    bpm,
+    barsPerChord,
+    sound,
+    feel,
+    drums,
+    swing,
+    mix,
+    inst: activeInst,
+  });
   const { toggle } = track;
 
   // Spacebar starts/stops.
@@ -228,8 +271,8 @@ export function BackingTrack() {
         </div>
       </div>
 
-      {/* Instrument — visual picker */}
-      <div className="glass space-y-2 rounded-2xl p-4 ring-1 ring-border sm:p-5">
+      {/* Instrument — visual picker + per-instrument channel strip */}
+      <div className="glass space-y-3 rounded-2xl p-4 ring-1 ring-border sm:p-5">
         <span className="eyebrow">Instrument</span>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {SOUNDS.map((s) => {
@@ -260,6 +303,37 @@ export function BackingTrack() {
               </button>
             );
           })}
+        </div>
+
+        {/* Selected instrument's own settings */}
+        <div className="space-y-2 border-t border-border pt-3">
+          <div className="flex items-center justify-between">
+            <span className="eyebrow">
+              {SOUNDS.find((s) => s.id === sound)?.label} settings
+            </span>
+            {track.loading && (
+              <span className="text-xs text-muted-foreground">loading instrument…</span>
+            )}
+          </div>
+          <div className="grid gap-x-5 gap-y-2.5 sm:grid-cols-2">
+            {INST_CONTROLS.map((ctrl) => (
+              <label key={ctrl.key} className="flex items-center gap-3 text-sm">
+                <span className="w-16 shrink-0 text-muted-foreground">{ctrl.label}</span>
+                <input
+                  type="range"
+                  min={ctrl.min}
+                  max={ctrl.max}
+                  value={activeInst[ctrl.key]}
+                  onChange={(e) => updateInst(ctrl.key, Number(e.target.value))}
+                  aria-label={`${ctrl.label} for ${sound}`}
+                  className="w-full accent-primary"
+                />
+                <span className="w-10 shrink-0 text-right font-mono text-xs tabular-nums text-foreground/70">
+                  {ctrl.fmt(activeInst[ctrl.key])}
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -347,11 +421,12 @@ export function BackingTrack() {
         <button
           type="button"
           onClick={toggle}
+          disabled={track.loading && !track.running}
           aria-pressed={track.running}
-          className="inline-flex min-w-[140px] items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-sm transition-transform hover:scale-[1.02]"
+          className="inline-flex min-w-[140px] items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-sm transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {track.running ? <Pause className="size-4" /> : <Play className="size-4" />}
-          {track.running ? "Stop" : "Play"}
+          {track.loading && !track.running ? "Loading…" : track.running ? "Stop" : "Play"}
         </button>
       </div>
 
