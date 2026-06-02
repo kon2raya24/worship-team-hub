@@ -9,7 +9,7 @@ import type { DrumMachine, Soundfont } from "smplr";
 
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD = 0.2;
-const EIGHTHS_PER_BAR = 8; // 4/4
+const EIGHTHS: Record<MeterId, number> = { "4/4": 8, "6/8": 6 };
 
 export type SoundId =
   | "pad"
@@ -25,7 +25,21 @@ export type SoundId =
   | "marimba"
   | "bell";
 export type FeelId = "sustained" | "pulse" | "arpeggio" | "strum" | "offbeat";
-export type DrumId = "none" | "pop" | "rock" | "ballad" | "funk" | "dance" | "halftime" | "ride";
+export type MeterId = "4/4" | "6/8";
+export type DrumId =
+  | "none"
+  | "pop"
+  | "rock"
+  | "ballad"
+  | "funk"
+  | "dance"
+  | "halftime"
+  | "ride"
+  | "bossa"
+  | "gospel"
+  | "motown" // extra 4/4 grooves
+  | "march"
+  | "swing"; // 6/8 grooves
 export type DrumPiece =
   | "kick"
   | "snare"
@@ -74,7 +88,9 @@ const toCutoff = (t: number) => 400 * Math.pow(45, clamp(t, 0, 100) / 100); // 4
 const toAttack = (a: number) => (a / 100) * 0.6; // 0..0.6s
 
 // Strum velocity per eighth — strong downbeats, lighter up-strokes on the "ands".
-const STRUM: Record<number, number> = { 0: 1, 2: 0.7, 3: 0.55, 4: 1, 6: 0.7, 7: 0.55 };
+const STRUM_44: Record<number, number> = { 0: 1, 2: 0.7, 3: 0.55, 4: 1, 6: 0.7, 7: 0.55 };
+// 6/8 lilts in two: accent the two dotted-quarter pulses (0 and 3).
+const STRUM_68: Record<number, number> = { 0: 1, 1: 0.4, 2: 0.5, 3: 0.85, 4: 0.4, 5: 0.5 };
 
 // --- Drum kit (sampled via smplr DrumMachine) ----------------------------
 
@@ -88,7 +104,8 @@ type DrumPattern = {
   rim?: number[];
   crashFirst?: boolean;
 };
-const DRUM_PATTERNS: Record<Exclude<DrumId, "none">, DrumPattern> = {
+// 4/4 grooves (eighth-note grid, indices 0..7).
+const DRUM_PATTERNS: Record<string, DrumPattern> = {
   pop: { kick: [0, 4], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7], crashFirst: true },
   rock: { kick: [0, 4, 5], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7], openhat: [7], crashFirst: true },
   ballad: { kick: [0], snare: [4], hat: [0, 2, 4, 6], crashFirst: true },
@@ -96,17 +113,45 @@ const DRUM_PATTERNS: Record<Exclude<DrumId, "none">, DrumPattern> = {
   dance: { kick: [0, 2, 4, 6], snare: [2, 6], clap: [2, 6], openhat: [1, 3, 5, 7], crashFirst: true },
   halftime: { kick: [0, 5], snare: [4], hat: [0, 1, 2, 3, 4, 5, 6, 7], crashFirst: true },
   ride: { kick: [0, 4], snare: [2, 6], ride: [0, 1, 2, 3, 4, 5, 6, 7], crashFirst: true },
+  bossa: { kick: [0, 3, 4, 7], hat: [0, 1, 2, 3, 4, 5, 6, 7], rim: [2, 6] },
+  gospel: { kick: [0, 3, 4, 6], snare: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7], openhat: [7], crashFirst: true },
+  motown: { kick: [0, 4], snare: [0, 2, 4, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7], crashFirst: true },
 };
-const TOM_FILL: { eighth: number; tom: "hi" | "mid" | "lo" }[] = [
+// 6/8 grooves (eighth-note grid, indices 0..5; felt in two pulses on 0 and 3).
+const DRUM_PATTERNS_68: Record<string, DrumPattern> = {
+  ballad: { kick: [0], snare: [3], hat: [0, 1, 2, 3, 4, 5], crashFirst: true },
+  rock: { kick: [0, 3], snare: [3], hat: [0, 1, 2, 3, 4, 5], openhat: [5], crashFirst: true },
+  march: { kick: [0, 3], snare: [3], hat: [0, 2, 3, 5], crashFirst: true },
+  swing: { kick: [0, 3], snare: [3], ride: [0, 2, 3, 5], crashFirst: true },
+};
+type TomFillStep = { eighth: number; tom: "hi" | "mid" | "lo" };
+const TOM_FILL_44: TomFillStep[] = [
   { eighth: 4, tom: "hi" },
   { eighth: 5, tom: "hi" },
   { eighth: 6, tom: "mid" },
   { eighth: 7, tom: "lo" },
 ];
+const TOM_FILL_68: TomFillStep[] = [
+  { eighth: 3, tom: "hi" },
+  { eighth: 4, tom: "mid" },
+  { eighth: 5, tom: "lo" },
+];
 
 // Map a kit's actual sample-group names to our logical voices. Names vary per
 // kit (e.g. "hihat-close" / "hhclosed", "cymbal" / "crash"), so match loosely.
-type DrumMap = Record<string, string | undefined>;
+type DrumMap = {
+  kick?: string;
+  snare?: string;
+  hatClosed?: string;
+  hatOpen?: string;
+  crash?: string;
+  ride?: string;
+  clap?: string;
+  rim?: string;
+  tomHi?: string;
+  tomMid?: string;
+  tomLo?: string;
+};
 function mapKit(groups: string[]): DrumMap {
   const find = (...cands: string[]) => {
     for (const c of cands) {
@@ -131,37 +176,46 @@ function mapKit(groups: string[]): DrumMap {
   };
 }
 
+type KitNode = { dm: DrumMachine; map: DrumMap };
+
 function scheduleDrums(
-  dm: DrumMachine,
-  map: DrumMap,
+  kits: Map<string, KitNode>,
+  pieceKits: Record<DrumPiece, string>,
   drumMix: DrumMix,
-  pattern: Exclude<DrumId, "none">,
+  table: Record<string, DrumPattern>,
+  fill: TomFillStep[],
+  fillFrom: number,
+  pattern: DrumId,
   eighth: number,
   isLoopStart: boolean,
   isFillBar: boolean,
   time: number,
   vel: number,
 ) {
-  // Each piece is gated by its own enable + volume from the drum mixer.
-  const hit = (piece: DrumPiece, group: string | undefined, accent: number) => {
+  const p = table[pattern];
+  if (!p) return;
+  // Each piece is gated by its own enable + volume, and plays from its own kit.
+  const hit = (piece: DrumPiece, voice: keyof DrumMap, accent: number) => {
     const m = drumMix[piece];
-    if (!group || !m || !m.enabled) return;
-    dm.start({ note: group, time, velocity: clamp(Math.round(127 * vel * accent * (m.volume / 100)), 1, 127) });
+    if (!m || !m.enabled) return;
+    const kit = kits.get(pieceKits[piece]);
+    const sample = kit?.map[voice];
+    if (!kit || !sample) return;
+    kit.dm.start({ note: sample, time, velocity: clamp(Math.round(127 * vel * accent * (m.volume / 100)), 1, 127) });
   };
-  const p = DRUM_PATTERNS[pattern];
-  if (p.crashFirst && isLoopStart && eighth === 0) hit("crash", map.crash, 0.9);
-  if (isFillBar && eighth >= 4) {
-    const f = TOM_FILL.find((x) => x.eighth === eighth);
-    if (f) hit("tom", f.tom === "hi" ? map.tomHi : f.tom === "mid" ? map.tomMid : map.tomLo, 0.95);
+  if (p.crashFirst && isLoopStart && eighth === 0) hit("crash", "crash", 0.9);
+  if (isFillBar && eighth >= fillFrom) {
+    const f = fill.find((x) => x.eighth === eighth);
+    if (f) hit("tom", f.tom === "hi" ? "tomHi" : f.tom === "mid" ? "tomMid" : "tomLo", 0.95);
     return;
   }
-  if (p.kick?.includes(eighth)) hit("kick", map.kick, 1);
-  if (p.snare?.includes(eighth)) hit("snare", map.snare, 1);
-  if (p.clap?.includes(eighth)) hit("clap", map.clap, 0.9);
-  if (p.rim?.includes(eighth)) hit("rim", map.rim, 0.8);
-  if (p.hat?.includes(eighth)) hit("hatClosed", map.hatClosed, eighth % 2 ? 0.6 : 0.85);
-  if (p.openhat?.includes(eighth)) hit("hatOpen", map.hatOpen, 0.8);
-  if (p.ride?.includes(eighth)) hit("ride", map.ride, eighth % 2 ? 0.6 : 0.85);
+  if (p.kick?.includes(eighth)) hit("kick", "kick", 1);
+  if (p.snare?.includes(eighth)) hit("snare", "snare", 1);
+  if (p.clap?.includes(eighth)) hit("clap", "clap", 0.9);
+  if (p.rim?.includes(eighth)) hit("rim", "rim", 0.8);
+  if (p.hat?.includes(eighth)) hit("hatClosed", "hatClosed", eighth % 2 ? 0.6 : 0.85);
+  if (p.openhat?.includes(eighth)) hit("hatOpen", "hatOpen", 0.8);
+  if (p.ride?.includes(eighth)) hit("ride", "ride", eighth % 2 ? 0.6 : 0.85);
 }
 
 function makeImpulse(ctx: AudioContext): AudioBuffer {
@@ -191,8 +245,9 @@ export function useBackingTrack(opts: {
   barsPerChord: number;
   instruments: ActiveInstrument[];
   feel: FeelId;
+  meter: MeterId;
   drums: DrumId;
-  drumKit: string;
+  pieceKits: Record<DrumPiece, string>;
   drumMix: DrumMix;
   swing: number;
   mix: Mix;
@@ -205,8 +260,9 @@ export function useBackingTrack(opts: {
   const masterRef = useRef<GainNode | null>(null);
   const convolverRef = useRef<ConvolverNode | null>(null);
   const bassInstRef = useRef<Soundfont | null>(null);
-  const drumMachineRef = useRef<DrumMachine | null>(null);
-  const drumMapRef = useRef<DrumMap>({});
+  // One loaded DrumMachine per distinct kit name in use across the pieces.
+  const kitsRef = useRef<Map<string, KitNode>>(new Map());
+  const pendingKitsRef = useRef<Set<string>>(new Set());
 
   // One sampled instrument per active layer, plus its routing nodes.
   const nodesRef = useRef<Map<SoundId, InstNode>>(new Map());
@@ -227,13 +283,21 @@ export function useBackingTrack(opts: {
   const bpmRef = useRef(opts.bpm);
   const barsRef = useRef(opts.barsPerChord);
   const feelRef = useRef(opts.feel);
+  const meterRef = useRef(opts.meter);
   const drumsRef = useRef(opts.drums);
+  const pieceKitsRef = useRef(opts.pieceKits);
   const drumMixRef = useRef(opts.drumMix);
   const swingRef = useRef(opts.swing);
   const mixRef = useRef(opts.mix);
   useEffect(() => {
     chordsRef.current = opts.chords;
   }, [opts.chords]);
+  useEffect(() => {
+    meterRef.current = opts.meter;
+  }, [opts.meter]);
+  useEffect(() => {
+    pieceKitsRef.current = opts.pieceKits;
+  }, [opts.pieceKits]);
   useEffect(() => {
     bpmRef.current = opts.bpm;
   }, [opts.bpm]);
@@ -281,6 +345,8 @@ export function useBackingTrack(opts: {
     });
 
     const nodes = nodesRef.current;
+    const kits = kitsRef.current;
+    const pendingKits = pendingKitsRef.current;
     return () => {
       disposed = true;
       if (timerRef.current !== null) clearInterval(timerRef.current);
@@ -288,36 +354,53 @@ export function useBackingTrack(opts: {
       nodes.forEach((n) => n.inst.dispose());
       nodes.clear();
       bassInstRef.current?.dispose();
-      drumMachineRef.current?.dispose();
+      kits.forEach((k) => k.dm.dispose());
+      kits.clear();
+      pendingKits.clear();
       ctx.close();
     };
   }, []);
 
-  // Load the selected drum kit whenever it changes.
+  // Load a DrumMachine for every distinct kit the pieces reference; drop any
+  // kit no piece uses any more. The captured (per-mount) ctx is the lifecycle
+  // guard — it goes "closed" on unmount, so in-flight loads bail cleanly.
   useEffect(() => {
     const ctx = ctxRef.current;
     const master = masterRef.current;
     if (!ctx || !master) return;
-    let cancelled = false;
-    import("smplr").then(({ DrumMachine }) => {
-      if (cancelled) return;
-      const dm = DrumMachine(ctx, { instrument: opts.drumKit, destination: master });
-      dm.ready.then(() => {
-        if (cancelled) {
-          dm.dispose();
+    const kits = kitsRef.current;
+    const needed = new Set(Object.values(opts.pieceKits));
+
+    needed.forEach((kitName) => {
+      if (kits.has(kitName) || pendingKitsRef.current.has(kitName)) return;
+      pendingKitsRef.current.add(kitName);
+      import("smplr").then(({ DrumMachine }) => {
+        if (ctx.state === "closed") {
+          pendingKitsRef.current.delete(kitName);
           return;
         }
-        drumMachineRef.current?.dispose();
-        drumMachineRef.current = dm;
-        // Map against full sample names ("hihat-close", "tom-hi") — group names
-        // are split on -/ and collapse closed/open hats and all toms together.
-        drumMapRef.current = mapKit(dm.getSampleNames());
+        const dm = DrumMachine(ctx, { instrument: kitName, destination: master });
+        dm.ready.then(() => {
+          pendingKitsRef.current.delete(kitName);
+          const stillNeeded = new Set(Object.values(pieceKitsRef.current)).has(kitName);
+          if (ctx.state === "closed" || !stillNeeded || kits.has(kitName)) {
+            dm.dispose();
+            return;
+          }
+          // Map against full sample names ("hihat-close", "tom-hi") — group names
+          // are split on -/ and collapse closed/open hats and all toms together.
+          kits.set(kitName, { dm, map: mapKit(dm.getSampleNames()) });
+        });
       });
     });
-    return () => {
-      cancelled = true;
-    };
-  }, [opts.drumKit]);
+
+    for (const name of [...kits.keys()]) {
+      if (!needed.has(name)) {
+        kits.get(name)!.dm.dispose();
+        kits.delete(name);
+      }
+    }
+  }, [opts.pieceKits]);
 
   // Reconcile the loaded instruments with the active layer set, and apply each
   // layer's live channel-strip settings.
@@ -410,16 +493,20 @@ export function useBackingTrack(opts: {
       while (nextTimeRef.current < c.currentTime + SCHEDULE_AHEAD) {
         const chords = chordsRef.current;
         if (chords.length === 0) break;
+        const meter = meterRef.current;
+        const eighthsPerBar = EIGHTHS[meter];
         const beat = 60 / bpmRef.current;
         const stepDur = beat / 2;
         const bars = barsRef.current;
-        const stepsPerChord = bars * EIGHTHS_PER_BAR;
+        const stepsPerChord = bars * eighthsPerBar;
         const step = stepInChordRef.current;
-        const eighth = step % EIGHTHS_PER_BAR;
+        const eighth = step % eighthsPerBar;
         const index = indexRef.current % chords.length;
         const chord = chords[index];
         const gridTime = nextTimeRef.current;
-        const time = eighth % 2 === 1 ? gridTime + (swingRef.current / 100) * stepDur : gridTime;
+        // 6/8 is a compound meter — its lilt comes from the grouping, not swing.
+        const sw = meter === "4/4" ? swingRef.current : 0;
+        const time = eighth % 2 === 1 ? gridTime + (sw / 100) * stepDur : gridTime;
         const mix = mixRef.current;
         const feel = feelRef.current;
 
@@ -451,15 +538,19 @@ export function useBackingTrack(opts: {
           });
         };
 
+        const compound = meter === "6/8";
         if (feel === "sustained") {
           if (step === 0) playChord(gridTime, stepsPerChord * stepDur, 1);
         } else if (feel === "pulse") {
-          if (eighth % 2 === 0) playChord(time, beat * 0.9, 1);
+          // Quarters in 4/4; the two dotted-quarter pulses (0, 3) in 6/8.
+          const onPulse = compound ? eighth === 0 || eighth === 3 : eighth % 2 === 0;
+          if (onPulse) playChord(time, (compound ? 3 : 2) * stepDur * 0.9, 1);
         } else if (feel === "strum") {
-          const sv = STRUM[eighth];
-          if (sv) playChord(time, stepDur * 1.6, sv);
+          const sv = (compound ? STRUM_68 : STRUM_44)[eighth];
+          if (sv) playChord(time, stepDur * (compound ? 1.4 : 1.6), sv);
         } else if (feel === "offbeat") {
-          if (eighth % 2 === 1) playChord(time, stepDur * 0.6, 1);
+          const off = compound ? eighth === 2 || eighth === 5 : eighth % 2 === 1;
+          if (off) playChord(time, stepDur * 0.6, 1);
         } else if (mix.chords > 0) {
           // arpeggio — one tone per eighth, climbing an octave each pass
           const n = chord.pcs.length;
@@ -471,26 +562,40 @@ export function useBackingTrack(opts: {
           });
         }
 
-        // Bass — root on beat 1, fifth on beat 3
+        // Bass — root on pulse 1, fifth on pulse 2 (eighth 4 in 4/4, eighth 3 in 6/8).
         const bass = bassInstRef.current;
         if (bass && mix.bass > 0) {
           const bvel = clamp(Math.round(110 * mix.bass), 1, 127);
+          const bdur = (eighthsPerBar / 2) * stepDur * 0.95; // half a bar
           if (eighth === 0) {
             // Slash chords put a different note in the bass (e.g. D/F# → F#).
-            bass.start({ note: 36 + (chord.bass ?? chord.pcs[0]), time: gridTime, duration: beat * 2 * 0.95, velocity: bvel });
-          } else if (eighth === 4) {
-            bass.start({ note: 36 + (chord.pcs[2] ?? chord.pcs[0]), time: gridTime, duration: beat * 2 * 0.95, velocity: bvel });
+            bass.start({ note: 36 + (chord.bass ?? chord.pcs[0]), time: gridTime, duration: bdur, velocity: bvel });
+          } else if (eighth === (compound ? 3 : 4)) {
+            bass.start({ note: 36 + (chord.pcs[2] ?? chord.pcs[0]), time: gridTime, duration: bdur, velocity: bvel });
           }
         }
 
-        // Drums
-        const dm = drumMachineRef.current;
-        if (dm && mix.drums > 0 && drumsRef.current !== "none") {
-          const bar = Math.floor(step / EIGHTHS_PER_BAR);
+        // Drums — each piece plays from its own kit (per-piece kit selection).
+        const kits = kitsRef.current;
+        if (kits.size && mix.drums > 0 && drumsRef.current !== "none") {
+          const bar = Math.floor(step / eighthsPerBar);
           const loopBars = chords.length * bars;
           const isLoopStart = index === 0 && bar === 0;
           const isFillBar = loopBars >= 2 && index === chords.length - 1 && bar === bars - 1;
-          scheduleDrums(dm, drumMapRef.current, drumMixRef.current, drumsRef.current, eighth, isLoopStart, isFillBar, time, mix.drums);
+          scheduleDrums(
+            kits,
+            pieceKitsRef.current,
+            drumMixRef.current,
+            compound ? DRUM_PATTERNS_68 : DRUM_PATTERNS,
+            compound ? TOM_FILL_68 : TOM_FILL_44,
+            compound ? 3 : 4,
+            drumsRef.current,
+            eighth,
+            isLoopStart,
+            isFillBar,
+            time,
+            mix.drums,
+          );
         }
 
         nextTimeRef.current += stepDur;

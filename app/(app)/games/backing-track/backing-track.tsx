@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Pause, Play } from "lucide-react";
-import { ROOTS, SCALES, type ScaleDef } from "@/lib/fretboard";
+import { ROOTS, SCALES, rootUsesFlats, spell, type ScaleDef } from "@/lib/fretboard";
 import { buildDiatonicChords } from "@/lib/fretboard-chords";
 import {
   useBackingTrack,
@@ -12,6 +12,7 @@ import {
   type DrumPiece,
   type FeelId,
   type InstSettings,
+  type MeterId,
   type SoundId,
 } from "@/lib/use-backing-track";
 
@@ -30,6 +31,9 @@ const PROGRESSIONS = [
   { id: "turnaround", label: "Turnaround", degrees: [1, 6, 2, 5] },
   { id: "twofiveone", label: "ii–V–I", degrees: [2, 5, 1] },
   { id: "andalusian", label: "Andalusian", degrees: [1, 7, 6, 5] },
+  { id: "anthem", label: "Anthem", degrees: [4, 1, 5, 6] },
+  { id: "folk", label: "Folk", degrees: [1, 4, 5, 4] },
+  { id: "descending", label: "Descending", degrees: [1, 5, 6, 3] },
   { id: "canon", label: "Canon", degrees: [1, 5, 6, 3, 4, 1, 4, 5] },
   { id: "blues", label: "12-bar blues", degrees: [1, 1, 1, 1, 4, 4, 1, 1, 5, 4, 1, 5] },
 ];
@@ -55,7 +59,7 @@ const FEELS: { id: FeelId; label: string }[] = [
   { id: "strum", label: "Strum" },
   { id: "offbeat", label: "Offbeat" },
 ];
-const DRUMS: { id: DrumId; label: string }[] = [
+const DRUMS_44: { id: DrumId; label: string }[] = [
   { id: "none", label: "Off" },
   { id: "pop", label: "Pop" },
   { id: "rock", label: "Rock" },
@@ -64,6 +68,16 @@ const DRUMS: { id: DrumId; label: string }[] = [
   { id: "dance", label: "Dance" },
   { id: "halftime", label: "Half-time" },
   { id: "ride", label: "Ride" },
+  { id: "bossa", label: "Bossa" },
+  { id: "gospel", label: "Gospel" },
+  { id: "motown", label: "Motown" },
+];
+const DRUMS_68: { id: DrumId; label: string }[] = [
+  { id: "none", label: "Off" },
+  { id: "ballad", label: "Ballad" },
+  { id: "rock", label: "Rock" },
+  { id: "march", label: "March" },
+  { id: "swing", label: "Swing" },
 ];
 const DRUM_KITS = ["TR-808", "Casio-RZ1", "LM-2", "MFB-512", "Roland CR-8000"];
 const DRUM_PIECES: { key: DrumPiece; label: string }[] = [
@@ -81,11 +95,15 @@ const DEFAULT_DRUM_MIX: DrumMix = Object.fromEntries(
   DRUM_PIECES.map((p) => [p.key, { volume: 80, enabled: true }]),
 ) as DrumMix;
 
-// "D/F#" when a slash bass is set, otherwise just the chord name.
-function slashName(c: { name: string; pcs: number[]; notes: string[]; bass?: number }): string {
+// "D/F#" when a slash bass is set, otherwise just the chord name. The bass can
+// be any pitch class — chord tone or not — so fall back to spelling it directly.
+function slashName(
+  c: { name: string; pcs: number[]; notes: string[]; bass?: number },
+  useFlats: boolean,
+): string {
   if (c.bass == null) return c.name;
   const i = c.pcs.indexOf(c.bass);
-  return i >= 0 ? `${c.name}/${c.notes[i]}` : c.name;
+  return `${c.name}/${i >= 0 ? c.notes[i] : spell(c.bass, useFlats)}`;
 }
 
 const chipBase = "rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition-colors";
@@ -117,14 +135,32 @@ export function BackingTrack() {
   const [qualityId, setQualityId] = useState<QualityId>("major");
   const [progId, setProgId] = useState("pop");
   const [customChords, setCustomChords] = useState<{ degree: number; bass?: number }[]>([]);
+  const [selectedChip, setSelectedChip] = useState<number | null>(null); // sequence chip being bass-edited
   const [bpm, setBpm] = useState(90);
   const [barsPerChord, setBarsPerChord] = useState(1);
   const [activeSounds, setActiveSounds] = useState<SoundId[]>(["piano"]);
   const [editSound, setEditSound] = useState<SoundId>("piano"); // which layer's settings show
   const [feel, setFeel] = useState<FeelId>("pulse");
+  const [meter, setMeter] = useState<MeterId>("4/4");
   const [drums, setDrums] = useState<DrumId>("pop");
-  const [drumKit, setDrumKit] = useState(DRUM_KITS[0]);
+  const [drumKit, setDrumKit] = useState(DRUM_KITS[0]); // the master kit
+  // Each piece can play from its own kit; the master selector sets them all.
+  const [pieceKits, setPieceKits] = useState<Record<DrumPiece, string>>(
+    () => Object.fromEntries(DRUM_PIECES.map((p) => [p.key, DRUM_KITS[0]])) as Record<DrumPiece, string>,
+  );
   const [drumMix, setDrumMix] = useState<DrumMix>(DEFAULT_DRUM_MIX);
+  const drumOptions = meter === "6/8" ? DRUMS_68 : DRUMS_44;
+  const chooseMeter = (m: MeterId) => {
+    setMeter(m);
+    const opts = m === "6/8" ? DRUMS_68 : DRUMS_44;
+    setDrums((d) => (opts.some((o) => o.id === d) ? d : m === "6/8" ? "ballad" : "pop"));
+  };
+  const chooseDrumKit = (k: string) => {
+    setDrumKit(k);
+    setPieceKits(Object.fromEntries(DRUM_PIECES.map((p) => [p.key, k])) as Record<DrumPiece, string>);
+  };
+  const setPieceKit = (piece: DrumPiece, k: string) =>
+    setPieceKits((prev) => ({ ...prev, [piece]: k }));
   const updatePiece = (key: DrumPiece, patch: Partial<DrumMixEntry>) =>
     setDrumMix((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
   const [swing, setSwing] = useState(0);
@@ -157,6 +193,7 @@ export function BackingTrack() {
   );
   // Every diatonic chord in the key — the palette for the custom builder.
   const allChords = useMemo(() => buildDiatonicChords(root, scale), [root, scale]);
+  const useFlats = useMemo(() => rootUsesFlats(root), [root]);
   // A progression is a list of {degree, optional slash bass}. Presets have no bass.
   const progItems = useMemo<{ degree: number; bass?: number }[]>(
     () =>
@@ -179,10 +216,20 @@ export function BackingTrack() {
   // Switching to Custom seeds the sequence from the current preset, then it's free to edit.
   const chooseProg = (id: string) => {
     if (id === "custom" && customChords.length === 0) setCustomChords(progItems.map((it) => ({ ...it })));
+    setSelectedChip(null);
     setProgId(id);
   };
   const addChord = (degree: number, bass?: number) =>
     setCustomChords((prev) => [...prev, { degree, bass }]);
+  const removeChord = (i: number) => {
+    setCustomChords((arr) => arr.filter((_, j) => j !== i));
+    setSelectedChip(null);
+  };
+  // Set (or clear, with null) the slash bass on the chip being edited.
+  const setSelectedBass = (bass: number | null) =>
+    setCustomChords((arr) =>
+      arr.map((it, j) => (j === selectedChip ? { ...it, bass: bass ?? undefined } : it)),
+    );
   const voices = useMemo(() => progChords.map((c) => ({ pcs: c.pcs, bass: c.bass })), [progChords]);
   const mix = useMemo(
     () => ({ chords: mixChords / 100, bass: mixBass / 100, drums: mixDrums / 100 }),
@@ -200,8 +247,9 @@ export function BackingTrack() {
     barsPerChord,
     instruments,
     feel,
+    meter,
     drums,
-    drumKit,
+    pieceKits,
     drumMix,
     swing,
     mix,
@@ -308,7 +356,7 @@ export function BackingTrack() {
         {progId === "custom" && (
           <div className="space-y-2.5 rounded-xl bg-tint-1/40 p-3 ring-1 ring-border">
             <span className="eyebrow">
-              Build your progression — tap a chord (or a slash inversion) to add it
+              Build your progression — tap a chord to add it, then tap it in the sequence to set a slash bass
             </span>
             <div className="flex flex-wrap gap-2">
               {allChords.map((c) => {
@@ -341,35 +389,97 @@ export function BackingTrack() {
               })}
             </div>
             {customChords.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Sequence:</span>
-                {customChords.map((item, i) => {
-                  const c = allChords.find((x) => x.degree === item.degree);
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setCustomChords((arr) => arr.filter((_, j) => j !== i))}
-                      className="group inline-flex items-center gap-1 rounded-lg bg-primary/15 px-2.5 py-1 text-sm font-medium text-primary ring-1 ring-primary/40"
-                      title="Remove"
-                    >
-                      {c ? slashName({ ...c, bass: item.bass }) : item.degree}
-                      <span className="text-primary/50 group-hover:text-primary">✕</span>
-                    </button>
-                  );
-                })}
-                <button
-                  type="button"
-                  onClick={() => setCustomChords([])}
-                  className="ml-1 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  Clear all
-                </button>
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">Sequence:</span>
+                  {customChords.map((item, i) => {
+                    const c = allChords.find((x) => x.degree === item.degree);
+                    const selected = selectedChip === i;
+                    return (
+                      <span
+                        key={i}
+                        className={
+                          "inline-flex items-center rounded-lg text-sm font-medium text-primary ring-1 transition-colors " +
+                          (selected ? "bg-primary/25 ring-primary" : "bg-primary/15 ring-primary/40")
+                        }
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setSelectedChip(selected ? null : i)}
+                          className="py-1 pl-2.5 pr-1"
+                          title="Set slash bass"
+                        >
+                          {c ? slashName({ ...c, bass: item.bass }, useFlats) : item.degree}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeChord(i)}
+                          className="py-1 pl-0.5 pr-2 text-primary/50 hover:text-primary"
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomChords([]);
+                      setSelectedChip(null);
+                    }}
+                    className="ml-1 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Clear all
+                  </button>
+                </div>
+
+                {/* Slash-bass picker for the selected chip — any chromatic note */}
+                {selectedChip != null && selectedChip < customChords.length && (
+                  <div className="space-y-1.5 rounded-lg bg-tint-1 p-2.5 ring-1 ring-border">
+                    <span className="text-xs text-muted-foreground">
+                      Slash bass under{" "}
+                      <span className="font-medium text-foreground/90">
+                        {allChords.find((x) => x.degree === customChords[selectedChip].degree)?.name ??
+                          customChords[selectedChip].degree}
+                      </span>{" "}
+                      — tap any note
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {Array.from({ length: 12 }, (_, pc) => {
+                        const active = customChords[selectedChip].bass === pc;
+                        return (
+                          <button
+                            key={pc}
+                            type="button"
+                            onClick={() => setSelectedBass(pc)}
+                            aria-pressed={active}
+                            className={
+                              "min-w-[40px] rounded-md px-2 py-1 text-center font-mono text-xs font-medium ring-1 transition-colors " +
+                              (active
+                                ? "bg-primary text-primary-foreground ring-primary"
+                                : "bg-tint-2 text-foreground/80 ring-border hover:bg-tint-1")
+                            }
+                          >
+                            {spell(pc, useFlats)}
+                          </button>
+                        );
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedBass(null)}
+                        className="rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border transition-colors hover:text-foreground"
+                      >
+                        None
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Tap a chord to add it, or a /note for a slash bass (e.g. D/F#). Tap a chord in your
-                sequence to remove it.
+                Tap a chord to add it (or a /note for a quick inversion). Tap a chord in your sequence
+                to set its slash bass; the ✕ removes it.
               </p>
             )}
           </div>
@@ -389,29 +499,57 @@ export function BackingTrack() {
           />
         </div>
 
-        {/* Bars per chord */}
-        <div className="space-y-1.5">
-          <span className="eyebrow">Bars per chord</span>
-          <div className="inline-flex rounded-xl bg-tint-1 p-1 ring-1 ring-border">
-            {[1, 2].map((n) => {
-              const active = n === barsPerChord;
-              return (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setBarsPerChord(n)}
-                  aria-pressed={active}
-                  className={
-                    "min-w-[44px] rounded-lg px-3 py-1.5 text-sm font-medium tabular-nums transition-colors " +
-                    (active
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground")
-                  }
-                >
-                  {n}
-                </button>
-              );
-            })}
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Meter */}
+          <div className="space-y-1.5">
+            <span className="eyebrow">Meter</span>
+            <div className="inline-flex rounded-xl bg-tint-1 p-1 ring-1 ring-border">
+              {(["4/4", "6/8"] as MeterId[]).map((m) => {
+                const active = m === meter;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => chooseMeter(m)}
+                    aria-pressed={active}
+                    className={
+                      "min-w-[56px] rounded-lg px-3 py-1.5 text-sm font-medium tabular-nums transition-colors " +
+                      (active
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground")
+                    }
+                  >
+                    {m}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Bars per chord */}
+          <div className="space-y-1.5">
+            <span className="eyebrow">Bars per chord</span>
+            <div className="inline-flex rounded-xl bg-tint-1 p-1 ring-1 ring-border">
+              {[1, 2].map((n) => {
+                const active = n === barsPerChord;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setBarsPerChord(n)}
+                    aria-pressed={active}
+                    className={
+                      "min-w-[44px] rounded-lg px-3 py-1.5 text-sm font-medium tabular-nums transition-colors " +
+                      (active
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground")
+                    }
+                  >
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -521,7 +659,7 @@ export function BackingTrack() {
           <div className="space-y-1.5">
             <span className="eyebrow">Drums</span>
             <div className="flex flex-wrap gap-1.5">
-              {DRUMS.map((d) => (
+              {drumOptions.map((d) => (
                 <button
                   key={d.id}
                   type="button"
@@ -536,16 +674,16 @@ export function BackingTrack() {
           </div>
         </div>
 
-        {/* Drum kit */}
+        {/* Drum kit — the master selector sets every piece; override per piece below */}
         {drums !== "none" && (
           <div className="space-y-1.5">
-            <span className="eyebrow">Drum kit</span>
+            <span className="eyebrow">Drum kit — sets all pieces</span>
             <div className="flex flex-wrap gap-1.5">
               {DRUM_KITS.map((k) => (
                 <button
                   key={k}
                   type="button"
-                  onClick={() => setDrumKit(k)}
+                  onClick={() => chooseDrumKit(k)}
                   aria-pressed={k === drumKit}
                   className={`${chipBase} ${k === drumKit ? chipOn : chipOff}`}
                 >
@@ -591,6 +729,19 @@ export function BackingTrack() {
                       aria-label={`${piece.label} volume`}
                       className="w-full accent-primary disabled:opacity-40"
                     />
+                    <select
+                      value={pieceKits[piece.key]}
+                      onChange={(e) => setPieceKit(piece.key, e.target.value)}
+                      disabled={!m.enabled}
+                      aria-label={`${piece.label} kit`}
+                      className="mt-1.5 w-full rounded-md bg-tint-2 px-1.5 py-1 text-[11px] text-foreground/80 ring-1 ring-border disabled:opacity-40"
+                    >
+                      {DRUM_KITS.map((k) => (
+                        <option key={k} value={k}>
+                          {k}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 );
               })}
@@ -598,19 +749,21 @@ export function BackingTrack() {
           </div>
         )}
 
-        {/* Swing */}
-        <div className="space-y-1.5">
-          <span className="eyebrow">Swing — {swing === 0 ? "straight" : `${swing}%`}</span>
-          <input
-            type="range"
-            min={0}
-            max={60}
-            value={swing}
-            onChange={(e) => setSwing(Number(e.target.value))}
-            aria-label="Swing amount"
-            className="w-full max-w-md accent-primary"
-          />
-        </div>
+        {/* Swing — 4/4 only; 6/8 already lilts from its grouping */}
+        {meter === "4/4" && (
+          <div className="space-y-1.5">
+            <span className="eyebrow">Swing — {swing === 0 ? "straight" : `${swing}%`}</span>
+            <input
+              type="range"
+              min={0}
+              max={60}
+              value={swing}
+              onChange={(e) => setSwing(Number(e.target.value))}
+              aria-label="Swing amount"
+              className="w-full max-w-md accent-primary"
+            />
+          </div>
+        )}
 
         {/* Mix */}
         <div className="space-y-1.5">
@@ -672,7 +825,7 @@ export function BackingTrack() {
               >
                 <div className="eyebrow">{c.roman}</div>
                 <div className="font-display text-lg font-semibold text-foreground/95">
-                  {slashName(c)}
+                  {slashName(c, useFlats)}
                 </div>
                 <div className="font-mono text-[11px] text-muted-foreground">{c.notes.join(" ")}</div>
               </div>
