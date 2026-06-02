@@ -1,8 +1,8 @@
 // Backing-track engine (Phase 6). Client-only — Web Audio API + smplr samples.
-// Chords, bass, AND drums play real samples (General-MIDI soundfont + drum
-// machine via smplr). Each chord instrument has its own channel strip (volume /
-// octave / attack / release / tone / reverb / pan). The drift-free lookahead
-// scheduler steps at the eighth note so everything lands in time.
+// Chords (one OR MORE layered instruments), bass, and drums all play real
+// samples. Each chord instrument has its own channel strip (volume / octave /
+// attack / release / tone / reverb / pan). The drift-free lookahead scheduler
+// steps at the eighth note so everything lands in time.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DrumMachine, Soundfont } from "smplr";
@@ -37,6 +37,7 @@ export type InstSettings = {
   reverb: number; // 0..100
   pan: number; // -100..100
 };
+export type ActiveInstrument = { id: SoundId; settings: InstSettings };
 
 // General-MIDI soundfont program for each instrument + the bass.
 const GM: Record<SoundId, string> = {
@@ -159,6 +160,8 @@ function makeImpulse(ctx: AudioContext): AudioBuffer {
 
 // --- Hook -----------------------------------------------------------------
 
+type InstNode = { inst: Soundfont; bus: GainNode; reverbSend: GainNode };
+
 export type BackingTrack = {
   running: boolean;
   loading: boolean;
@@ -170,13 +173,12 @@ export function useBackingTrack(opts: {
   chords: TrackChord[];
   bpm: number;
   barsPerChord: number;
-  sound: SoundId;
+  instruments: ActiveInstrument[];
   feel: FeelId;
   drums: DrumId;
   drumKit: string;
   swing: number;
   mix: Mix;
-  inst: InstSettings;
 }): BackingTrack {
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -184,12 +186,16 @@ export function useBackingTrack(opts: {
 
   const ctxRef = useRef<AudioContext | null>(null);
   const masterRef = useRef<GainNode | null>(null);
-  const chordBusRef = useRef<GainNode | null>(null); // attack envelope lives here
-  const reverbSendRef = useRef<GainNode | null>(null);
-  const chordInstRef = useRef<Soundfont | null>(null);
+  const convolverRef = useRef<ConvolverNode | null>(null);
   const bassInstRef = useRef<Soundfont | null>(null);
   const drumMachineRef = useRef<DrumMachine | null>(null);
   const drumMapRef = useRef<DrumMap>({});
+
+  // One sampled instrument per active layer, plus its routing nodes.
+  const nodesRef = useRef<Map<SoundId, InstNode>>(new Map());
+  const pendingRef = useRef<Set<SoundId>>(new Set());
+  const activeIdsRef = useRef<SoundId[]>([]);
+  const settingsRef = useRef<Record<string, InstSettings>>({});
 
   const nextTimeRef = useRef(0);
   const stepInChordRef = useRef(0);
@@ -207,7 +213,6 @@ export function useBackingTrack(opts: {
   const drumsRef = useRef(opts.drums);
   const swingRef = useRef(opts.swing);
   const mixRef = useRef(opts.mix);
-  const instRef = useRef(opts.inst);
   useEffect(() => {
     chordsRef.current = opts.chords;
   }, [opts.chords]);
@@ -240,15 +245,10 @@ export function useBackingTrack(opts: {
     master.gain.value = 0.9;
     master.connect(comp);
     masterRef.current = master;
-    const chordBus = ctx.createGain();
-    chordBus.connect(master);
-    chordBusRef.current = chordBus;
-    const reverbSend = ctx.createGain();
-    reverbSend.gain.value = 0;
     const convolver = ctx.createConvolver();
     convolver.buffer = makeImpulse(ctx);
-    chordBus.connect(reverbSend).connect(convolver).connect(master); // wet path
-    reverbSendRef.current = reverbSend;
+    convolver.connect(master);
+    convolverRef.current = convolver;
 
     let disposed = false;
     import("smplr").then(({ Soundfont }) => {
@@ -259,44 +259,18 @@ export function useBackingTrack(opts: {
       });
     });
 
+    const nodes = nodesRef.current;
     return () => {
       disposed = true;
       if (timerRef.current !== null) clearInterval(timerRef.current);
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-      chordInstRef.current?.dispose();
+      nodes.forEach((n) => n.inst.dispose());
+      nodes.clear();
       bassInstRef.current?.dispose();
       drumMachineRef.current?.dispose();
       ctx.close();
     };
   }, []);
-
-  // Load the selected chord instrument whenever it changes.
-  useEffect(() => {
-    const ctx = ctxRef.current;
-    const chordBus = chordBusRef.current;
-    if (!ctx || !chordBus) return;
-    let cancelled = false;
-    setLoading(true);
-    import("smplr").then(({ Soundfont }) => {
-      if (cancelled) return;
-      const inst = Soundfont(ctx, { instrument: GM[opts.sound], destination: chordBus });
-      inst.ready.then(() => {
-        if (cancelled) {
-          inst.dispose();
-          return;
-        }
-        chordInstRef.current?.dispose();
-        chordInstRef.current = inst;
-        const s = instRef.current;
-        inst.output.volume = Math.round(127 * (s.volume / 100));
-        inst.output.pan = clamp(s.pan / 100, -1, 1);
-        setLoading(false);
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [opts.sound]);
 
   // Load the selected drum kit whenever it changes.
   useEffect(() => {
@@ -322,21 +296,82 @@ export function useBackingTrack(opts: {
     };
   }, [opts.drumKit]);
 
-  // Apply the live channel-strip settings (volume/pan to the sampler, reverb to the send).
+  // Reconcile the loaded instruments with the active layer set, and apply each
+  // layer's live channel-strip settings.
   useEffect(() => {
-    instRef.current = opts.inst;
-    const inst = chordInstRef.current;
-    if (inst) {
-      inst.output.volume = Math.round(127 * (opts.inst.volume / 100));
-      inst.output.pan = clamp(opts.inst.pan / 100, -1, 1);
+    const ctx = ctxRef.current;
+    const master = masterRef.current;
+    const convolver = convolverRef.current;
+    if (!ctx || !master || !convolver) return;
+    const nodes = nodesRef.current;
+
+    const active = opts.instruments.map((i) => i.id);
+    activeIdsRef.current = active;
+    const sm: Record<string, InstSettings> = {};
+    opts.instruments.forEach((i) => {
+      sm[i.id] = i.settings;
+    });
+    settingsRef.current = sm;
+
+    const recomputeLoading = () =>
+      setLoading(active.length === 0 || active.some((id) => !nodes.has(id)));
+
+    const applySettings = (id: SoundId) => {
+      const node = nodes.get(id);
+      const s = sm[id];
+      if (!node || !s) return;
+      node.inst.output.volume = Math.round(127 * (s.volume / 100));
+      node.inst.output.pan = clamp(s.pan / 100, -1, 1);
+      node.reverbSend.gain.value = (s.reverb / 100) * 0.85;
+    };
+
+    // Add newly-active instruments.
+    for (const id of active) {
+      if (nodes.has(id) || pendingRef.current.has(id)) {
+        applySettings(id);
+        continue;
+      }
+      pendingRef.current.add(id);
+      const bus = ctx.createGain();
+      bus.connect(master);
+      const reverbSend = ctx.createGain();
+      reverbSend.gain.value = 0;
+      bus.connect(reverbSend).connect(convolver);
+      import("smplr").then(({ Soundfont }) => {
+        const inst = Soundfont(ctx, { instrument: GM[id], destination: bus });
+        inst.ready.then(() => {
+          pendingRef.current.delete(id);
+          if (!activeIdsRef.current.includes(id)) {
+            inst.dispose();
+            bus.disconnect();
+            reverbSend.disconnect();
+            return;
+          }
+          nodes.set(id, { inst, bus, reverbSend });
+          applySettings(id);
+          recomputeLoading();
+        });
+      });
     }
-    if (reverbSendRef.current) reverbSendRef.current.gain.value = (opts.inst.reverb / 100) * 0.85;
-  }, [opts.inst]);
+
+    // Remove instruments no longer active.
+    for (const id of [...nodes.keys()]) {
+      if (!active.includes(id)) {
+        const node = nodes.get(id)!;
+        node.inst.dispose();
+        node.bus.disconnect();
+        node.reverbSend.disconnect();
+        nodes.delete(id);
+      }
+    }
+
+    recomputeLoading();
+  }, [opts.instruments]);
 
   const start = useCallback(() => {
     if (runningRef.current) return;
     const ctx = ctxRef.current;
-    if (!ctx || !chordInstRef.current) return;
+    if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     runningRef.current = true;
     indexRef.current = 0;
@@ -347,9 +382,8 @@ export function useBackingTrack(opts: {
 
     const scheduler = () => {
       const c = ctxRef.current;
-      const chordInst = chordInstRef.current;
-      const chordBus = chordBusRef.current;
-      if (!c || !chordInst || !chordBus) return;
+      if (!c) return;
+      const nodes = nodesRef.current;
       while (nextTimeRef.current < c.currentTime + SCHEDULE_AHEAD) {
         const chords = chordsRef.current;
         if (chords.length === 0) break;
@@ -364,25 +398,34 @@ export function useBackingTrack(opts: {
         const gridTime = nextTimeRef.current;
         const time = eighth % 2 === 1 ? gridTime + (swingRef.current / 100) * stepDur : gridTime;
         const mix = mixRef.current;
-        const s = instRef.current;
         const feel = feelRef.current;
-        const release = toRelease(s.release);
-        const cutoff = toCutoff(s.tone);
-        const transpose = s.octave * 12;
 
         if (step === 0) queueRef.current.push({ index, time: gridTime });
 
+        // Play a chord (or one arp tone) across every active layer.
+        const eachLayer = (cb: (node: InstNode, s: InstSettings) => void) => {
+          for (const id of activeIdsRef.current) {
+            const node = nodes.get(id);
+            const s = settingsRef.current[id];
+            if (node && s) cb(node, s);
+          }
+        };
         const playChord = (t: number, dur: number, velScale: number) => {
           if (mix.chords <= 0) return;
-          const atk = toAttack(s.attack);
-          if (atk > 0.02 && feel !== "arpeggio") {
-            chordBus.gain.setValueAtTime(0.0001, t);
-            chordBus.gain.linearRampToValueAtTime(1, t + atk);
-          }
           const velocity = clamp(Math.round(110 * mix.chords * velScale), 1, 127);
-          for (const pc of chord.pcs) {
-            chordInst.start({ note: 60 + pc + transpose, time: t, duration: dur, velocity, ampRelease: release, lpfCutoffHz: cutoff });
-          }
+          eachLayer((node, s) => {
+            const atk = toAttack(s.attack);
+            if (atk > 0.02 && feel !== "arpeggio") {
+              node.bus.gain.setValueAtTime(0.0001, t);
+              node.bus.gain.linearRampToValueAtTime(1, t + atk);
+            }
+            const rel = toRelease(s.release);
+            const cutoff = toCutoff(s.tone);
+            const transpose = s.octave * 12;
+            for (const pc of chord.pcs) {
+              node.inst.start({ note: 60 + pc + transpose, time: t, duration: dur, velocity, ampRelease: rel, lpfCutoffHz: cutoff });
+            }
+          });
         };
 
         if (feel === "sustained") {
@@ -400,7 +443,9 @@ export function useBackingTrack(opts: {
           const pc = chord.pcs[step % n];
           const oct = Math.floor(step / n) % 2 ? 12 : 0;
           const velocity = clamp(Math.round(110 * mix.chords), 1, 127);
-          chordInst.start({ note: 60 + pc + oct + transpose, time, duration: stepDur * 0.9, velocity, ampRelease: release, lpfCutoffHz: cutoff });
+          eachLayer((node, s) => {
+            node.inst.start({ note: 60 + pc + oct + s.octave * 12, time, duration: stepDur * 0.9, velocity, ampRelease: toRelease(s.release), lpfCutoffHz: toCutoff(s.tone) });
+          });
         }
 
         // Bass — root on beat 1, fifth on beat 3
@@ -458,11 +503,11 @@ export function useBackingTrack(opts: {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    chordInstRef.current?.stop();
-    if (chordBusRef.current) {
-      chordBusRef.current.gain.cancelScheduledValues(0);
-      chordBusRef.current.gain.value = 1;
-    }
+    nodesRef.current.forEach((node) => {
+      node.inst.stop();
+      node.bus.gain.cancelScheduledValues(0);
+      node.bus.gain.value = 1;
+    });
     queueRef.current = [];
     setRunning(false);
     setCurrentIndex(-1);

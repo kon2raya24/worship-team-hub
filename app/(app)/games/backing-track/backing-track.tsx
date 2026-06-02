@@ -95,7 +95,8 @@ export function BackingTrack() {
   const [customDegrees, setCustomDegrees] = useState<number[]>([]);
   const [bpm, setBpm] = useState(90);
   const [barsPerChord, setBarsPerChord] = useState(1);
-  const [sound, setSound] = useState<SoundId>("piano");
+  const [activeSounds, setActiveSounds] = useState<SoundId[]>(["piano"]);
+  const [editSound, setEditSound] = useState<SoundId>("piano"); // which layer's settings show
   const [feel, setFeel] = useState<FeelId>("pulse");
   const [drums, setDrums] = useState<DrumId>("pop");
   const [drumKit, setDrumKit] = useState(DRUM_KITS[0]);
@@ -107,9 +108,21 @@ export function BackingTrack() {
   const [instSettings, setInstSettings] = useState<Record<SoundId, InstSettings>>(
     () => Object.fromEntries(SOUNDS.map((s) => [s.id, { ...DEFAULT_INST }])) as Record<SoundId, InstSettings>,
   );
-  const activeInst = instSettings[sound];
+  const activeInst = instSettings[editSound];
   const updateInst = (key: keyof InstSettings, value: number) =>
-    setInstSettings((prev) => ({ ...prev, [sound]: { ...prev[sound], [key]: value } }));
+    setInstSettings((prev) => ({ ...prev, [editSound]: { ...prev[editSound], [key]: value } }));
+  // Toggle a layer on/off. At least one instrument must stay active.
+  const toggleSound = (id: SoundId) =>
+    setActiveSounds((prev) => {
+      if (prev.includes(id)) {
+        if (prev.length === 1) return prev; // keep the last one
+        const next = prev.filter((s) => s !== id);
+        if (editSound === id) setEditSound(next[0]);
+        return next;
+      }
+      setEditSound(id);
+      return [...prev, id];
+    });
 
   const scale = useMemo<ScaleDef>(
     () => SCALES.find((s) => s.id === qualityId) ?? SCALES[0],
@@ -142,18 +155,22 @@ export function BackingTrack() {
     () => ({ chords: mixChords / 100, bass: mixBass / 100, drums: mixDrums / 100 }),
     [mixChords, mixBass, mixDrums],
   );
+  // The active layers with their settings — drives which instruments play together.
+  const instruments = useMemo(
+    () => activeSounds.map((id) => ({ id, settings: instSettings[id] })),
+    [activeSounds, instSettings],
+  );
 
   const track = useBackingTrack({
     chords: voices,
     bpm,
     barsPerChord,
-    sound,
+    instruments,
     feel,
     drums,
     drumKit,
     swing,
     mix,
-    inst: activeInst,
   });
   const { toggle } = track;
 
@@ -346,25 +363,33 @@ export function BackingTrack() {
         </div>
       </div>
 
-      {/* Instrument — visual picker + per-instrument channel strip */}
+      {/* Instruments — layer one or more, each with its own channel strip */}
       <div className="glass space-y-3 rounded-2xl p-4 ring-1 ring-border sm:p-5">
-        <span className="eyebrow">Instrument</span>
+        <div className="flex items-center justify-between">
+          <span className="eyebrow">Instruments — tap to layer</span>
+          {track.loading && <span className="text-xs text-muted-foreground">loading…</span>}
+        </div>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {SOUNDS.map((s) => {
-            const active = s.id === sound;
+            const active = activeSounds.includes(s.id);
             return (
               <button
                 key={s.id}
                 type="button"
-                onClick={() => setSound(s.id)}
+                onClick={() => toggleSound(s.id)}
                 aria-pressed={active}
                 className={
-                  "flex flex-col items-center gap-1 rounded-xl p-3 ring-1 transition-all " +
+                  "relative flex flex-col items-center gap-1 rounded-xl p-3 ring-1 transition-all " +
                   (active
                     ? "scale-[1.03] bg-primary/15 ring-primary/60"
                     : "bg-tint-1 ring-border hover:bg-tint-2")
                 }
               >
+                {active && (
+                  <span className="absolute right-1.5 top-1.5 grid size-4 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                    ✓
+                  </span>
+                )}
                 <span className="text-2xl leading-none" aria-hidden>
                   {s.icon}
                 </span>
@@ -380,15 +405,24 @@ export function BackingTrack() {
           })}
         </div>
 
-        {/* Selected instrument's own settings */}
-        <div className="space-y-2 border-t border-border pt-3">
-          <div className="flex items-center justify-between">
-            <span className="eyebrow">
-              {SOUNDS.find((s) => s.id === sound)?.label} settings
-            </span>
-            {track.loading && (
-              <span className="text-xs text-muted-foreground">loading instrument…</span>
-            )}
+        {/* Per-layer channel strip — pick which layer to tweak */}
+        <div className="space-y-2.5 border-t border-border pt-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="eyebrow mr-1">Editing</span>
+            {activeSounds.map((id) => {
+              const s = SOUNDS.find((x) => x.id === id)!;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setEditSound(id)}
+                  aria-pressed={id === editSound}
+                  className={`${chipBase} ${id === editSound ? chipOn : chipOff}`}
+                >
+                  <span aria-hidden>{s.icon}</span> {s.label}
+                </button>
+              );
+            })}
           </div>
           <div className="grid gap-x-5 gap-y-2.5 sm:grid-cols-2">
             {INST_CONTROLS.map((ctrl) => (
@@ -400,7 +434,7 @@ export function BackingTrack() {
                   max={ctrl.max}
                   value={activeInst[ctrl.key]}
                   onChange={(e) => updateInst(ctrl.key, Number(e.target.value))}
-                  aria-label={`${ctrl.label} for ${sound}`}
+                  aria-label={`${ctrl.label} for ${editSound}`}
                   className="w-full accent-primary"
                 />
                 <span className="w-10 shrink-0 text-right font-mono text-xs tabular-nums text-foreground/70">
