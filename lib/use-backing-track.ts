@@ -26,6 +26,18 @@ export type SoundId =
   | "bell";
 export type FeelId = "sustained" | "pulse" | "arpeggio" | "strum" | "offbeat";
 export type DrumId = "none" | "pop" | "rock" | "ballad" | "funk" | "dance" | "halftime" | "ride";
+export type DrumPiece =
+  | "kick"
+  | "snare"
+  | "hatClosed"
+  | "hatOpen"
+  | "crash"
+  | "ride"
+  | "clap"
+  | "rim"
+  | "tom";
+export type DrumMixEntry = { volume: number; enabled: boolean }; // volume 0..100
+export type DrumMix = Record<DrumPiece, DrumMixEntry>;
 export type TrackChord = { pcs: number[] }; // triad pitch classes; pcs[0]=root, pcs[2]=fifth
 export type Mix = { chords: number; bass: number; drums: number };
 export type InstSettings = {
@@ -122,6 +134,7 @@ function mapKit(groups: string[]): DrumMap {
 function scheduleDrums(
   dm: DrumMachine,
   map: DrumMap,
+  drumMix: DrumMix,
   pattern: Exclude<DrumId, "none">,
   eighth: number,
   isLoopStart: boolean,
@@ -129,23 +142,26 @@ function scheduleDrums(
   time: number,
   vel: number,
 ) {
-  const hit = (group: string | undefined, v: number) => {
-    if (group) dm.start({ note: group, time, velocity: clamp(Math.round(127 * vel * v), 1, 127) });
+  // Each piece is gated by its own enable + volume from the drum mixer.
+  const hit = (piece: DrumPiece, group: string | undefined, accent: number) => {
+    const m = drumMix[piece];
+    if (!group || !m || !m.enabled) return;
+    dm.start({ note: group, time, velocity: clamp(Math.round(127 * vel * accent * (m.volume / 100)), 1, 127) });
   };
   const p = DRUM_PATTERNS[pattern];
-  if (p.crashFirst && isLoopStart && eighth === 0) hit(map.crash, 0.9);
+  if (p.crashFirst && isLoopStart && eighth === 0) hit("crash", map.crash, 0.9);
   if (isFillBar && eighth >= 4) {
     const f = TOM_FILL.find((x) => x.eighth === eighth);
-    if (f) hit(f.tom === "hi" ? map.tomHi : f.tom === "mid" ? map.tomMid : map.tomLo, 0.95);
+    if (f) hit("tom", f.tom === "hi" ? map.tomHi : f.tom === "mid" ? map.tomMid : map.tomLo, 0.95);
     return;
   }
-  if (p.kick?.includes(eighth)) hit(map.kick, 1);
-  if (p.snare?.includes(eighth)) hit(map.snare, 1);
-  if (p.clap?.includes(eighth)) hit(map.clap, 0.9);
-  if (p.rim?.includes(eighth)) hit(map.rim, 0.8);
-  if (p.hat?.includes(eighth)) hit(map.hatClosed, eighth % 2 ? 0.6 : 0.85);
-  if (p.openhat?.includes(eighth)) hit(map.hatOpen, 0.8);
-  if (p.ride?.includes(eighth)) hit(map.ride, eighth % 2 ? 0.6 : 0.85);
+  if (p.kick?.includes(eighth)) hit("kick", map.kick, 1);
+  if (p.snare?.includes(eighth)) hit("snare", map.snare, 1);
+  if (p.clap?.includes(eighth)) hit("clap", map.clap, 0.9);
+  if (p.rim?.includes(eighth)) hit("rim", map.rim, 0.8);
+  if (p.hat?.includes(eighth)) hit("hatClosed", map.hatClosed, eighth % 2 ? 0.6 : 0.85);
+  if (p.openhat?.includes(eighth)) hit("hatOpen", map.hatOpen, 0.8);
+  if (p.ride?.includes(eighth)) hit("ride", map.ride, eighth % 2 ? 0.6 : 0.85);
 }
 
 function makeImpulse(ctx: AudioContext): AudioBuffer {
@@ -177,6 +193,7 @@ export function useBackingTrack(opts: {
   feel: FeelId;
   drums: DrumId;
   drumKit: string;
+  drumMix: DrumMix;
   swing: number;
   mix: Mix;
 }): BackingTrack {
@@ -211,6 +228,7 @@ export function useBackingTrack(opts: {
   const barsRef = useRef(opts.barsPerChord);
   const feelRef = useRef(opts.feel);
   const drumsRef = useRef(opts.drums);
+  const drumMixRef = useRef(opts.drumMix);
   const swingRef = useRef(opts.swing);
   const mixRef = useRef(opts.mix);
   useEffect(() => {
@@ -228,6 +246,9 @@ export function useBackingTrack(opts: {
   useEffect(() => {
     drumsRef.current = opts.drums;
   }, [opts.drums]);
+  useEffect(() => {
+    drumMixRef.current = opts.drumMix;
+  }, [opts.drumMix]);
   useEffect(() => {
     swingRef.current = opts.swing;
   }, [opts.swing]);
@@ -466,7 +487,7 @@ export function useBackingTrack(opts: {
           const loopBars = chords.length * bars;
           const isLoopStart = index === 0 && bar === 0;
           const isFillBar = loopBars >= 2 && index === chords.length - 1 && bar === bars - 1;
-          scheduleDrums(dm, drumMapRef.current, drumsRef.current, eighth, isLoopStart, isFillBar, time, mix.drums);
+          scheduleDrums(dm, drumMapRef.current, drumMixRef.current, drumsRef.current, eighth, isLoopStart, isFillBar, time, mix.drums);
         }
 
         nextTimeRef.current += stepDur;

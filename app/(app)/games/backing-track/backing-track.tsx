@@ -7,6 +7,9 @@ import { buildDiatonicChords } from "@/lib/fretboard-chords";
 import {
   useBackingTrack,
   type DrumId,
+  type DrumMix,
+  type DrumMixEntry,
+  type DrumPiece,
   type FeelId,
   type InstSettings,
   type SoundId,
@@ -63,6 +66,20 @@ const DRUMS: { id: DrumId; label: string }[] = [
   { id: "ride", label: "Ride" },
 ];
 const DRUM_KITS = ["TR-808", "Casio-RZ1", "LM-2", "MFB-512", "Roland CR-8000"];
+const DRUM_PIECES: { key: DrumPiece; label: string }[] = [
+  { key: "kick", label: "Kick" },
+  { key: "snare", label: "Snare" },
+  { key: "hatClosed", label: "Hi-Hat" },
+  { key: "hatOpen", label: "Open Hat" },
+  { key: "crash", label: "Crash" },
+  { key: "ride", label: "Ride" },
+  { key: "clap", label: "Clap" },
+  { key: "rim", label: "Rim" },
+  { key: "tom", label: "Toms" },
+];
+const DEFAULT_DRUM_MIX: DrumMix = Object.fromEntries(
+  DRUM_PIECES.map((p) => [p.key, { volume: 80, enabled: true }]),
+) as DrumMix;
 
 const chipBase = "rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition-colors";
 const chipOn = "bg-primary/15 text-primary ring-primary/40";
@@ -100,6 +117,9 @@ export function BackingTrack() {
   const [feel, setFeel] = useState<FeelId>("pulse");
   const [drums, setDrums] = useState<DrumId>("pop");
   const [drumKit, setDrumKit] = useState(DRUM_KITS[0]);
+  const [drumMix, setDrumMix] = useState<DrumMix>(DEFAULT_DRUM_MIX);
+  const updatePiece = (key: DrumPiece, patch: Partial<DrumMixEntry>) =>
+    setDrumMix((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
   const [swing, setSwing] = useState(0);
   const [mixChords, setMixChords] = useState(80);
   const [mixBass, setMixBass] = useState(80);
@@ -169,6 +189,7 @@ export function BackingTrack() {
     feel,
     drums,
     drumKit,
+    drumMix,
     swing,
     mix,
   });
@@ -499,6 +520,48 @@ export function BackingTrack() {
                   {k}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Drum mixer — one component per kit piece */}
+        {drums !== "none" && (
+          <div className="space-y-1.5">
+            <span className="eyebrow">Drum mixer</span>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {DRUM_PIECES.map((piece) => {
+                const m = drumMix[piece.key];
+                return (
+                  <div key={piece.key} className="rounded-xl bg-tint-1 p-2.5 ring-1 ring-border">
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-foreground/90">{piece.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => updatePiece(piece.key, { enabled: !m.enabled })}
+                        aria-pressed={m.enabled}
+                        className={
+                          "rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 transition-colors " +
+                          (m.enabled
+                            ? "bg-primary/15 text-primary ring-primary/40"
+                            : "bg-tint-2 text-muted-foreground ring-border")
+                        }
+                      >
+                        {m.enabled ? "On" : "Off"}
+                      </button>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={m.volume}
+                      onChange={(e) => updatePiece(piece.key, { volume: Number(e.target.value) })}
+                      disabled={!m.enabled}
+                      aria-label={`${piece.label} volume`}
+                      className="w-full accent-primary disabled:opacity-40"
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
