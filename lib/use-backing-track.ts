@@ -38,7 +38,7 @@ export type DrumPiece =
   | "tom";
 export type DrumMixEntry = { volume: number; enabled: boolean }; // volume 0..100
 export type DrumMix = Record<DrumPiece, DrumMixEntry>;
-export type TrackChord = { pcs: number[] }; // triad pitch classes; pcs[0]=root, pcs[2]=fifth
+export type TrackChord = { pcs: number[]; bass?: number }; // triad pcs; bass = slash bass pitch class
 export type Mix = { chords: number; bass: number; drums: number };
 export type InstSettings = {
   volume: number; // 0..100
@@ -118,8 +118,8 @@ function mapKit(groups: string[]): DrumMap {
   const tomLo = find("tom-low", "tom-l", "conga-low", "conga-l");
   return {
     kick: find("kick", "bass"),
-    snare: find("snare"),
-    hatClosed: find("close", "chh", "hhc"),
+    snare: find("snare", "snr"),
+    hatClosed: find("close", "chh", "hhc", "hihat", "hat"),
     hatOpen: find("open", "ohh"),
     crash: find("crash", "cymbal", "cymball", "cym"),
     ride: find("ride", "cymbal", "cymball", "cym"),
@@ -309,7 +309,9 @@ export function useBackingTrack(opts: {
         }
         drumMachineRef.current?.dispose();
         drumMachineRef.current = dm;
-        drumMapRef.current = mapKit(dm.getGroupNames());
+        // Map against full sample names ("hihat-close", "tom-hi") — group names
+        // are split on -/ and collapse closed/open hats and all toms together.
+        drumMapRef.current = mapKit(dm.getSampleNames());
       });
     });
     return () => {
@@ -474,7 +476,8 @@ export function useBackingTrack(opts: {
         if (bass && mix.bass > 0) {
           const bvel = clamp(Math.round(110 * mix.bass), 1, 127);
           if (eighth === 0) {
-            bass.start({ note: 36 + chord.pcs[0], time: gridTime, duration: beat * 2 * 0.95, velocity: bvel });
+            // Slash chords put a different note in the bass (e.g. D/F# → F#).
+            bass.start({ note: 36 + (chord.bass ?? chord.pcs[0]), time: gridTime, duration: beat * 2 * 0.95, velocity: bvel });
           } else if (eighth === 4) {
             bass.start({ note: 36 + (chord.pcs[2] ?? chord.pcs[0]), time: gridTime, duration: beat * 2 * 0.95, velocity: bvel });
           }

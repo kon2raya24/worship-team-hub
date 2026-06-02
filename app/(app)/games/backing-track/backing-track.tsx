@@ -81,6 +81,13 @@ const DEFAULT_DRUM_MIX: DrumMix = Object.fromEntries(
   DRUM_PIECES.map((p) => [p.key, { volume: 80, enabled: true }]),
 ) as DrumMix;
 
+// "D/F#" when a slash bass is set, otherwise just the chord name.
+function slashName(c: { name: string; pcs: number[]; notes: string[]; bass?: number }): string {
+  if (c.bass == null) return c.name;
+  const i = c.pcs.indexOf(c.bass);
+  return i >= 0 ? `${c.name}/${c.notes[i]}` : c.name;
+}
+
 const chipBase = "rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition-colors";
 const chipOn = "bg-primary/15 text-primary ring-primary/40";
 const chipOff = "bg-tint-1 text-foreground/80 ring-border hover:bg-tint-2 hover:text-foreground";
@@ -109,7 +116,7 @@ export function BackingTrack() {
   const [root, setRoot] = useState("G");
   const [qualityId, setQualityId] = useState<QualityId>("major");
   const [progId, setProgId] = useState("pop");
-  const [customDegrees, setCustomDegrees] = useState<number[]>([]);
+  const [customChords, setCustomChords] = useState<{ degree: number; bass?: number }[]>([]);
   const [bpm, setBpm] = useState(90);
   const [barsPerChord, setBarsPerChord] = useState(1);
   const [activeSounds, setActiveSounds] = useState<SoundId[]>(["piano"]);
@@ -150,27 +157,33 @@ export function BackingTrack() {
   );
   // Every diatonic chord in the key — the palette for the custom builder.
   const allChords = useMemo(() => buildDiatonicChords(root, scale), [root, scale]);
-  const degrees = useMemo(
+  // A progression is a list of {degree, optional slash bass}. Presets have no bass.
+  const progItems = useMemo<{ degree: number; bass?: number }[]>(
     () =>
       progId === "custom"
-        ? customDegrees
-        : PROGRESSIONS.find((p) => p.id === progId)?.degrees ?? PROGRESSIONS[0].degrees,
-    [progId, customDegrees],
+        ? customChords
+        : (PROGRESSIONS.find((p) => p.id === progId)?.degrees ?? PROGRESSIONS[0].degrees).map((d) => ({
+            degree: d,
+          })),
+    [progId, customChords],
   );
-  // Resolve the progression's scale degrees to real diatonic chords in this key.
-  const progChords = useMemo(
-    () =>
-      degrees
-        .map((d) => allChords.find((c) => c.degree === d))
-        .filter((c): c is NonNullable<typeof c> => Boolean(c)),
-    [allChords, degrees],
-  );
+  // Resolve to real diatonic chords in this key, carrying any slash bass.
+  const progChords = useMemo(() => {
+    const out: ((typeof allChords)[number] & { bass?: number })[] = [];
+    for (const item of progItems) {
+      const c = allChords.find((x) => x.degree === item.degree);
+      if (c) out.push({ ...c, bass: item.bass });
+    }
+    return out;
+  }, [allChords, progItems]);
   // Switching to Custom seeds the sequence from the current preset, then it's free to edit.
   const chooseProg = (id: string) => {
-    if (id === "custom" && customDegrees.length === 0) setCustomDegrees(degrees.slice());
+    if (id === "custom" && customChords.length === 0) setCustomChords(progItems.map((it) => ({ ...it })));
     setProgId(id);
   };
-  const voices = useMemo(() => progChords.map((c) => ({ pcs: c.pcs })), [progChords]);
+  const addChord = (degree: number, bass?: number) =>
+    setCustomChords((prev) => [...prev, { degree, bass }]);
+  const voices = useMemo(() => progChords.map((c) => ({ pcs: c.pcs, bass: c.bass })), [progChords]);
   const mix = useMemo(
     () => ({ chords: mixChords / 100, bass: mixBass / 100, drums: mixDrums / 100 }),
     [mixChords, mixBass, mixDrums],
@@ -294,42 +307,60 @@ export function BackingTrack() {
         {/* Custom progression builder */}
         {progId === "custom" && (
           <div className="space-y-2.5 rounded-xl bg-tint-1/40 p-3 ring-1 ring-border">
-            <span className="eyebrow">Build your progression — tap chords in order</span>
-            <div className="flex flex-wrap gap-1.5">
-              {allChords.map((c) => (
-                <button
-                  key={c.degree}
-                  type="button"
-                  onClick={() => setCustomDegrees((d) => [...d, c.degree])}
-                  className="rounded-lg bg-tint-1 px-2.5 py-1.5 text-sm ring-1 ring-border transition-colors hover:bg-tint-2"
-                  title={`Add ${c.name}`}
-                >
-                  <span className="font-mono text-xs text-muted-foreground">{c.roman}</span>{" "}
-                  <span className="font-medium text-foreground/90">{c.name}</span>
-                </button>
-              ))}
+            <span className="eyebrow">
+              Build your progression — tap a chord (or a slash inversion) to add it
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {allChords.map((c) => {
+                const variants: { bass?: number; label: string }[] = [
+                  { bass: undefined, label: c.name },
+                  { bass: c.pcs[1], label: `${c.name}/${c.notes[1]}` },
+                  { bass: c.pcs[2], label: `${c.name}/${c.notes[2]}` },
+                ];
+                return (
+                  <div
+                    key={c.degree}
+                    className="inline-flex items-center gap-0.5 rounded-lg bg-tint-1 p-0.5 ring-1 ring-border"
+                  >
+                    {variants.map((v, vi) => (
+                      <button
+                        key={vi}
+                        type="button"
+                        onClick={() => addChord(c.degree, v.bass)}
+                        className={
+                          "rounded-md px-2 py-1 text-sm transition-colors hover:bg-tint-2 " +
+                          (vi === 0 ? "font-medium text-foreground/90" : "text-muted-foreground")
+                        }
+                        title={`Add ${v.label}`}
+                      >
+                        {vi === 0 ? v.label : `/${c.notes[vi]}`}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
-            {customDegrees.length > 0 ? (
+            {customChords.length > 0 ? (
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-xs text-muted-foreground">Sequence:</span>
-                {customDegrees.map((d, i) => {
-                  const c = allChords.find((x) => x.degree === d);
+                {customChords.map((item, i) => {
+                  const c = allChords.find((x) => x.degree === item.degree);
                   return (
                     <button
                       key={i}
                       type="button"
-                      onClick={() => setCustomDegrees((arr) => arr.filter((_, j) => j !== i))}
+                      onClick={() => setCustomChords((arr) => arr.filter((_, j) => j !== i))}
                       className="group inline-flex items-center gap-1 rounded-lg bg-primary/15 px-2.5 py-1 text-sm font-medium text-primary ring-1 ring-primary/40"
                       title="Remove"
                     >
-                      {c?.name ?? d}
+                      {c ? slashName({ ...c, bass: item.bass }) : item.degree}
                       <span className="text-primary/50 group-hover:text-primary">✕</span>
                     </button>
                   );
                 })}
                 <button
                   type="button"
-                  onClick={() => setCustomDegrees([])}
+                  onClick={() => setCustomChords([])}
                   className="ml-1 text-xs text-muted-foreground hover:text-foreground"
                 >
                   Clear all
@@ -337,7 +368,8 @@ export function BackingTrack() {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Tap chords above to add them. Tap a chord in your sequence to remove it.
+                Tap a chord to add it, or a /note for a slash bass (e.g. D/F#). Tap a chord in your
+                sequence to remove it.
               </p>
             )}
           </div>
@@ -639,7 +671,9 @@ export function BackingTrack() {
                 }
               >
                 <div className="eyebrow">{c.roman}</div>
-                <div className="font-display text-lg font-semibold text-foreground/95">{c.name}</div>
+                <div className="font-display text-lg font-semibold text-foreground/95">
+                  {slashName(c)}
+                </div>
                 <div className="font-mono text-[11px] text-muted-foreground">{c.notes.join(" ")}</div>
               </div>
             );
