@@ -1,12 +1,11 @@
 // Backing-track engine (Phase 6). Client-only — Web Audio API + smplr samples.
-// Chords and bass play REAL sampled instruments (General-MIDI soundfont via
-// smplr); each instrument has its own channel strip (volume / octave / attack /
-// release / tone / reverb / pan). Drums stay synthesized (a full kit). The
-// drift-free lookahead scheduler steps at the eighth note so everything lands
-// in time.
+// Chords, bass, AND drums play real samples (General-MIDI soundfont + drum
+// machine via smplr). Each chord instrument has its own channel strip (volume /
+// octave / attack / release / tone / reverb / pan). The drift-free lookahead
+// scheduler steps at the eighth note so everything lands in time.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Soundfont } from "smplr";
+import type { DrumMachine, Soundfont } from "smplr";
 
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD = 0.2;
@@ -64,7 +63,7 @@ const toAttack = (a: number) => (a / 100) * 0.6; // 0..0.6s
 // Strum velocity per eighth — strong downbeats, lighter up-strokes on the "ands".
 const STRUM: Record<number, number> = { 0: 1, 2: 0.7, 3: 0.55, 4: 1, 6: 0.7, 7: 0.55 };
 
-// --- Drum kit (synthesized) ----------------------------------------------
+// --- Drum kit (sampled via smplr DrumMachine) ----------------------------
 
 type DrumPattern = {
   kick?: number[];
@@ -92,108 +91,36 @@ const TOM_FILL: { eighth: number; tom: "hi" | "mid" | "lo" }[] = [
   { eighth: 7, tom: "lo" },
 ];
 
-function playKick(ctx: AudioContext, dest: AudioNode, time: number, vel: number) {
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.frequency.setValueAtTime(150, time);
-  osc.frequency.exponentialRampToValueAtTime(50, time + 0.12);
-  g.gain.setValueAtTime(0.0001, time);
-  g.gain.exponentialRampToValueAtTime(0.9 * vel, time + 0.005);
-  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.18);
-  osc.connect(g).connect(dest);
-  osc.start(time);
-  osc.stop(time + 0.2);
-}
-
-function playNoise(
-  ctx: AudioContext,
-  dest: AudioNode,
-  noise: AudioBuffer,
-  time: number,
-  cutoff: number,
-  peak: number,
-  decay: number,
-) {
-  const src = ctx.createBufferSource();
-  src.buffer = noise;
-  const hp = ctx.createBiquadFilter();
-  hp.type = "highpass";
-  hp.frequency.value = cutoff;
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0.0001, time);
-  g.gain.exponentialRampToValueAtTime(peak, time + 0.002);
-  g.gain.exponentialRampToValueAtTime(0.0001, time + decay);
-  src.connect(hp).connect(g).connect(dest);
-  src.start(time);
-  src.stop(time + decay + 0.02);
-}
-
-function playSnare(ctx: AudioContext, dest: AudioNode, noise: AudioBuffer, time: number, vel: number) {
-  playNoise(ctx, dest, noise, time, 1500, 0.5 * vel, 0.12);
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.type = "triangle";
-  osc.frequency.value = 180;
-  g.gain.setValueAtTime(0.0001, time);
-  g.gain.exponentialRampToValueAtTime(0.18 * vel, time + 0.002);
-  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.08);
-  osc.connect(g).connect(dest);
-  osc.start(time);
-  osc.stop(time + 0.1);
-}
-
-function playClap(ctx: AudioContext, dest: AudioNode, noise: AudioBuffer, time: number, vel: number) {
-  for (const off of [0, 0.012, 0.024]) playNoise(ctx, dest, noise, time + off, 1000, 0.4 * vel, 0.05);
-  playNoise(ctx, dest, noise, time + 0.03, 1000, 0.3 * vel, 0.12);
-}
-
-function playRim(ctx: AudioContext, dest: AudioNode, noise: AudioBuffer, time: number, vel: number) {
-  playNoise(ctx, dest, noise, time, 2000, 0.35 * vel, 0.03);
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.type = "triangle";
-  osc.frequency.value = 400;
-  g.gain.setValueAtTime(0.0001, time);
-  g.gain.exponentialRampToValueAtTime(0.3 * vel, time + 0.002);
-  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.03);
-  osc.connect(g).connect(dest);
-  osc.start(time);
-  osc.stop(time + 0.04);
-}
-
-function playRide(ctx: AudioContext, dest: AudioNode, noise: AudioBuffer, time: number, vel: number) {
-  playNoise(ctx, dest, noise, time, 5000, 0.1 * vel, 0.3);
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.type = "square";
-  osc.frequency.value = 520;
-  g.gain.setValueAtTime(0.0001, time);
-  g.gain.exponentialRampToValueAtTime(0.05 * vel, time + 0.002);
-  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.25);
-  osc.connect(g).connect(dest);
-  osc.start(time);
-  osc.stop(time + 0.27);
-}
-
-function playTom(ctx: AudioContext, dest: AudioNode, tom: "hi" | "mid" | "lo", time: number, vel: number) {
-  const f0 = tom === "hi" ? 220 : tom === "mid" ? 160 : 110;
-  const f1 = tom === "hi" ? 140 : tom === "mid" ? 100 : 70;
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.frequency.setValueAtTime(f0, time);
-  osc.frequency.exponentialRampToValueAtTime(f1, time + 0.2);
-  g.gain.setValueAtTime(0.0001, time);
-  g.gain.exponentialRampToValueAtTime(0.7 * vel, time + 0.005);
-  g.gain.exponentialRampToValueAtTime(0.0001, time + 0.25);
-  osc.connect(g).connect(dest);
-  osc.start(time);
-  osc.stop(time + 0.27);
+// Map a kit's actual sample-group names to our logical voices. Names vary per
+// kit (e.g. "hihat-close" / "hhclosed", "cymbal" / "crash"), so match loosely.
+type DrumMap = Record<string, string | undefined>;
+function mapKit(groups: string[]): DrumMap {
+  const find = (...cands: string[]) => {
+    for (const c of cands) {
+      const hit = groups.find((g) => g.toLowerCase().includes(c));
+      if (hit) return hit;
+    }
+    return undefined;
+  };
+  const tomLo = find("tom-low", "tom-l", "conga-low", "conga-l");
+  return {
+    kick: find("kick", "bass"),
+    snare: find("snare"),
+    hatClosed: find("close", "chh", "hhc"),
+    hatOpen: find("open", "ohh"),
+    crash: find("crash", "cymbal", "cymball", "cym"),
+    ride: find("ride", "cymbal", "cymball", "cym"),
+    clap: find("clap"),
+    rim: find("rim", "stick", "clave"),
+    tomHi: find("tom-hi", "tom-high", "tom-h", "conga-hi", "conga-h"),
+    tomMid: find("tom-mid", "mid-tom", "tom-m", "conga-mid", "conga-m") ?? tomLo,
+    tomLo,
+  };
 }
 
 function scheduleDrums(
-  ctx: AudioContext,
-  dest: AudioNode,
-  noise: AudioBuffer,
+  dm: DrumMachine,
+  map: DrumMap,
   pattern: Exclude<DrumId, "none">,
   eighth: number,
   isLoopStart: boolean,
@@ -201,29 +128,23 @@ function scheduleDrums(
   time: number,
   vel: number,
 ) {
+  const hit = (group: string | undefined, v: number) => {
+    if (group) dm.start({ note: group, time, velocity: clamp(Math.round(127 * vel * v), 1, 127) });
+  };
   const p = DRUM_PATTERNS[pattern];
-  if (p.crashFirst && isLoopStart && eighth === 0) {
-    playNoise(ctx, dest, noise, time, 3000, 0.35 * vel, 1.0); // crash cymbal
-  }
+  if (p.crashFirst && isLoopStart && eighth === 0) hit(map.crash, 0.9);
   if (isFillBar && eighth >= 4) {
     const f = TOM_FILL.find((x) => x.eighth === eighth);
-    if (f) playTom(ctx, dest, f.tom, time, vel);
+    if (f) hit(f.tom === "hi" ? map.tomHi : f.tom === "mid" ? map.tomMid : map.tomLo, 0.95);
     return;
   }
-  if (p.kick?.includes(eighth)) playKick(ctx, dest, time, vel);
-  if (p.snare?.includes(eighth)) playSnare(ctx, dest, noise, time, vel);
-  if (p.clap?.includes(eighth)) playClap(ctx, dest, noise, time, vel);
-  if (p.rim?.includes(eighth)) playRim(ctx, dest, noise, time, vel);
-  if (p.hat?.includes(eighth)) playNoise(ctx, dest, noise, time, 7000, (eighth % 2 ? 0.16 : 0.24) * vel, 0.03);
-  if (p.openhat?.includes(eighth)) playNoise(ctx, dest, noise, time, 6000, 0.2 * vel, 0.18);
-  if (p.ride?.includes(eighth)) playRide(ctx, dest, noise, time, (eighth % 2 ? 0.7 : 1) * vel);
-}
-
-function makeNoise(ctx: AudioContext): AudioBuffer {
-  const buf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-  return buf;
+  if (p.kick?.includes(eighth)) hit(map.kick, 1);
+  if (p.snare?.includes(eighth)) hit(map.snare, 1);
+  if (p.clap?.includes(eighth)) hit(map.clap, 0.9);
+  if (p.rim?.includes(eighth)) hit(map.rim, 0.8);
+  if (p.hat?.includes(eighth)) hit(map.hatClosed, eighth % 2 ? 0.6 : 0.85);
+  if (p.openhat?.includes(eighth)) hit(map.hatOpen, 0.8);
+  if (p.ride?.includes(eighth)) hit(map.ride, eighth % 2 ? 0.6 : 0.85);
 }
 
 function makeImpulse(ctx: AudioContext): AudioBuffer {
@@ -252,6 +173,7 @@ export function useBackingTrack(opts: {
   sound: SoundId;
   feel: FeelId;
   drums: DrumId;
+  drumKit: string;
   swing: number;
   mix: Mix;
   inst: InstSettings;
@@ -264,9 +186,10 @@ export function useBackingTrack(opts: {
   const masterRef = useRef<GainNode | null>(null);
   const chordBusRef = useRef<GainNode | null>(null); // attack envelope lives here
   const reverbSendRef = useRef<GainNode | null>(null);
-  const noiseRef = useRef<AudioBuffer | null>(null);
   const chordInstRef = useRef<Soundfont | null>(null);
   const bassInstRef = useRef<Soundfont | null>(null);
+  const drumMachineRef = useRef<DrumMachine | null>(null);
+  const drumMapRef = useRef<DrumMap>({});
 
   const nextTimeRef = useRef(0);
   const stepInChordRef = useRef(0);
@@ -317,7 +240,7 @@ export function useBackingTrack(opts: {
     master.gain.value = 0.9;
     master.connect(comp);
     masterRef.current = master;
-    const chordBus = ctx.createGain(); // attack envelope target
+    const chordBus = ctx.createGain();
     chordBus.connect(master);
     chordBusRef.current = chordBus;
     const reverbSend = ctx.createGain();
@@ -326,7 +249,6 @@ export function useBackingTrack(opts: {
     convolver.buffer = makeImpulse(ctx);
     chordBus.connect(reverbSend).connect(convolver).connect(master); // wet path
     reverbSendRef.current = reverbSend;
-    noiseRef.current = makeNoise(ctx);
 
     let disposed = false;
     import("smplr").then(({ Soundfont }) => {
@@ -343,6 +265,7 @@ export function useBackingTrack(opts: {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       chordInstRef.current?.dispose();
       bassInstRef.current?.dispose();
+      drumMachineRef.current?.dispose();
       ctx.close();
     };
   }, []);
@@ -375,6 +298,30 @@ export function useBackingTrack(opts: {
     };
   }, [opts.sound]);
 
+  // Load the selected drum kit whenever it changes.
+  useEffect(() => {
+    const ctx = ctxRef.current;
+    const master = masterRef.current;
+    if (!ctx || !master) return;
+    let cancelled = false;
+    import("smplr").then(({ DrumMachine }) => {
+      if (cancelled) return;
+      const dm = DrumMachine(ctx, { instrument: opts.drumKit, destination: master });
+      dm.ready.then(() => {
+        if (cancelled) {
+          dm.dispose();
+          return;
+        }
+        drumMachineRef.current?.dispose();
+        drumMachineRef.current = dm;
+        drumMapRef.current = mapKit(dm.getGroupNames());
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [opts.drumKit]);
+
   // Apply the live channel-strip settings (volume/pan to the sampler, reverb to the send).
   useEffect(() => {
     instRef.current = opts.inst;
@@ -391,8 +338,6 @@ export function useBackingTrack(opts: {
     const ctx = ctxRef.current;
     if (!ctx || !chordInstRef.current) return;
     if (ctx.state === "suspended") ctx.resume();
-    const master = masterRef.current!;
-    const noise = noiseRef.current!;
     runningRef.current = true;
     indexRef.current = 0;
     stepInChordRef.current = 0;
@@ -429,7 +374,6 @@ export function useBackingTrack(opts: {
 
         const playChord = (t: number, dur: number, velScale: number) => {
           if (mix.chords <= 0) return;
-          // A soft attack swells the whole chord bus (skipped for arpeggios).
           const atk = toAttack(s.attack);
           if (atk > 0.02 && feel !== "arpeggio") {
             chordBus.gain.setValueAtTime(0.0001, t);
@@ -471,12 +415,13 @@ export function useBackingTrack(opts: {
         }
 
         // Drums
-        if (mix.drums > 0 && drumsRef.current !== "none") {
+        const dm = drumMachineRef.current;
+        if (dm && mix.drums > 0 && drumsRef.current !== "none") {
           const bar = Math.floor(step / EIGHTHS_PER_BAR);
           const loopBars = chords.length * bars;
           const isLoopStart = index === 0 && bar === 0;
           const isFillBar = loopBars >= 2 && index === chords.length - 1 && bar === bars - 1;
-          scheduleDrums(c, master, noise, drumsRef.current, eighth, isLoopStart, isFillBar, time, mix.drums);
+          scheduleDrums(dm, drumMapRef.current, drumsRef.current, eighth, isLoopStart, isFillBar, time, mix.drums);
         }
 
         nextTimeRef.current += stepDur;

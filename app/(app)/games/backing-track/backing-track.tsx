@@ -62,6 +62,7 @@ const DRUMS: { id: DrumId; label: string }[] = [
   { id: "halftime", label: "Half-time" },
   { id: "ride", label: "Ride" },
 ];
+const DRUM_KITS = ["TR-808", "Casio-RZ1", "LM-2", "MFB-512", "Roland CR-8000"];
 
 const chipBase = "rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition-colors";
 const chipOn = "bg-primary/15 text-primary ring-primary/40";
@@ -97,6 +98,7 @@ export function BackingTrack() {
   const [sound, setSound] = useState<SoundId>("piano");
   const [feel, setFeel] = useState<FeelId>("pulse");
   const [drums, setDrums] = useState<DrumId>("pop");
+  const [drumKit, setDrumKit] = useState(DRUM_KITS[0]);
   const [swing, setSwing] = useState(0);
   const [mixChords, setMixChords] = useState(80);
   const [mixBass, setMixBass] = useState(80);
@@ -148,6 +150,7 @@ export function BackingTrack() {
     sound,
     feel,
     drums,
+    drumKit,
     swing,
     mix,
     inst: activeInst,
@@ -445,6 +448,26 @@ export function BackingTrack() {
             </div>
           </div>
         </div>
+
+        {/* Drum kit */}
+        {drums !== "none" && (
+          <div className="space-y-1.5">
+            <span className="eyebrow">Drum kit</span>
+            <div className="flex flex-wrap gap-1.5">
+              {DRUM_KITS.map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setDrumKit(k)}
+                  aria-pressed={k === drumKit}
+                  className={`${chipBase} ${k === drumKit ? chipOn : chipOff}`}
+                >
+                  {k}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Swing */}
         <div className="space-y-1.5">
