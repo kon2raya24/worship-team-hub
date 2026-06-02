@@ -10,6 +10,7 @@ import {
   Ruler,
   CircleDot,
   Repeat2,
+  AudioLines,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 
@@ -23,6 +24,15 @@ const GAMES = [
       "See any scale across the whole neck, in any key. Toggle note names, intervals, or hide labels for visual practice. 20+ scales — pentatonics, modes, blues, harmonic minor, and more.",
     icon: Guitar,
     accent: "teal" as const,
+    eyebrow: "Practice tool",
+  },
+  {
+    href: "/games/metronome",
+    title: "Metronome",
+    blurb:
+      "A click that won't drift. Set the meter, tap along to find a song's tempo, and hit start — the downbeat is accented so the band knows where bar one is.",
+    icon: AudioLines,
+    accent: "orange" as const,
     eyebrow: "Practice tool",
   },
   {
@@ -145,6 +155,12 @@ const ACCENTS = {
     bg: "bg-[#5eead4]/15",
     text: "text-[#5eead4]",
     glow: "hover:shadow-[0_0_24px_rgba(94,234,212,0.35)]",
+  },
+  orange: {
+    ring: "ring-[#fb923c]/30 hover:ring-[#fb923c]/60",
+    bg: "bg-[#fb923c]/15",
+    text: "text-[#fb923c]",
+    glow: "hover:shadow-[0_0_24px_rgba(251,146,60,0.35)]",
   },
 } as const;
 
