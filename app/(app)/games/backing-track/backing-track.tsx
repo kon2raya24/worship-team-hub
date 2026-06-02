@@ -91,6 +91,7 @@ export function BackingTrack() {
   const [root, setRoot] = useState("G");
   const [qualityId, setQualityId] = useState<QualityId>("major");
   const [progId, setProgId] = useState("pop");
+  const [customDegrees, setCustomDegrees] = useState<number[]>([]);
   const [bpm, setBpm] = useState(90);
   const [barsPerChord, setBarsPerChord] = useState(1);
   const [sound, setSound] = useState<SoundId>("piano");
@@ -112,17 +113,28 @@ export function BackingTrack() {
     () => SCALES.find((s) => s.id === qualityId) ?? SCALES[0],
     [qualityId],
   );
+  // Every diatonic chord in the key — the palette for the custom builder.
+  const allChords = useMemo(() => buildDiatonicChords(root, scale), [root, scale]);
   const degrees = useMemo(
-    () => PROGRESSIONS.find((p) => p.id === progId)?.degrees ?? PROGRESSIONS[0].degrees,
-    [progId],
+    () =>
+      progId === "custom"
+        ? customDegrees
+        : PROGRESSIONS.find((p) => p.id === progId)?.degrees ?? PROGRESSIONS[0].degrees,
+    [progId, customDegrees],
   );
   // Resolve the progression's scale degrees to real diatonic chords in this key.
-  const progChords = useMemo(() => {
-    const all = buildDiatonicChords(root, scale);
-    return degrees
-      .map((d) => all.find((c) => c.degree === d))
-      .filter((c): c is NonNullable<typeof c> => Boolean(c));
-  }, [root, scale, degrees]);
+  const progChords = useMemo(
+    () =>
+      degrees
+        .map((d) => allChords.find((c) => c.degree === d))
+        .filter((c): c is NonNullable<typeof c> => Boolean(c)),
+    [allChords, degrees],
+  );
+  // Switching to Custom seeds the sequence from the current preset, then it's free to edit.
+  const chooseProg = (id: string) => {
+    if (id === "custom" && customDegrees.length === 0) setCustomDegrees(degrees.slice());
+    setProgId(id);
+  };
   const voices = useMemo(() => progChords.map((c) => ({ pcs: c.pcs })), [progChords]);
   const mix = useMemo(
     () => ({ chords: mixChords / 100, bass: mixBass / 100, drums: mixDrums / 100 }),
@@ -219,16 +231,76 @@ export function BackingTrack() {
                 <button
                   key={p.id}
                   type="button"
-                  onClick={() => setProgId(p.id)}
+                  onClick={() => chooseProg(p.id)}
                   aria-pressed={p.id === progId}
                   className={`${chipBase} ${p.id === progId ? chipOn : chipOff}`}
                 >
                   {p.label}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => chooseProg("custom")}
+                aria-pressed={progId === "custom"}
+                className={`${chipBase} ${progId === "custom" ? chipOn : chipOff}`}
+              >
+                + Custom
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Custom progression builder */}
+        {progId === "custom" && (
+          <div className="space-y-2.5 rounded-xl bg-tint-1/40 p-3 ring-1 ring-border">
+            <span className="eyebrow">Build your progression — tap chords in order</span>
+            <div className="flex flex-wrap gap-1.5">
+              {allChords.map((c) => (
+                <button
+                  key={c.degree}
+                  type="button"
+                  onClick={() => setCustomDegrees((d) => [...d, c.degree])}
+                  className="rounded-lg bg-tint-1 px-2.5 py-1.5 text-sm ring-1 ring-border transition-colors hover:bg-tint-2"
+                  title={`Add ${c.name}`}
+                >
+                  <span className="font-mono text-xs text-muted-foreground">{c.roman}</span>{" "}
+                  <span className="font-medium text-foreground/90">{c.name}</span>
+                </button>
+              ))}
+            </div>
+            {customDegrees.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Sequence:</span>
+                {customDegrees.map((d, i) => {
+                  const c = allChords.find((x) => x.degree === d);
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setCustomDegrees((arr) => arr.filter((_, j) => j !== i))}
+                      className="group inline-flex items-center gap-1 rounded-lg bg-primary/15 px-2.5 py-1 text-sm font-medium text-primary ring-1 ring-primary/40"
+                      title="Remove"
+                    >
+                      {c?.name ?? d}
+                      <span className="text-primary/50 group-hover:text-primary">✕</span>
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setCustomDegrees([])}
+                  className="ml-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Clear all
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Tap chords above to add them. Tap a chord in your sequence to remove it.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Tempo */}
         <div className="space-y-1.5">
