@@ -11,6 +11,7 @@ import {
   CircleDot,
   Repeat2,
   AudioLines,
+  Disc3,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 
@@ -33,6 +34,15 @@ const GAMES = [
       "A click that won't drift. Set the meter, tap along to find a song's tempo, and hit start — the downbeat is accented so the band knows where bar one is.",
     icon: AudioLines,
     accent: "orange" as const,
+    eyebrow: "Practice tool",
+  },
+  {
+    href: "/games/backing-track",
+    title: "Backing Track",
+    blurb:
+      "Pick a key and a progression — Pop, Classic, '50s, or ii–V–I — and loop it as a soft pad-and-bass jam track. Solo over it while you work a scale on the fretboard.",
+    icon: Disc3,
+    accent: "rose" as const,
     eyebrow: "Practice tool",
   },
   {
@@ -161,6 +171,12 @@ const ACCENTS = {
     bg: "bg-[#fb923c]/15",
     text: "text-[#fb923c]",
     glow: "hover:shadow-[0_0_24px_rgba(251,146,60,0.35)]",
+  },
+  rose: {
+    ring: "ring-[#fb7185]/30 hover:ring-[#fb7185]/60",
+    bg: "bg-[#fb7185]/15",
+    text: "text-[#fb7185]",
+    glow: "hover:shadow-[0_0_24px_rgba(251,113,133,0.35)]",
   },
 } as const;
 
