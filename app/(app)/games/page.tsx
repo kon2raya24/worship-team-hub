@@ -12,6 +12,7 @@ import {
   Repeat2,
   AudioLines,
   Disc3,
+  Gauge,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 
@@ -43,6 +44,15 @@ const GAMES = [
       "Pick a key and a progression — Pop, Classic, '50s, or ii–V–I — and loop it as a soft pad-and-bass jam track. Solo over it while you work a scale on the fretboard.",
     icon: Disc3,
     accent: "rose" as const,
+    eyebrow: "Practice tool",
+  },
+  {
+    href: "/games/tuner",
+    title: "Tuner",
+    blurb:
+      "Tune any instrument by ear. Play a note and the mic shows the nearest pitch with a live cents meter — green when you're locked in. Calibrate the A4 reference for the room.",
+    icon: Gauge,
+    accent: "emerald" as const,
     eyebrow: "Practice tool",
   },
   {
@@ -177,6 +187,12 @@ const ACCENTS = {
     bg: "bg-[#fb7185]/15",
     text: "text-[#fb7185]",
     glow: "hover:shadow-[0_0_24px_rgba(251,113,133,0.35)]",
+  },
+  emerald: {
+    ring: "ring-[#34d399]/30 hover:ring-[#34d399]/60",
+    bg: "bg-[#34d399]/15",
+    text: "text-[#34d399]",
+    glow: "hover:shadow-[0_0_24px_rgba(52,211,153,0.35)]",
   },
 } as const;
 
