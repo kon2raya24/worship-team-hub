@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { ChevronLeft, ChevronRight, Download, Pencil, RotateCcw } from "lucide-react";
 import {
   Select,
@@ -118,7 +118,9 @@ export function FretboardExplorer() {
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [added, setAdded] = useState<Set<string>>(new Set());
   const [rotateLabels, setRotateLabels] = useState(false);
+  const [slides, setSlides] = useState<[string, string][]>([]);
   const svgRef = useRef<SVGSVGElement>(null);
+  const dragFrom = useRef<string | null>(null);
 
   const scale = useMemo<ScaleDef>(() => SCALES.find((s) => s.id === scaleId) ?? SCALES[0], [scaleId]);
   const scaleB = useMemo<ScaleDef>(
@@ -179,6 +181,50 @@ export function FretboardExplorer() {
   const resetEdits = () => {
     setHidden(new Set());
     setAdded(new Set());
+    setSlides([]);
+  };
+  // Slides connect two cells with an arc; drag between notes to add, tap an arc to remove.
+  const slideKey = (a: string, b: string) => [a, b].sort().join("|");
+  const cellXY = (k: string) => {
+    const [s, f] = k.split(":").map(Number);
+    return { x: noteX(f), y: stringY(s) };
+  };
+  const slidePath = (a: string, b: string) => {
+    const p = cellXY(a);
+    const q = cellXY(b);
+    return `M ${p.x} ${p.y} Q ${(p.x + q.x) / 2} ${(p.y + q.y) / 2 - 16} ${q.x} ${q.y}`;
+  };
+  const addSlide = (a: string, b: string) =>
+    setSlides((prev) =>
+      prev.some(([x, y]) => slideKey(x, y) === slideKey(a, b))
+        ? prev
+        : [...prev, [a, b] as [string, string]],
+    );
+  const removeSlide = (a: string, b: string) =>
+    setSlides((prev) => prev.filter(([x, y]) => slideKey(x, y) !== slideKey(a, b)));
+  // Cell handlers are passed by reference (not inline) and read the cell from a
+  // data attribute, so the drag ref is only touched inside event handlers.
+  const startDrag = (e: ReactPointerEvent<SVGRectElement>) => {
+    // Release touch's implicit capture so pointerup fires on the destination cell —
+    // that's how we tell a drag from a tap.
+    if (e.currentTarget.hasPointerCapture(e.pointerId))
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    dragFrom.current = e.currentTarget.dataset.cell ?? null;
+  };
+  const endDrag = (e: ReactPointerEvent<SVGRectElement>) => {
+    const from = dragFrom.current;
+    dragFrom.current = null;
+    const to = e.currentTarget.dataset.cell;
+    if (from === null || !to) return;
+    if (from === to) {
+      const [s, f] = to.split(":").map(Number);
+      toggleCell(s, f); // a tap toggles hide/add
+    } else {
+      addSlide(from, to); // a drag draws a slide
+    }
+  };
+  const cancelDrag = () => {
+    dragFrom.current = null;
   };
   const exportPng = (dotsOnly: boolean) => {
     if (!svgRef.current) return;
@@ -559,6 +605,20 @@ export function FretboardExplorer() {
           ))}
 
           </g>
+          {/* Slides — arcs connecting two notes, drawn under the dots */}
+          {!compare && slides.length > 0 && (
+            <g data-layer="slides">
+              {slides.map(([a, b]) => (
+                <path
+                  key={slideKey(a, b)}
+                  d={slidePath(a, b)}
+                  className="fill-none stroke-chart-5"
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                />
+              ))}
+            </g>
+          )}
           {/* Note dots */}
           <g data-layer="dots">
           {dots.map((d) => (
@@ -598,21 +658,35 @@ export function FretboardExplorer() {
           ))}
           </g>
           {editMode && !compare && (
-            <g data-layer="hit">
+            <g data-layer="hit" onPointerLeave={cancelDrag}>
               {Array.from({ length: N_STRINGS }).flatMap((_, s) =>
                 Array.from({ length: MAX_FRET + 1 }).map((_, f) => (
                   <rect
                     key={`hit-${s}-${f}`}
+                    data-cell={noteKey(s, f)}
                     x={noteX(f) - FRET_W / 2}
                     y={stringY(s) - STRING_GAP / 2}
                     width={FRET_W}
                     height={STRING_GAP}
                     fill="transparent"
                     className="cursor-pointer"
-                    onClick={() => toggleCell(s, f)}
+                    onPointerDown={startDrag}
+                    onPointerUp={endDrag}
                   />
                 )),
               )}
+              {/* Tap an arc to delete it (sits above the cells) */}
+              {slides.map(([a, b]) => (
+                <path
+                  key={`del-${slideKey(a, b)}`}
+                  d={slidePath(a, b)}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={16}
+                  className="cursor-pointer"
+                  onClick={() => removeSlide(a, b)}
+                />
+              ))}
             </g>
           )}
         </svg>
@@ -639,7 +713,7 @@ export function FretboardExplorer() {
               >
                 <RotateCcw className="size-3.5" /> Rotate labels
               </button>
-              {(hidden.size > 0 || added.size > 0) && (
+              {(hidden.size > 0 || added.size > 0 || slides.length > 0) && (
                 <button type="button" onClick={resetEdits} className={toolbarBtn(false)}>
                   Reset edits
                 </button>
@@ -656,8 +730,9 @@ export function FretboardExplorer() {
         </div>
         {editMode && !compare && (
           <p className="text-sm text-muted-foreground">
-            Tap a note to hide it; tap an empty spot to add an out-of-scale note (grey). Dots only
-            exports a transparent overlay for videos.
+            Tap a note to hide it; tap an empty spot to add an out-of-scale note (grey); drag between
+            two notes to draw a slide (tap a slide to remove it). Dots only exports a transparent
+            overlay for videos.
           </p>
         )}
       </div>
