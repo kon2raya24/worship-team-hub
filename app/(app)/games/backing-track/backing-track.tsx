@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Pause, Play } from "lucide-react";
-import { ROOTS, SCALES, rootUsesFlats, spell, type ScaleDef } from "@/lib/fretboard";
+import { ROOTS, SCALES, pitchClass, rootUsesFlats, spell, type ScaleDef } from "@/lib/fretboard";
 import { buildDiatonicChords } from "@/lib/fretboard-chords";
 import {
   useBackingTrack,
@@ -51,6 +51,20 @@ const SOUNDS: { id: SoundId; label: string; icon: string }[] = [
   { id: "pluck", label: "Pluck", icon: "🎸" },
   { id: "marimba", label: "Marimba", icon: "🎶" },
   { id: "bell", label: "Bell", icon: "🔔" },
+];
+// Chord color — plain triads, diatonic 7ths, or worship-style add9 voicings.
+const COLORS = [
+  { id: "triads", label: "Triads" },
+  { id: "sevenths", label: "7ths" },
+  { id: "lush", label: "Lush" },
+] as const;
+type ColorId = (typeof COLORS)[number]["id"];
+// Manual energy levels; "Build" cycles them automatically each pass.
+const ENERGY_OPTS = [
+  { v: 0, label: "Sparse" },
+  { v: 1, label: "Groove" },
+  { v: 2, label: "Full" },
+  { v: 3, label: "Push" },
 ];
 const FEELS: { id: FeelId; label: string }[] = [
   { id: "sustained", label: "Sustained" },
@@ -138,6 +152,10 @@ export function BackingTrack() {
   const [selectedChip, setSelectedChip] = useState<number | null>(null); // sequence chip being bass-edited
   const [bpm, setBpm] = useState(90);
   const [barsPerChord, setBarsPerChord] = useState(1);
+  const [color, setColor] = useState<ColorId>("triads");
+  const [energy, setEnergy] = useState(2);
+  const [autoBuild, setAutoBuild] = useState(true);
+  const [countIn, setCountIn] = useState(true);
   const [activeSounds, setActiveSounds] = useState<SoundId[]>(["piano"]);
   const [editSound, setEditSound] = useState<SoundId>("piano"); // which layer's settings show
   const [feel, setFeel] = useState<FeelId>("pulse");
@@ -230,7 +248,27 @@ export function BackingTrack() {
     setCustomChords((arr) =>
       arr.map((it, j) => (j === selectedChip ? { ...it, bass: bass ?? undefined } : it)),
     );
-  const voices = useMemo(() => progChords.map((c) => ({ pcs: c.pcs, bass: c.bass })), [progChords]);
+  // Chord color extends the triads: diatonic 7th, or an add9 ("lush") that
+  // voices as an add2 cluster — the classic worship pad sound. Dim/aug chords
+  // stay plain triads in lush mode.
+  const voices = useMemo(() => {
+    const rootPc = pitchClass(root) ?? 0;
+    const deg = scale.intervals;
+    return progChords.map((c) => {
+      const pcs = [...c.pcs];
+      if (color === "sevenths") pcs.push((rootPc + deg[(c.degree + 5) % 7]) % 12);
+      else if (color === "lush" && (c.quality === "maj" || c.quality === "min"))
+        pcs.push((rootPc + deg[c.degree % 7]) % 12);
+      return { pcs, bass: c.bass };
+    });
+  }, [progChords, color, scale, root]);
+  // The chord name as colored — "Am7", "Cadd9" — for the progression display.
+  const colorName = (c: (typeof progChords)[number]) =>
+    color === "sevenths"
+      ? c.seventh
+      : color === "lush" && (c.quality === "maj" || c.quality === "min")
+        ? `${c.name}add9`
+        : c.name;
   const mix = useMemo(
     () => ({ chords: mixChords / 100, bass: mixBass / 100, drums: mixDrums / 100 }),
     [mixChords, mixBass, mixDrums],
@@ -253,6 +291,9 @@ export function BackingTrack() {
     drumMix,
     swing,
     mix,
+    energy,
+    autoBuild,
+    countIn,
   });
   const { toggle } = track;
 
@@ -526,6 +567,24 @@ export function BackingTrack() {
             </div>
           </div>
 
+          {/* Chord color */}
+          <div className="space-y-1.5">
+            <span className="eyebrow">Chord color</span>
+            <div className="flex flex-wrap gap-1.5">
+              {COLORS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setColor(c.id)}
+                  aria-pressed={c.id === color}
+                  className={`${chipBase} ${c.id === color ? chipOn : chipOff}`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Bars per chord */}
           <div className="space-y-1.5">
             <span className="eyebrow">Bars per chord</span>
@@ -639,6 +698,53 @@ export function BackingTrack() {
 
       {/* Feel, drums, swing, mix */}
       <div className="glass space-y-4 rounded-2xl p-4 ring-1 ring-border sm:p-5">
+        {/* Energy — Build cycles the arrangement (sparse → groove → full →
+            push → drop) each pass; the live level lights up while it plays. */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <span className="eyebrow">Energy</span>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setAutoBuild(true)}
+                aria-pressed={autoBuild}
+                className={`${chipBase} ${autoBuild ? chipOn : chipOff}`}
+              >
+                🔄 Build
+              </button>
+              {ENERGY_OPTS.map((e) => {
+                const live = autoBuild && track.energyNow === e.v;
+                const active = !autoBuild && energy === e.v;
+                return (
+                  <button
+                    key={e.v}
+                    type="button"
+                    onClick={() => {
+                      setAutoBuild(false);
+                      setEnergy(e.v);
+                    }}
+                    aria-pressed={active}
+                    className={`${chipBase} ${active || live ? chipOn : chipOff}`}
+                  >
+                    {e.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <span className="eyebrow">Count-in</span>
+            <button
+              type="button"
+              onClick={() => setCountIn((v) => !v)}
+              aria-pressed={countIn}
+              className={`${chipBase} ${countIn ? chipOn : chipOff}`}
+            >
+              {countIn ? "1 bar of clicks" : "Off"}
+            </button>
+          </div>
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <span className="eyebrow">Feel</span>
@@ -825,7 +931,7 @@ export function BackingTrack() {
               >
                 <div className="eyebrow">{c.roman}</div>
                 <div className="font-display text-lg font-semibold text-foreground/95">
-                  {slashName(c, useFlats)}
+                  {slashName({ ...c, name: colorName(c) }, useFlats)}
                 </div>
                 <div className="font-mono text-[11px] text-muted-foreground">{c.notes.join(" ")}</div>
               </div>
@@ -835,7 +941,8 @@ export function BackingTrack() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Pick a sound and feel, add drums, then solo over it with the matching{" "}
+        🔄 Build grows the band each pass — sparse, groove, full, push, then back down — like a real
+        arrangement. Pick a sound and feel, add drums, then solo over it with the matching{" "}
         {scale.name.toLowerCase()} scale on the{" "}
         <a href="/games/fretboard" className="text-primary hover:underline">
           Fretboard Explorer

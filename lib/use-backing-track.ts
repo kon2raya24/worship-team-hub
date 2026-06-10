@@ -92,6 +92,105 @@ const STRUM_44: Record<number, number> = { 0: 1, 2: 0.7, 3: 0.55, 4: 1, 6: 0.7, 
 // 6/8 lilts in two: accent the two dotted-quarter pulses (0 and 3).
 const STRUM_68: Record<number, number> = { 0: 1, 1: 0.4, 2: 0.5, 3: 0.85, 4: 0.4, 5: 0.5 };
 
+// --- Energy / arrangement ------------------------------------------------
+// Energy shapes the whole arrangement: how hard everything hits, which drum
+// pieces play, how busy the bass line is, and whether fills happen.
+type DrumDensity = "tick" | "low" | "full" | "push";
+type EnergyConf = { vel: number; drums: DrumDensity; bassBusy: number; fills: boolean };
+const ENERGY_CONF: EnergyConf[] = [
+  { vel: 0.72, drums: "tick", bassBusy: 0, fills: false }, // sparse
+  { vel: 0.85, drums: "low", bassBusy: 1, fills: false }, // groove
+  { vel: 1, drums: "full", bassBusy: 2, fills: true }, // full
+  { vel: 1.08, drums: "push", bassBusy: 2, fills: true }, // push
+];
+// Auto-build steps this arc once per pass through the progression:
+// verse → build → chorus → peak → peak → drop back down, then around again.
+const BUILD_ARC = [0, 1, 2, 3, 3, 1];
+
+// --- Bass lines -----------------------------------------------------------
+// Style-specific bass patterns on the eighth grid. `busy` marks pickup notes
+// that only play at full bass busyness (energy ≥ full).
+type BassTone = "root" | "third" | "fifth" | "octave";
+type BassStep = { e: number; tone: BassTone; len: number; vel?: number; busy?: number };
+const BASS_44: Record<string, BassStep[]> = {
+  default: [
+    { e: 0, tone: "root", len: 4 },
+    { e: 4, tone: "fifth", len: 3 },
+    { e: 7, tone: "octave", len: 1, vel: 0.75, busy: 2 },
+  ],
+  ballad: [{ e: 0, tone: "root", len: 8 }],
+  pump: [
+    { e: 0, tone: "root", len: 2 },
+    { e: 2, tone: "root", len: 2, vel: 0.85 },
+    { e: 4, tone: "root", len: 2 },
+    { e: 6, tone: "root", len: 2, vel: 0.85 },
+  ],
+  funk: [
+    { e: 0, tone: "root", len: 2 },
+    { e: 3, tone: "octave", len: 1, vel: 0.85, busy: 2 },
+    { e: 4, tone: "fifth", len: 2 },
+    { e: 6, tone: "root", len: 1, vel: 0.9 },
+    { e: 7, tone: "octave", len: 1, vel: 0.75, busy: 2 },
+  ],
+  disco: [
+    { e: 0, tone: "root", len: 1 },
+    { e: 1, tone: "octave", len: 1, vel: 0.8 },
+    { e: 2, tone: "root", len: 1 },
+    { e: 3, tone: "octave", len: 1, vel: 0.8 },
+    { e: 4, tone: "root", len: 1 },
+    { e: 5, tone: "octave", len: 1, vel: 0.8 },
+    { e: 6, tone: "root", len: 1 },
+    { e: 7, tone: "octave", len: 1, vel: 0.8 },
+  ],
+  bossa: [
+    { e: 0, tone: "root", len: 3 },
+    { e: 3, tone: "fifth", len: 1, vel: 0.8, busy: 2 },
+    { e: 4, tone: "fifth", len: 3 },
+    { e: 7, tone: "root", len: 1, vel: 0.8, busy: 2 },
+  ],
+  halftime: [
+    { e: 0, tone: "root", len: 5 },
+    { e: 5, tone: "root", len: 2, vel: 0.9 },
+    { e: 7, tone: "fifth", len: 1, vel: 0.75, busy: 2 },
+  ],
+  motown: [
+    { e: 0, tone: "root", len: 2 },
+    { e: 2, tone: "third", len: 1, vel: 0.85, busy: 2 },
+    { e: 3, tone: "fifth", len: 1, vel: 0.85 },
+    { e: 4, tone: "octave", len: 2, vel: 0.9 },
+    { e: 6, tone: "fifth", len: 2, vel: 0.85 },
+  ],
+};
+const BASS_68: Record<string, BassStep[]> = {
+  default: [
+    { e: 0, tone: "root", len: 3 },
+    { e: 3, tone: "fifth", len: 3 },
+  ],
+  ballad: [{ e: 0, tone: "root", len: 6 }],
+  pump: [
+    { e: 0, tone: "root", len: 2 },
+    { e: 2, tone: "root", len: 1, vel: 0.8, busy: 2 },
+    { e: 3, tone: "fifth", len: 2 },
+    { e: 5, tone: "octave", len: 1, vel: 0.8, busy: 2 },
+  ],
+};
+// Which bass line each drum style wants.
+const BASS_FOR_DRUMS: Record<DrumId, string> = {
+  none: "default",
+  pop: "default",
+  rock: "pump",
+  ballad: "ballad",
+  funk: "funk",
+  dance: "disco",
+  halftime: "halftime",
+  ride: "default",
+  bossa: "bossa",
+  gospel: "funk",
+  motown: "motown",
+  march: "pump",
+  swing: "default",
+};
+
 // --- Drum kit (sampled via smplr DrumMachine) ----------------------------
 
 type DrumPattern = {
@@ -136,6 +235,20 @@ const TOM_FILL_68: TomFillStep[] = [
   { eighth: 4, tom: "mid" },
   { eighth: 5, tom: "lo" },
 ];
+// The alternate fill — a snare roll building into the next section.
+type SnareFillStep = { e: number; v: number };
+const SNARE_FILL_44: SnareFillStep[] = [
+  { e: 4, v: 0.5 },
+  { e: 5, v: 0.62 },
+  { e: 6, v: 0.78 },
+  { e: 7, v: 0.95 },
+];
+const SNARE_FILL_68: SnareFillStep[] = [
+  { e: 3, v: 0.55 },
+  { e: 4, v: 0.72 },
+  { e: 5, v: 0.92 },
+];
+type FillKind = "tom" | "snare" | null;
 
 // Map a kit's actual sample-group names to our logical voices. Names vary per
 // kit (e.g. "hihat-close" / "hhclosed", "cymbal" / "crash"), so match loosely.
@@ -178,44 +291,95 @@ function mapKit(groups: string[]): DrumMap {
 
 type KitNode = { dm: DrumMachine; map: DrumMap };
 
-function scheduleDrums(
-  kits: Map<string, KitNode>,
-  pieceKits: Record<DrumPiece, string>,
-  drumMix: DrumMix,
-  table: Record<string, DrumPattern>,
-  fill: TomFillStep[],
-  fillFrom: number,
-  pattern: DrumId,
-  eighth: number,
-  isLoopStart: boolean,
-  isFillBar: boolean,
-  time: number,
-  vel: number,
-) {
-  const p = table[pattern];
+function scheduleDrums(o: {
+  kits: Map<string, KitNode>;
+  pieceKits: Record<DrumPiece, string>;
+  drumMix: DrumMix;
+  table: Record<string, DrumPattern>;
+  tomFill: TomFillStep[];
+  snareFill: SnareFillStep[];
+  fillFrom: number;
+  pattern: DrumId;
+  eighth: number;
+  crashBar: boolean;
+  fillKind: FillKind;
+  compound: boolean;
+  density: DrumDensity;
+  time: number;
+  vel: number;
+}) {
+  const p = o.table[o.pattern];
   if (!p) return;
+  const { eighth } = o;
   // Each piece is gated by its own enable + volume, and plays from its own kit.
-  const hit = (piece: DrumPiece, voice: keyof DrumMap, accent: number) => {
-    const m = drumMix[piece];
+  const hit = (piece: DrumPiece, voice: keyof DrumMap, accent: number, t = o.time) => {
+    const m = o.drumMix[piece];
     if (!m || !m.enabled) return;
-    const kit = kits.get(pieceKits[piece]);
+    const kit = o.kits.get(o.pieceKits[piece]);
     const sample = kit?.map[voice];
     if (!kit || !sample) return;
-    kit.dm.start({ note: sample, time, velocity: clamp(Math.round(127 * vel * accent * (m.volume / 100)), 1, 127) });
+    kit.dm.start({ note: sample, time: t, velocity: clamp(Math.round(127 * o.vel * accent * (m.volume / 100)), 1, 127) });
   };
-  if (p.crashFirst && isLoopStart && eighth === 0) hit("crash", "crash", 0.9);
-  if (isFillBar && eighth >= fillFrom) {
-    const f = fill.find((x) => x.eighth === eighth);
-    if (f) hit("tom", f.tom === "hi" ? "tomHi" : f.tom === "mid" ? "tomMid" : "tomLo", 0.95);
+  // Real cymbal hands drift a few ms and never hit twice at the same strength.
+  const loose = () => o.time + (Math.random() - 0.5) * 0.006;
+  const pulse = () => {
+    const acc = (eighth % 2 ? 0.52 : 0.78) + Math.random() * 0.12;
+    if (p.hat?.includes(eighth)) hit("hatClosed", "hatClosed", acc, loose());
+    if (p.ride?.includes(eighth)) hit("ride", "ride", acc, loose());
+  };
+  if (p.crashFirst && o.crashBar && eighth === 0) hit("crash", "crash", 0.9);
+  if (o.fillKind && eighth >= o.fillFrom) {
+    if (o.fillKind === "tom") {
+      const f = o.tomFill.find((x) => x.eighth === eighth);
+      if (f) hit("tom", f.tom === "hi" ? "tomHi" : f.tom === "mid" ? "tomMid" : "tomLo", 0.95);
+    } else {
+      const f = o.snareFill.find((x) => x.e === eighth);
+      if (f) hit("snare", "snare", f.v);
+    }
+    return;
+  }
+  // tick = just the cymbal pulse; low = kick + sidestick backbeat until the
+  // song opens up; full = the written groove; push = full + open-hat lift.
+  if (o.density === "tick") {
+    pulse();
+    return;
+  }
+  if (o.density === "low") {
+    if (p.kick?.includes(eighth)) hit("kick", "kick", 1);
+    if (p.snare?.includes(eighth)) hit("rim", "rim", 0.85);
+    pulse();
     return;
   }
   if (p.kick?.includes(eighth)) hit("kick", "kick", 1);
   if (p.snare?.includes(eighth)) hit("snare", "snare", 1);
+  else if (!o.compound && (eighth === 3 || eighth === 7) && Math.random() < 0.18)
+    hit("snare", "snare", 0.22); // ghost note between backbeats
   if (p.clap?.includes(eighth)) hit("clap", "clap", 0.9);
   if (p.rim?.includes(eighth)) hit("rim", "rim", 0.8);
-  if (p.hat?.includes(eighth)) hit("hatClosed", "hatClosed", eighth % 2 ? 0.6 : 0.85);
+  pulse();
   if (p.openhat?.includes(eighth)) hit("hatOpen", "hatOpen", 0.8);
-  if (p.ride?.includes(eighth)) hit("ride", "ride", eighth % 2 ? 0.6 : 0.85);
+  else if (o.density === "push" && eighth === (o.compound ? 5 : 7))
+    hit("hatOpen", "hatOpen", 0.85); // open hat lifting into the next bar
+}
+
+// One bar of metronome-style clicks before the band comes in.
+function scheduleCountIn(ctx: AudioContext, dest: AudioNode, t0: number, stepDur: number, meter: MeterId) {
+  const compound = meter === "6/8";
+  const clicks = compound ? [0, 1, 2, 3, 4, 5] : [0, 2, 4, 6];
+  const accents = compound ? [0, 3] : [0];
+  for (const e of clicks) {
+    const t = t0 + e * stepDur;
+    const accent = accents.includes(e);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = accent ? 1500 : 1000;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(accent ? 0.5 : 0.35, t + 0.001);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    osc.connect(gain).connect(dest);
+    osc.start(t);
+    osc.stop(t + 0.06);
+  }
 }
 
 function makeImpulse(ctx: AudioContext): AudioBuffer {
@@ -236,6 +400,7 @@ export type BackingTrack = {
   running: boolean;
   loading: boolean;
   currentIndex: number;
+  energyNow: number; // energy level currently sounding (-1 when stopped)
   toggle: () => void;
 };
 
@@ -251,10 +416,14 @@ export function useBackingTrack(opts: {
   drumMix: DrumMix;
   swing: number;
   mix: Mix;
+  energy: number; // 0..3, used when autoBuild is off
+  autoBuild: boolean; // step the BUILD_ARC each pass through the progression
+  countIn: boolean; // one bar of clicks before the band comes in
 }): BackingTrack {
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [energyNow, setEnergyNow] = useState(-1);
 
   const ctxRef = useRef<AudioContext | null>(null);
   const masterRef = useRef<GainNode | null>(null);
@@ -273,9 +442,11 @@ export function useBackingTrack(opts: {
   const nextTimeRef = useRef(0);
   const stepInChordRef = useRef(0);
   const indexRef = useRef(0);
+  const globalStepRef = useRef(0); // steps since play started — drives bar-level fills
+  const roundRef = useRef(0); // completed passes through the progression — drives auto-build
   const timerRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
-  const queueRef = useRef<{ index: number; time: number }[]>([]);
+  const queueRef = useRef<{ index: number; time: number; energy: number }[]>([]);
   const runningRef = useRef(false);
 
   // The scheduler runs imperatively, so it reads everything from refs.
@@ -289,6 +460,18 @@ export function useBackingTrack(opts: {
   const drumMixRef = useRef(opts.drumMix);
   const swingRef = useRef(opts.swing);
   const mixRef = useRef(opts.mix);
+  const energyRef = useRef(opts.energy);
+  const autoBuildRef = useRef(opts.autoBuild);
+  const countInRef = useRef(opts.countIn);
+  useEffect(() => {
+    energyRef.current = opts.energy;
+  }, [opts.energy]);
+  useEffect(() => {
+    autoBuildRef.current = opts.autoBuild;
+  }, [opts.autoBuild]);
+  useEffect(() => {
+    countInRef.current = opts.countIn;
+  }, [opts.countIn]);
   useEffect(() => {
     chordsRef.current = opts.chords;
   }, [opts.chords]);
@@ -482,7 +665,17 @@ export function useBackingTrack(opts: {
     runningRef.current = true;
     indexRef.current = 0;
     stepInChordRef.current = 0;
-    nextTimeRef.current = ctx.currentTime + 0.1;
+    globalStepRef.current = 0;
+    roundRef.current = 0;
+    // One bar of clicks before the band comes in, so you can find the tempo.
+    const t0 = ctx.currentTime + 0.1;
+    const stepDur = 60 / bpmRef.current / 2;
+    if (countInRef.current && masterRef.current) {
+      scheduleCountIn(ctx, masterRef.current, t0, stepDur, meterRef.current);
+      nextTimeRef.current = t0 + EIGHTHS[meterRef.current] * stepDur;
+    } else {
+      nextTimeRef.current = t0;
+    }
     queueRef.current = [];
     setRunning(true);
 
@@ -509,8 +702,13 @@ export function useBackingTrack(opts: {
         const time = eighth % 2 === 1 ? gridTime + (sw / 100) * stepDur : gridTime;
         const mix = mixRef.current;
         const feel = feelRef.current;
+        // Energy — the manual level, or the auto-build arc stepping each pass.
+        const level = autoBuildRef.current
+          ? BUILD_ARC[roundRef.current % BUILD_ARC.length]
+          : clamp(Math.round(energyRef.current), 0, 3);
+        const E = ENERGY_CONF[level];
 
-        if (step === 0) queueRef.current.push({ index, time: gridTime });
+        if (step === 0) queueRef.current.push({ index, time: gridTime, energy: level });
 
         // Play a chord (or one arp tone) across every active layer.
         const eachLayer = (cb: (node: InstNode, s: InstSettings) => void) => {
@@ -522,7 +720,9 @@ export function useBackingTrack(opts: {
         };
         const playChord = (t: number, dur: number, velScale: number) => {
           if (mix.chords <= 0) return;
-          const velocity = clamp(Math.round(110 * mix.chords * velScale), 1, 127);
+          // No two hits land at exactly the same strength — keeps loops alive.
+          const human = 0.94 + Math.random() * 0.08;
+          const velocity = clamp(Math.round(110 * mix.chords * velScale * E.vel * human), 1, 127);
           eachLayer((node, s) => {
             const atk = toAttack(s.attack);
             if (atk > 0.02 && feel !== "arpeggio") {
@@ -532,8 +732,11 @@ export function useBackingTrack(opts: {
             const rel = toRelease(s.release);
             const cutoff = toCutoff(s.tone);
             const transpose = s.octave * 12;
+            let i = 0;
             for (const pc of chord.pcs) {
-              node.inst.start({ note: 60 + pc + transpose, time: t, duration: dur, velocity, ampRelease: rel, lpfCutoffHz: cutoff });
+              // Strums rake across the notes instead of hitting as a block.
+              const nt = feel === "strum" ? t + i++ * 0.012 : t;
+              node.inst.start({ note: 60 + pc + transpose, time: nt, duration: dur, velocity, ampRelease: rel, lpfCutoffHz: cutoff });
             }
           });
         };
@@ -556,22 +759,38 @@ export function useBackingTrack(opts: {
           const n = chord.pcs.length;
           const pc = chord.pcs[step % n];
           const oct = Math.floor(step / n) % 2 ? 12 : 0;
-          const velocity = clamp(Math.round(110 * mix.chords), 1, 127);
+          const velocity = clamp(Math.round(110 * mix.chords * E.vel * (0.94 + Math.random() * 0.08)), 1, 127);
           eachLayer((node, s) => {
             node.inst.start({ note: 60 + pc + oct + s.octave * 12, time, duration: stepDur * 0.9, velocity, ampRelease: toRelease(s.release), lpfCutoffHz: toCutoff(s.tone) });
           });
         }
 
-        // Bass — root on pulse 1, fifth on pulse 2 (eighth 4 in 4/4, eighth 3 in 6/8).
+        // Bass — style-specific lines (pump, funk syncopation, bossa, …),
+        // thinned out at low energy down to a whole-note root.
         const bass = bassInstRef.current;
         if (bass && mix.bass > 0) {
-          const bvel = clamp(Math.round(110 * mix.bass), 1, 127);
-          const bdur = (eighthsPerBar / 2) * stepDur * 0.95; // half a bar
-          if (eighth === 0) {
+          const table = compound ? BASS_68 : BASS_44;
+          const steps =
+            E.bassBusy === 0
+              ? table.ballad
+              : (table[BASS_FOR_DRUMS[drumsRef.current]] ?? table.default);
+          const st = steps.find((s) => s.e === eighth && (s.busy ?? 0) <= E.bassBusy);
+          if (st) {
             // Slash chords put a different note in the bass (e.g. D/F# → F#).
-            bass.start({ note: 36 + (chord.bass ?? chord.pcs[0]), time: gridTime, duration: bdur, velocity: bvel });
-          } else if (eighth === (compound ? 3 : 4)) {
-            bass.start({ note: 36 + (chord.pcs[2] ?? chord.pcs[0]), time: gridTime, duration: bdur, velocity: bvel });
+            const rootPc = chord.bass ?? chord.pcs[0];
+            const pc =
+              st.tone === "fifth"
+                ? (chord.pcs[2] ?? rootPc)
+                : st.tone === "third"
+                  ? (chord.pcs[1] ?? rootPc)
+                  : rootPc;
+            const bvel = clamp(Math.round(110 * mix.bass * E.vel * (st.vel ?? 1)), 1, 127);
+            bass.start({
+              note: 36 + pc + (st.tone === "octave" ? 12 : 0),
+              time,
+              duration: st.len * stepDur * 0.95,
+              velocity: bvel,
+            });
           }
         }
 
@@ -579,30 +798,44 @@ export function useBackingTrack(opts: {
         const kits = kitsRef.current;
         if (kits.size && mix.drums > 0 && drumsRef.current !== "none") {
           const bar = Math.floor(step / eighthsPerBar);
-          const loopBars = chords.length * bars;
           const isLoopStart = index === 0 && bar === 0;
-          const isFillBar = loopBars >= 2 && index === chords.length - 1 && bar === bars - 1;
-          scheduleDrums(
+          // A fill every 4th bar (alternating toms / snare roll), then a crash
+          // landing on the bar after it.
+          const globalBar = Math.floor(globalStepRef.current / eighthsPerBar);
+          const isFillBar = E.fills && globalBar % 4 === 3;
+          const fillKind: FillKind = isFillBar
+            ? Math.floor(globalBar / 4) % 2
+              ? "snare"
+              : "tom"
+            : null;
+          const crashBar = isLoopStart || (E.fills && globalBar > 0 && globalBar % 4 === 0);
+          scheduleDrums({
             kits,
-            pieceKitsRef.current,
-            drumMixRef.current,
-            compound ? DRUM_PATTERNS_68 : DRUM_PATTERNS,
-            compound ? TOM_FILL_68 : TOM_FILL_44,
-            compound ? 3 : 4,
-            drumsRef.current,
+            pieceKits: pieceKitsRef.current,
+            drumMix: drumMixRef.current,
+            table: compound ? DRUM_PATTERNS_68 : DRUM_PATTERNS,
+            tomFill: compound ? TOM_FILL_68 : TOM_FILL_44,
+            snareFill: compound ? SNARE_FILL_68 : SNARE_FILL_44,
+            fillFrom: compound ? 3 : 4,
+            pattern: drumsRef.current,
             eighth,
-            isLoopStart,
-            isFillBar,
+            crashBar,
+            fillKind,
+            compound,
+            density: E.drums,
             time,
-            mix.drums,
-          );
+            vel: mix.drums * E.vel,
+          });
         }
 
         nextTimeRef.current += stepDur;
+        globalStepRef.current += 1;
         stepInChordRef.current += 1;
         if (stepInChordRef.current >= stepsPerChord) {
           stepInChordRef.current = 0;
-          indexRef.current = (index + 1) % chords.length;
+          const next = (index + 1) % chords.length;
+          indexRef.current = next;
+          if (next === 0) roundRef.current += 1; // full pass — auto-build steps the arc
         }
       }
     };
@@ -615,6 +848,7 @@ export function useBackingTrack(opts: {
       const q = queueRef.current;
       while (q.length && q[0].time <= c.currentTime) {
         setCurrentIndex(q[0].index);
+        setEnergyNow(q[0].energy);
         q.shift();
       }
       rafRef.current = requestAnimationFrame(draw);
@@ -640,6 +874,7 @@ export function useBackingTrack(opts: {
     queueRef.current = [];
     setRunning(false);
     setCurrentIndex(-1);
+    setEnergyNow(-1);
   }, []);
 
   const toggle = useCallback(() => {
@@ -647,5 +882,5 @@ export function useBackingTrack(opts: {
     else start();
   }, [start, stop]);
 
-  return { running, loading, currentIndex, toggle };
+  return { running, loading, currentIndex, energyNow, toggle };
 }
