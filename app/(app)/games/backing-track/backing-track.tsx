@@ -6,6 +6,7 @@ import { ROOTS, SCALES, pitchClass, rootUsesFlats, spell, type ScaleDef } from "
 import { buildDiatonicChords } from "@/lib/fretboard-chords";
 import {
   useBackingTrack,
+  voiceLead,
   type DrumId,
   type DrumMix,
   type DrumMixEntry,
@@ -14,6 +15,7 @@ import {
   type InstSettings,
   type MeterId,
   type SoundId,
+  type VoicingId,
 } from "@/lib/use-backing-track";
 
 const QUALITIES = [
@@ -65,6 +67,24 @@ const ENERGY_OPTS = [
   { v: 1, label: "Groove" },
   { v: 2, label: "Full" },
   { v: 3, label: "Push" },
+];
+// How the chord tones are stacked: re-stacked per chord, voice-led to the
+// nearest inversion, or voice-led with the bottom note dropped an octave.
+const VOICINGS: { id: VoicingId; label: string }[] = [
+  { id: "smooth", label: "Smooth" },
+  { id: "close", label: "Close" },
+  { id: "spread", label: "Spread" },
+];
+const FILL_OPTS = [
+  { v: 0, label: "Off" },
+  { v: 2, label: "2 bars" },
+  { v: 4, label: "4 bars" },
+  { v: 8, label: "8 bars" },
+];
+const COUNT_IN_OPTS = [
+  { v: 0, label: "Off" },
+  { v: 1, label: "1 bar" },
+  { v: 2, label: "2 bars" },
 ];
 const FEELS: { id: FeelId; label: string }[] = [
   { id: "sustained", label: "Sustained" },
@@ -153,9 +173,13 @@ export function BackingTrack() {
   const [bpm, setBpm] = useState(90);
   const [barsPerChord, setBarsPerChord] = useState(1);
   const [color, setColor] = useState<ColorId>("triads");
+  const [voicing, setVoicing] = useState<VoicingId>("smooth");
   const [energy, setEnergy] = useState(2);
   const [autoBuild, setAutoBuild] = useState(true);
-  const [countIn, setCountIn] = useState(true);
+  const [countIn, setCountIn] = useState(1);
+  const [humanize, setHumanize] = useState(60);
+  const [walkups, setWalkups] = useState(true);
+  const [fillEvery, setFillEvery] = useState(4);
   const [activeSounds, setActiveSounds] = useState<SoundId[]>(["piano"]);
   const [editSound, setEditSound] = useState<SoundId>("piano"); // which layer's settings show
   const [feel, setFeel] = useState<FeelId>("pulse");
@@ -254,14 +278,18 @@ export function BackingTrack() {
   const voices = useMemo(() => {
     const rootPc = pitchClass(root) ?? 0;
     const deg = scale.intervals;
-    return progChords.map((c) => {
+    const colored = progChords.map((c) => {
       const pcs = [...c.pcs];
       if (color === "sevenths") pcs.push((rootPc + deg[(c.degree + 5) % 7]) % 12);
       else if (color === "lush" && (c.quality === "maj" || c.quality === "min"))
         pcs.push((rootPc + deg[c.degree % 7]) % 12);
       return { pcs, bass: c.bass };
     });
-  }, [progChords, color, scale, root]);
+    // Voice-lead the sequence so chords flow into each other instead of
+    // re-stacking in the same octave every time.
+    const led = voiceLead(colored.map((c) => c.pcs), voicing);
+    return colored.map((c, i) => ({ ...c, notes: led[i] }));
+  }, [progChords, color, voicing, scale, root]);
   // The chord name as colored — "Am7", "Cadd9" — for the progression display.
   const colorName = (c: (typeof progChords)[number]) =>
     color === "sevenths"
@@ -294,6 +322,9 @@ export function BackingTrack() {
     energy,
     autoBuild,
     countIn,
+    humanize,
+    walkups,
+    fillEvery,
   });
   const { toggle } = track;
 
@@ -585,6 +616,24 @@ export function BackingTrack() {
             </div>
           </div>
 
+          {/* Voicing */}
+          <div className="space-y-1.5">
+            <span className="eyebrow">Voicing</span>
+            <div className="flex flex-wrap gap-1.5">
+              {VOICINGS.map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setVoicing(v.id)}
+                  aria-pressed={v.id === voicing}
+                  className={`${chipBase} ${v.id === voicing ? chipOn : chipOff}`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Bars per chord */}
           <div className="space-y-1.5">
             <span className="eyebrow">Bars per chord</span>
@@ -734,15 +783,67 @@ export function BackingTrack() {
           </div>
           <div className="space-y-1.5">
             <span className="eyebrow">Count-in</span>
+            <div className="flex flex-wrap gap-1.5">
+              {COUNT_IN_OPTS.map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => setCountIn(o.v)}
+                  aria-pressed={o.v === countIn}
+                  className={`${chipBase} ${o.v === countIn ? chipOn : chipOff}`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Fills + bass walk-ups */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <span className="eyebrow">Drum fill every</span>
+            <div className="flex flex-wrap gap-1.5">
+              {FILL_OPTS.map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => setFillEvery(o.v)}
+                  aria-pressed={o.v === fillEvery}
+                  className={`${chipBase} ${o.v === fillEvery ? chipOn : chipOff}`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <span className="eyebrow">Bass walk-ups</span>
             <button
               type="button"
-              onClick={() => setCountIn((v) => !v)}
-              aria-pressed={countIn}
-              className={`${chipBase} ${countIn ? chipOn : chipOff}`}
+              onClick={() => setWalkups((v) => !v)}
+              aria-pressed={walkups}
+              className={`${chipBase} ${walkups ? chipOn : chipOff}`}
             >
-              {countIn ? "1 bar of clicks" : "Off"}
+              {walkups ? "Walking into each chord" : "Off"}
             </button>
           </div>
+        </div>
+
+        {/* Humanize — scales timing looseness, velocity wobble, rolls, ghosts */}
+        <div className="space-y-1.5">
+          <span className="eyebrow">
+            Humanize — {humanize === 0 ? "machine-tight" : `${humanize}%`}
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={humanize}
+            onChange={(e) => setHumanize(Number(e.target.value))}
+            aria-label="Humanize amount"
+            className="w-full max-w-md accent-primary"
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

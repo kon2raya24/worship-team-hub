@@ -52,7 +52,9 @@ export type DrumPiece =
   | "tom";
 export type DrumMixEntry = { volume: number; enabled: boolean }; // volume 0..100
 export type DrumMix = Record<DrumPiece, DrumMixEntry>;
-export type TrackChord = { pcs: number[]; bass?: number }; // triad pcs; bass = slash bass pitch class
+// pcs = chord pitch classes (bass + walk-ups read these); notes = the actual
+// voiced midi notes to play (voice-led by the UI); bass = slash bass pc.
+export type TrackChord = { pcs: number[]; notes?: number[]; bass?: number };
 export type Mix = { chords: number; bass: number; drums: number };
 export type InstSettings = {
   volume: number; // 0..100
@@ -91,6 +93,10 @@ const toAttack = (a: number) => (a / 100) * 0.6; // 0..0.6s
 const STRUM_44: Record<number, number> = { 0: 1, 2: 0.7, 3: 0.55, 4: 1, 6: 0.7, 7: 0.55 };
 // 6/8 lilts in two: accent the two dotted-quarter pulses (0 and 3).
 const STRUM_68: Record<number, number> = { 0: 1, 1: 0.4, 2: 0.5, 3: 0.85, 4: 0.4, 5: 0.5 };
+// Within-bar dynamics — beat 1 strongest, backbeats medium, "ands" lighter.
+// Real players never hit every subdivision at the same strength.
+const CONTOUR_44 = [1, 0.84, 0.92, 0.84, 0.96, 0.84, 0.9, 0.84];
+const CONTOUR_68 = [1, 0.85, 0.88, 0.95, 0.85, 0.88];
 
 // --- Energy / arrangement ------------------------------------------------
 // Energy shapes the whole arrangement: how hard everything hits, which drum
@@ -190,6 +196,42 @@ const BASS_FOR_DRUMS: Record<DrumId, string> = {
   march: "pump",
   swing: "default",
 };
+
+// --- Voicing ----------------------------------------------------------------
+
+export type VoicingId = "close" | "smooth" | "spread";
+
+// Voice-lead a chord sequence: pick each chord's inversion so its voices move
+// minimally from the previous chord, instead of re-stacking every chord in
+// the same octave (the single biggest "robotic" tell). "spread" then drops
+// the lowest voice an octave for an open, pad-like spacing.
+export function voiceLead(seq: number[][], mode: VoicingId): number[][] {
+  if (mode === "close") return seq.map((pcs) => pcs.map((pc) => 60 + pc));
+  let prev: number[] | null = null;
+  return seq.map((pcs) => {
+    let best: number[] = [];
+    let bestScore = Infinity;
+    for (let inv = 0; inv < pcs.length; inv++) {
+      const order = [...pcs.slice(inv), ...pcs.slice(0, inv)];
+      // First voice lands in [55, 66]; the rest stack strictly upward.
+      const notes = [55 + ((((order[0] - 55) % 12) + 12) % 12)];
+      for (let i = 1; i < order.length; i++) {
+        const up = (((order[i] - notes[i - 1]) % 12) + 12) % 12 || 12;
+        notes.push(notes[i - 1] + up);
+      }
+      const p = prev;
+      const score = p
+        ? notes.reduce((a, x) => a + Math.min(...p.map((q) => Math.abs(x - q))), 0)
+        : Math.abs(notes.reduce((a, b) => a + b, 0) / notes.length - 64);
+      if (score < bestScore) {
+        bestScore = score;
+        best = notes;
+      }
+    }
+    prev = best;
+    return mode === "spread" ? [best[0] - 12, ...best.slice(1)] : best;
+  });
+}
 
 // --- Drum kit (sampled via smplr DrumMachine) ----------------------------
 
@@ -307,23 +349,26 @@ function scheduleDrums(o: {
   density: DrumDensity;
   time: number;
   vel: number;
+  h: number; // humanize amount 0..1
 }) {
   const p = o.table[o.pattern];
   if (!p) return;
-  const { eighth } = o;
+  const { eighth, h } = o;
   // Each piece is gated by its own enable + volume, and plays from its own kit.
+  // Every hit's velocity wobbles with the humanize amount.
   const hit = (piece: DrumPiece, voice: keyof DrumMap, accent: number, t = o.time) => {
     const m = o.drumMix[piece];
     if (!m || !m.enabled) return;
     const kit = o.kits.get(o.pieceKits[piece]);
     const sample = kit?.map[voice];
     if (!kit || !sample) return;
-    kit.dm.start({ note: sample, time: t, velocity: clamp(Math.round(127 * o.vel * accent * (m.volume / 100)), 1, 127) });
+    const wobble = 1 - Math.random() * 0.12 * h;
+    kit.dm.start({ note: sample, time: t, velocity: clamp(Math.round(127 * o.vel * accent * wobble * (m.volume / 100)), 1, 127) });
   };
   // Real cymbal hands drift a few ms and never hit twice at the same strength.
-  const loose = () => o.time + (Math.random() - 0.5) * 0.006;
+  const loose = () => o.time + (Math.random() - 0.5) * 0.009 * h;
   const pulse = () => {
-    const acc = (eighth % 2 ? 0.52 : 0.78) + Math.random() * 0.12;
+    const acc = (eighth % 2 ? 0.52 : 0.78) + Math.random() * 0.12 * (0.5 + h);
     if (p.hat?.includes(eighth)) hit("hatClosed", "hatClosed", acc, loose());
     if (p.ride?.includes(eighth)) hit("ride", "ride", acc, loose());
   };
@@ -352,7 +397,7 @@ function scheduleDrums(o: {
   }
   if (p.kick?.includes(eighth)) hit("kick", "kick", 1);
   if (p.snare?.includes(eighth)) hit("snare", "snare", 1);
-  else if (!o.compound && (eighth === 3 || eighth === 7) && Math.random() < 0.18)
+  else if (!o.compound && (eighth === 3 || eighth === 7) && Math.random() < 0.28 * h)
     hit("snare", "snare", 0.22); // ghost note between backbeats
   if (p.clap?.includes(eighth)) hit("clap", "clap", 0.9);
   if (p.rim?.includes(eighth)) hit("rim", "rim", 0.8);
@@ -418,7 +463,10 @@ export function useBackingTrack(opts: {
   mix: Mix;
   energy: number; // 0..3, used when autoBuild is off
   autoBuild: boolean; // step the BUILD_ARC each pass through the progression
-  countIn: boolean; // one bar of clicks before the band comes in
+  countIn: number; // bars of clicks before the band comes in (0..2)
+  humanize: number; // 0..100 — timing looseness, velocity wobble, ghosts
+  walkups: boolean; // bass walks chromatically into the next chord
+  fillEvery: number; // a fill every N bars (0 = never)
 }): BackingTrack {
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -463,6 +511,9 @@ export function useBackingTrack(opts: {
   const energyRef = useRef(opts.energy);
   const autoBuildRef = useRef(opts.autoBuild);
   const countInRef = useRef(opts.countIn);
+  const humanizeRef = useRef(opts.humanize);
+  const walkupsRef = useRef(opts.walkups);
+  const fillEveryRef = useRef(opts.fillEvery);
   useEffect(() => {
     energyRef.current = opts.energy;
   }, [opts.energy]);
@@ -472,6 +523,15 @@ export function useBackingTrack(opts: {
   useEffect(() => {
     countInRef.current = opts.countIn;
   }, [opts.countIn]);
+  useEffect(() => {
+    humanizeRef.current = opts.humanize;
+  }, [opts.humanize]);
+  useEffect(() => {
+    walkupsRef.current = opts.walkups;
+  }, [opts.walkups]);
+  useEffect(() => {
+    fillEveryRef.current = opts.fillEvery;
+  }, [opts.fillEvery]);
   useEffect(() => {
     chordsRef.current = opts.chords;
   }, [opts.chords]);
@@ -508,6 +568,11 @@ export function useBackingTrack(opts: {
     const ctx = new AudioContext();
     ctxRef.current = ctx;
     const comp = ctx.createDynamicsCompressor();
+    // Gentle mastering glue — the default 12:1 ratio pumps audibly.
+    comp.threshold.value = -18;
+    comp.ratio.value = 4;
+    comp.attack.value = 0.005;
+    comp.release.value = 0.2;
     comp.connect(ctx.destination);
     const master = ctx.createGain();
     master.gain.value = 0.9;
@@ -667,15 +732,17 @@ export function useBackingTrack(opts: {
     stepInChordRef.current = 0;
     globalStepRef.current = 0;
     roundRef.current = 0;
-    // One bar of clicks before the band comes in, so you can find the tempo.
+    // 0–2 bars of clicks before the band comes in, so you can find the tempo.
     const t0 = ctx.currentTime + 0.1;
     const stepDur = 60 / bpmRef.current / 2;
-    if (countInRef.current && masterRef.current) {
-      scheduleCountIn(ctx, masterRef.current, t0, stepDur, meterRef.current);
-      nextTimeRef.current = t0 + EIGHTHS[meterRef.current] * stepDur;
-    } else {
-      nextTimeRef.current = t0;
+    const bars = clamp(Math.round(countInRef.current), 0, 2);
+    const barDur = EIGHTHS[meterRef.current] * stepDur;
+    if (bars > 0 && masterRef.current) {
+      for (let b = 0; b < bars; b++) {
+        scheduleCountIn(ctx, masterRef.current, t0 + b * barDur, stepDur, meterRef.current);
+      }
     }
+    nextTimeRef.current = t0 + bars * barDur;
     queueRef.current = [];
     setRunning(true);
 
@@ -707,6 +774,9 @@ export function useBackingTrack(opts: {
           ? BUILD_ARC[roundRef.current % BUILD_ARC.length]
           : clamp(Math.round(energyRef.current), 0, 3);
         const E = ENERGY_CONF[level];
+        const h = clamp(humanizeRef.current, 0, 100) / 100;
+        // Within-bar dynamics curve (skip strum — it has its own shape).
+        const contour = (meter === "6/8" ? CONTOUR_68 : CONTOUR_44)[eighth] ?? 1;
 
         if (step === 0) queueRef.current.push({ index, time: gridTime, energy: level });
 
@@ -718,10 +788,14 @@ export function useBackingTrack(opts: {
             if (node && s) cb(node, s);
           }
         };
-        const playChord = (t: number, dur: number, velScale: number) => {
+        // The voiced midi notes (voice-led upstream); pcs are the fallback.
+        const chordNotes = chord.notes ?? chord.pcs.map((pc) => 60 + pc);
+        const playChord = (t0: number, dur: number, velScale: number) => {
           if (mix.chords <= 0) return;
-          // No two hits land at exactly the same strength — keeps loops alive.
-          const human = 0.94 + Math.random() * 0.08;
+          // Humanize: hits drift off the grid and no two land at the same
+          // strength — both scale with the humanize amount.
+          const t = t0 + (Math.random() - 0.5) * 0.008 * h;
+          const human = 1 + (Math.random() - 0.5) * 0.16 * h;
           const velocity = clamp(Math.round(110 * mix.chords * velScale * E.vel * human), 1, 127);
           eachLayer((node, s) => {
             const atk = toAttack(s.attack);
@@ -733,10 +807,11 @@ export function useBackingTrack(opts: {
             const cutoff = toCutoff(s.tone);
             const transpose = s.octave * 12;
             let i = 0;
-            for (const pc of chord.pcs) {
-              // Strums rake across the notes instead of hitting as a block.
-              const nt = feel === "strum" ? t + i++ * 0.012 : t;
-              node.inst.start({ note: 60 + pc + transpose, time: nt, duration: dur, velocity, ampRelease: rel, lpfCutoffHz: cutoff });
+            for (const note of chordNotes) {
+              // Strums rake across the notes; everything else rolls slightly
+              // (real hands never strike a chord as one block).
+              const nt = t + i++ * (feel === "strum" ? 0.012 : 0.007 * h + Math.random() * 0.003 * h);
+              node.inst.start({ note: note + transpose, time: nt, duration: dur, velocity, ampRelease: rel, lpfCutoffHz: cutoff });
             }
           });
         };
@@ -747,21 +822,22 @@ export function useBackingTrack(opts: {
         } else if (feel === "pulse") {
           // Quarters in 4/4; the two dotted-quarter pulses (0, 3) in 6/8.
           const onPulse = compound ? eighth === 0 || eighth === 3 : eighth % 2 === 0;
-          if (onPulse) playChord(time, (compound ? 3 : 2) * stepDur * 0.9, 1);
+          if (onPulse) playChord(time, (compound ? 3 : 2) * stepDur * 0.9, contour);
         } else if (feel === "strum") {
           const sv = (compound ? STRUM_68 : STRUM_44)[eighth];
           if (sv) playChord(time, stepDur * (compound ? 1.4 : 1.6), sv);
         } else if (feel === "offbeat") {
           const off = compound ? eighth === 2 || eighth === 5 : eighth % 2 === 1;
-          if (off) playChord(time, stepDur * 0.6, 1);
+          if (off) playChord(time, stepDur * 0.6, contour);
         } else if (mix.chords > 0) {
-          // arpeggio — one tone per eighth, climbing an octave each pass
-          const n = chord.pcs.length;
-          const pc = chord.pcs[step % n];
+          // arpeggio — one voiced note per eighth, climbing an octave each pass
+          const n = chordNotes.length;
+          const note = chordNotes[step % n];
           const oct = Math.floor(step / n) % 2 ? 12 : 0;
-          const velocity = clamp(Math.round(110 * mix.chords * E.vel * (0.94 + Math.random() * 0.08)), 1, 127);
+          const human = 1 + (Math.random() - 0.5) * 0.16 * h;
+          const velocity = clamp(Math.round(110 * mix.chords * E.vel * contour * human), 1, 127);
           eachLayer((node, s) => {
-            node.inst.start({ note: 60 + pc + oct + s.octave * 12, time, duration: stepDur * 0.9, velocity, ampRelease: toRelease(s.release), lpfCutoffHz: toCutoff(s.tone) });
+            node.inst.start({ note: note + oct + s.octave * 12, time, duration: stepDur * 0.9, velocity, ampRelease: toRelease(s.release), lpfCutoffHz: toCutoff(s.tone) });
           });
         }
 
@@ -769,28 +845,40 @@ export function useBackingTrack(opts: {
         // thinned out at low energy down to a whole-note root.
         const bass = bassInstRef.current;
         if (bass && mix.bass > 0) {
-          const table = compound ? BASS_68 : BASS_44;
-          const steps =
-            E.bassBusy === 0
-              ? table.ballad
-              : (table[BASS_FOR_DRUMS[drumsRef.current]] ?? table.default);
-          const st = steps.find((s) => s.e === eighth && (s.busy ?? 0) <= E.bassBusy);
-          if (st) {
-            // Slash chords put a different note in the bass (e.g. D/F# → F#).
-            const rootPc = chord.bass ?? chord.pcs[0];
-            const pc =
-              st.tone === "fifth"
-                ? (chord.pcs[2] ?? rootPc)
-                : st.tone === "third"
-                  ? (chord.pcs[1] ?? rootPc)
-                  : rootPc;
-            const bvel = clamp(Math.round(110 * mix.bass * E.vel * (st.vel ?? 1)), 1, 127);
-            bass.start({
-              note: 36 + pc + (st.tone === "octave" ? 12 : 0),
-              time,
-              duration: st.len * stepDur * 0.95,
-              velocity: bvel,
-            });
+          const bHuman = 1 + (Math.random() - 0.5) * 0.14 * h;
+          const bTime = time + (Math.random() - 0.5) * 0.006 * h;
+          // On the last eighth before a chord change, walk a half-step into
+          // the next root — the classic bass player's connective move.
+          const lastStep = step === stepsPerChord - 1;
+          if (walkupsRef.current && E.bassBusy >= 1 && lastStep && chords.length > 1) {
+            const next = chords[(index + 1) % chords.length];
+            const target = next.bass ?? next.pcs[0];
+            const bvel = clamp(Math.round(110 * mix.bass * E.vel * 0.7 * bHuman), 1, 127);
+            bass.start({ note: 35 + target, time: bTime, duration: stepDur * 0.9, velocity: bvel });
+          } else {
+            const table = compound ? BASS_68 : BASS_44;
+            const steps =
+              E.bassBusy === 0
+                ? table.ballad
+                : (table[BASS_FOR_DRUMS[drumsRef.current]] ?? table.default);
+            const st = steps.find((s) => s.e === eighth && (s.busy ?? 0) <= E.bassBusy);
+            if (st) {
+              // Slash chords put a different note in the bass (e.g. D/F# → F#).
+              const rootPc = chord.bass ?? chord.pcs[0];
+              const pc =
+                st.tone === "fifth"
+                  ? (chord.pcs[2] ?? rootPc)
+                  : st.tone === "third"
+                    ? (chord.pcs[1] ?? rootPc)
+                    : rootPc;
+              const bvel = clamp(Math.round(110 * mix.bass * E.vel * (st.vel ?? 1) * bHuman), 1, 127);
+              bass.start({
+                note: 36 + pc + (st.tone === "octave" ? 12 : 0),
+                time: bTime,
+                duration: st.len * stepDur * 0.95,
+                velocity: bvel,
+              });
+            }
           }
         }
 
@@ -799,16 +887,17 @@ export function useBackingTrack(opts: {
         if (kits.size && mix.drums > 0 && drumsRef.current !== "none") {
           const bar = Math.floor(step / eighthsPerBar);
           const isLoopStart = index === 0 && bar === 0;
-          // A fill every 4th bar (alternating toms / snare roll), then a crash
+          // A fill every N bars (alternating toms / snare roll), then a crash
           // landing on the bar after it.
+          const fe = fillEveryRef.current;
           const globalBar = Math.floor(globalStepRef.current / eighthsPerBar);
-          const isFillBar = E.fills && globalBar % 4 === 3;
+          const isFillBar = E.fills && fe > 0 && globalBar % fe === fe - 1;
           const fillKind: FillKind = isFillBar
-            ? Math.floor(globalBar / 4) % 2
+            ? Math.floor(globalBar / fe) % 2
               ? "snare"
               : "tom"
             : null;
-          const crashBar = isLoopStart || (E.fills && globalBar > 0 && globalBar % 4 === 0);
+          const crashBar = isLoopStart || (E.fills && fe > 0 && globalBar > 0 && globalBar % fe === 0);
           scheduleDrums({
             kits,
             pieceKits: pieceKitsRef.current,
@@ -825,6 +914,7 @@ export function useBackingTrack(opts: {
             density: E.drums,
             time,
             vel: mix.drums * E.vel,
+            h,
           });
         }
 
